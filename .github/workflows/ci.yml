@@ -1,0 +1,61 @@
+name: ci
+
+# The standard chassis CI (graduated from copafix, architecture-feedback G16/G22). A throwaway
+# Postgres runs the tenancy + request-path suites for real (the §9 "Tenant isolation" gate). Plain
+# Postgres: `postgres` is superuser (BYPASSRLS) = the admin connection; the migration creates the
+# app role <slug>_app (NOBYPASSRLS) = the runtime role — the same two-role model as Supabase, no
+# pooler. The jwt suite self-skips here (no Supabase env); it runs locally/against a real project.
+#
+# mj_brasil_app and mj-brasil are filled by `astralitics create-app` (→ <slug>_app, <slug>).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      APP_DB_PASSWORD: ci_app_pw
+      DATABASE_URL_ADMIN: postgresql://postgres:postgres@localhost:5432/postgres
+      DATABASE_URL: postgresql://mj_brasil_app:ci_app_pw@localhost:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+
+      # ── static gates first (no DB needed) — fail fast ──
+      - name: check:rls (every org_id table has its RLS appendix)
+        run: pnpm check:rls
+      - name: check:procedures (no domain router on publicProcedure)
+        run: pnpm check:procedures
+      - name: typecheck
+        run: pnpm typecheck
+
+      # ── DB gates against the service container ──
+      - name: db:migrate (roles + schema + RLS)
+        run: pnpm db:migrate
+      - name: test (tenancy · idempotency · request-path · outbox; jwt self-skips without Supabase)
+        run: pnpm test
+
+      # ── build + drift ──
+      - name: build web shell
+        run: pnpm --filter web build
+      - name: drift:check (managed cells unedited)
+        run: pnpm drift:check
