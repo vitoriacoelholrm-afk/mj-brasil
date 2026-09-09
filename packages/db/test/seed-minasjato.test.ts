@@ -15,7 +15,9 @@ const ORG = '41713775-0001-4000-8000-000000000091';
 const ctx = {
   orgId: ORG,
   membershipId: null,
-  actor: 'seed:minasjato',
+  // Ator como UUID: assets.created_by é uuid, enquanto customers.created_by é text.
+  // A inconsistência é do catálogo; aqui só se usa o formato mais restrito.
+  actor: '00000000-0000-4000-8000-000000005EED',
   rbacRole: 'admin' as const,
   permissions: new Set(['*']),
 };
@@ -73,30 +75,25 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
       { code: 'MJ-INS-004', name: 'Termômetro infravermelho', cert: '171032' },
     ];
 
-    // NOTA: createAsset está BLOQUEADO para a Minasjato — assetCreateInput exige `area`, cuja
-    // Definition `area_operativa` é FECHADA e traz as áreas de um hotel mexicano
-    // ('Playa', 'Albercas y Jacuzzis', 'Taco Paco'...). A correção pertence ao catálogo.
-    //
-    // Contorno explícito e temporário: os ativos entram por SQL de admin só para que cada
-    // instrumento tenha um titular próprio. Sem isso, a regra de supersedência do módulo
-    // (renovação substitui a credencial ativa do mesmo titular+tipo) colapsa os quatro em um.
-    for (const i of instrumentos) {
-      await admin`
-        insert into assets (org_id, code, name, kind, area, criticality, health_status, lifecycle_status, qr_token)
-        values (${ORG}, ${i.code}, ${i.name}, 'equipo_general', 'Almacén General', 'media', 'ok', 'activo',
-                encode(gen_random_bytes(16), 'hex'))
-        on conflict do nothing`;
-    }
-
+    // `area` usa a área real da Minasjato: o Laboratório da Qualidade, onde o MJ-CAL-01 guarda os
+    // instrumentos. Só é possível porque a Definition `area_operativa` passou a ser aberta —
+    // fechada, trazia as áreas de um hotel ('Playa', 'Taco Paco') e travava createAsset.
     await withTenant(ORG, async (tx) => {
       for (const i of instrumentos) {
-        const [ativo] = (await tx.execute(
+        const existente = (await tx.execute(
           sql`select id from assets where org_id = ${ORG}::uuid and code = ${i.code} limit 1`,
         )) as unknown as Array<{ id: string }>;
 
+        const assetId = existente[0]?.id ?? (await db.createAsset(tx as any, ctx as any, {
+          code: i.code,
+          name: i.name,
+          kind: 'equipo_general',
+          area: 'Laboratório da Qualidade',
+        } as any) as any).id;
+
         await db.upsertCredentialRecord(tx as any, ctx as any, {
           holderKind: 'asset',
-          holderId: ativo.id,
+          holderId: assetId,
           holderLabel: `${i.code} — ${i.name}`,
           kind: 'calibracao',
           title: 'Certificado de calibração RBC/INMETRO',

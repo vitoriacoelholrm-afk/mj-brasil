@@ -89,8 +89,9 @@ export const CATALOG_DEFINITIONS = {
     values: ['inspeccion_fallida', 'entrada_mantenimiento', 'limpieza_profunda_vencida', 'discrepancia_resuelta', 'ajuste_recepcion', 'otro'],
   },
   area_operativa: {
-    type: 'catalogo', owner: 'facility-spaces',
+    type: 'catalogo', owner: 'facility-spaces', open: true,
     values: ['Eléctrica/Mecánica', 'Cocinas', 'Lavandería', 'Albercas y Jacuzzis', 'Bares', 'Taco Paco', 'Almacén General', 'Habitaciones', 'Playa', 'Torres de Enfriamiento'],
+    note: 'org-editable; seeded values are the first app\'s areas (a hotel), kept for back-compat — closed, they made createAsset uncallable by any other app (mj-brasil has no Playa/Taco Paco). Mirrors its siblings room_type/fachada_zone.',
   },
   room_type: { type: 'catalogo', owner: 'facility-spaces', open: true, values: ['estandar'], note: 'real census pending client-questions §4' },
   fachada_zone: { type: 'catalogo', owner: 'facility-spaces', open: true, values: ['frente_mar', 'posterior'], note: 'real zoning pending client-questions §5' },

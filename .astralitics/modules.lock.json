@@ -31,14 +31,13 @@
       "version": "0.1.0",
       "installedAt": "(stamped on real run)",
       "files": {
-        "packages\\db\\migrations\\0013_customer_management.sql": "c0adf2651f133c5a",
         "packages\\db\\src\\entities\\Customer.ts": "5a002cff8694a391",
-        "packages\\db\\src\\entities\\index.ts": "7f5da0aa4f4dbc69",
+        "packages\\db\\src\\entities\\index.ts": "e1d37821e199f031",
         "packages\\db\\src\\modules\\customer-management\\functions\\functions.ts": "a35f9de5604fd363",
         "packages\\db\\src\\modules\\customer-management\\functions\\index.ts": "1af703f5e1ecb8ad",
         "packages\\db\\src\\modules\\customer-management\\functions\\transitions.ts": "ddd9cc1a6ad65332",
         "packages\\db\\src\\modules\\customer-management\\index.ts": "0023b9def90bec5f",
-        "packages\\trpc\\src\\routers\\customer-management.ts": "f0ff57d2802153f4"
+        "packages\\trpc\\src\\routers\\customer-management.ts": "37a6f164b1560e8b"
       }
     },
     "materials-inventory": {
@@ -96,10 +95,9 @@
       "version": "0.1.0",
       "installedAt": "(stamped on real run)",
       "files": {
-        "packages\\db\\migrations\\0017_facility_spaces.sql": "218ac7b5506555c7",
         "packages\\db\\src\\entities\\Location.ts": "9758419bad1fa07f",
         "packages\\db\\src\\entities\\SpaceStatusEvent.ts": "2c85429ca05e1280",
-        "packages\\db\\src\\entities\\index.ts": "6f692125119d0dae",
+        "packages\\db\\src\\entities\\index.ts": "e1d37821e199f031",
         "packages\\db\\src\\modules\\facility-spaces\\functions\\applyStatusTransition.ts": "88ecb99936b0f747",
         "packages\\db\\src\\modules\\facility-spaces\\functions\\getCurrentHouse.ts": "75f154439a3fc8f1",
         "packages\\db\\src\\modules\\facility-spaces\\functions\\getLegalTransitions.ts": "4b1d7e90b2ab695c",
@@ -109,6 +107,9 @@
         "packages\\db\\src\\modules\\facility-spaces\\functions\\index.ts": "814351b176450546",
         "packages\\db\\src\\modules\\facility-spaces\\functions\\transitions.ts": "986792de02e52aa3",
         "packages\\db\\src\\modules\\facility-spaces\\index.ts": "1a348e31940e365a",
+        "packages\\db\\src\\_definitions\\types.ts": "c7cdf9755f10aa1b",
+        "packages\\db\\src\\_definitions\\registry.ts": "ba38c0a56f6420f4",
+        "packages\\db\\src\\_definitions\\index.ts": "5982d57dcbd4076f",
         "packages\\trpc\\src\\routers\\facility-spaces.ts": "1f7829ed027aa6eb"
       }
     },
