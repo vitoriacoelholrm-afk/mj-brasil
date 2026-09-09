@@ -5,6 +5,7 @@
 import { createTRPCClient, httpBatchLink, TRPCClientError } from '@trpc/client';
 import type { AppRouter } from '@app/trpc';
 import { supabase } from '@/chassis/supabase';
+import { membershipAtual } from '@/lib/session';
 
 export const trpc = createTRPCClient<AppRouter>({
   links: [
@@ -13,7 +14,11 @@ export const trpc = createTRPCClient<AppRouter>({
       headers: async () => {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
-        return token ? { authorization: `Bearer ${token}` } : {};
+        if (token) return { authorization: `Bearer ${token}` };
+        // Sessão de desenvolvimento: o servidor só honra este header no `vite dev` com
+        // ALLOW_DEV_LOGIN=true (ver apps/web/vite.config.ts). Em produção é ignorado.
+        const dev = membershipAtual();
+        return dev ? { 'x-dev-membership': dev } : {};
       },
     }),
   ],

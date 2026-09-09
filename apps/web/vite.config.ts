@@ -26,7 +26,8 @@ function trpcDevApi() {
     configureServer(server: { middlewares: Connect.Server; ssrLoadModule: (id: string) => Promise<any> }) {
       server.middlewares.use('/api/trpc', async (req: any, res: any) => {
         try {
-          const { trpcFetchHandler } = await server.ssrLoadModule('@app/trpc');
+          const { trpcFetchHandler, appRouter, createContext, TRPC_ENDPOINT } =
+            await server.ssrLoadModule('@app/trpc');
           const chunks: Buffer[] = [];
           if (req.method !== 'GET' && req.method !== 'HEAD') for await (const c of req) chunks.push(c as Buffer);
           const headers: Record<string, string> = {};
@@ -35,7 +36,29 @@ function trpcDevApi() {
             method: req.method, headers,
             body: chunks.length ? Buffer.concat(chunks) : undefined,
           });
-          const response: Response = await trpcFetchHandler(request);
+
+          // ── SESSAO DE DESENVOLVIMENTO ────────────────────────────────────────────────────────
+          // Alimenta o principal `pinMembershipId` do chassis a partir do header x-dev-membership,
+          // para o app ser utilizavel antes de existir autenticacao de verdade.
+          //
+          // Mora AQUI de proposito: este plugin e `apply: 'serve'`, entao nao entra em build
+          // nenhum — a funcao da Vercel (api/trpc) nunca ve este codigo e continua exigindo um
+          // token Supabase verificado. Alem disso exige ALLOW_DEV_LOGIN=true, entao nem o
+          // `vite dev` aceita sem o desenvolvedor ter optado explicitamente.
+          //
+          // Nada a jusante muda: resolveContext ainda precisa achar uma membership ATIVA com esse
+          // id, e toda consulta continua dentro de withTenant, com RLS.
+          const devMembership = process.env.ALLOW_DEV_LOGIN === 'true'
+            ? headers['x-dev-membership']
+            : undefined;
+          const response: Response = devMembership
+            ? await (await import('@trpc/server/adapters/fetch')).fetchRequestHandler({
+                endpoint: TRPC_ENDPOINT,
+                req: request,
+                router: appRouter,
+                createContext: () => createContext({ headers, pinMembershipId: devMembership }),
+              })
+            : await trpcFetchHandler(request);
           res.statusCode = response.status;
           response.headers.forEach((value, key) => res.setHeader(key, value));
           res.end(Buffer.from(await response.arrayBuffer()));

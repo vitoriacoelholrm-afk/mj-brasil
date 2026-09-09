@@ -41,6 +41,22 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
       insert into orgs (id, slug, name, settings, is_primary, status)
       values (${ORG}, 'minasjato', 'MJ Serviços Industriais Ltda', '{}'::jsonb, true, 'active')
       on conflict (id) do update set name = excluded.name`;
+
+    // A equipe, conforme as assinaturas dos procedimentos e o questionário RINA.
+    // rbac_role 'admin' recebe permissões '*' em resolveContext; os demais dependeriam de
+    // role_assignments, que ainda não existem — por isso todos entram como admin por ora.
+    for (const p of [
+      { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', papel: 'Coordenadora da Qualidade', email: 'vitoriacoelholrm@gmail.com' },
+      { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', papel: 'Diretor', email: null },
+      { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', papel: 'Verificação', email: null },
+      { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', papel: 'Inspetor de Pintura N1', email: null },
+      { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', papel: 'Financeiro', email: 'financeiro@minasjato.net' },
+    ]) {
+      await admin`
+        insert into memberships (id, org_id, display_name, email, rbac_role, status, activated_at)
+        values (${p.id}, ${ORG}, ${p.nome}, ${p.email}, 'admin', 'active', now())
+        on conflict (id) do update set display_name = excluded.display_name, status = 'active'`;
+    }
   });
 
   it('cadastra os clientes da carteira', async () => {

@@ -7,8 +7,22 @@ import { createClient } from '@supabase/supabase-js';
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase = createClient(url ?? '', anon ?? '', {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-});
-
 export const supabaseConfigured = !!(url && anon);
+
+// Sem projeto Supabase configurado, createClient('','') lança "supabaseUrl is required" no import e
+// derruba o app inteiro na primeira tela que toque no cliente tRPC. Enquanto a autenticação real
+// não entra, devolvemos um substituto que apenas informa "não há sessão" — o app segue funcionando
+// pela sessão de desenvolvimento, e qualquer outra chamada falha alto em vez de silenciosamente.
+const semSessao = {
+  auth: {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+    signOut: async () => ({ error: null }),
+  },
+} as unknown as ReturnType<typeof createClient>;
+
+export const supabase = supabaseConfigured
+  ? createClient(url!, anon!, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+    })
+  : semSessao;

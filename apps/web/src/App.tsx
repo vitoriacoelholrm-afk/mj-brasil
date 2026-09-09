@@ -1,55 +1,119 @@
+// O shell do app: barra lateral, quem está usando, e a tela ativa.
+// Substitui a landing do chassis, que só listava os módulos instalados.
+import { useState } from 'react';
 import appInfo from './app-info.json';
-import installed from './installed.json';
+import { pessoaAtual, sair } from '@/lib/session';
+import { Entrar } from '@/telas/Entrar';
+import { Vencimentos } from '@/telas/Vencimentos';
+import { Instrumentos } from '@/telas/Instrumentos';
+import { Clientes } from '@/telas/Clientes';
+import { c, fonte } from '@/ui/estilo';
 
-// Minimal chassis landing — proves a freshly-created app boots and knows what it is +
-// which catalog modules are installed. Real UX comes from the installed modules' route
-// composition (apps/web/src/routes/); this is just the bootstrap shell.
+type Rota = 'vencimentos' | 'instrumentos' | 'clientes';
+
+const MENU: { chave: Rota; rotulo: string; nota: string }[] = [
+  { chave: 'vencimentos', rotulo: 'Vencimentos', nota: 'calibração e certificações' },
+  { chave: 'instrumentos', rotulo: 'Instrumentos', nota: 'equipamentos de medição' },
+  { chave: 'clientes', rotulo: 'Clientes', nota: 'carteira comercial' },
+];
+
 export function App() {
-  const modules = Object.entries(installed.modules ?? {}) as [string, { version: string; layer?: string }][];
-  return (
-    <div style={S.page}>
-      <div style={S.wrap}>
-        <div style={S.brandRow}><div style={S.dot} /><span style={S.brand}>Astralitics chassis</span></div>
-        <h1 style={S.h1}>{appInfo.name}</h1>
-        <p style={S.sub}>{appInfo.client ? `${appInfo.client} · ` : ''}{appInfo.domain || 'composed from the Astralitics catalog'}</p>
+  const [pessoa, setPessoa] = useState(pessoaAtual);
+  const [rota, setRota] = useState<Rota>('vencimentos');
 
-        <div style={S.card}>
-          <div style={S.cardHead}>Installed modules ({modules.length})</div>
-          {modules.length === 0 ? (
-            <div style={S.empty}>none yet — install with <code style={S.code}>astralitics install &lt;module&gt; --app .</code></div>
-          ) : (
-            <ul style={S.list}>
-              {modules.map(([name, m]) => (
-                <li key={name} style={S.li}>
-                  <code style={S.code}>{name}</code>
-                  <span style={S.ver}>@{m.version}</span>
-                  {m.layer ? <span style={S.layer}>{m.layer}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
+  if (!pessoa) return <Entrar aoEntrar={() => setPessoa(pessoaAtual())} />;
+
+  return (
+    <div style={S.pagina}>
+      <aside style={S.lateral}>
+        <div style={S.marca}>
+          <div style={S.marcaNome}>Minasjato</div>
+          <div style={S.marcaSub}>Sistema da Qualidade</div>
         </div>
-        <p style={S.foot}>chassis {appInfo.chassisVersion ?? '0.1.0'} · Supabase + Drizzle + tRPC + Vite</p>
-      </div>
+
+        <nav style={S.nav}>
+          {MENU.map((m) => {
+            const ativo = rota === m.chave;
+            return (
+              <button
+                key={m.chave}
+                onClick={() => setRota(m.chave)}
+                style={{
+                  ...S.item,
+                  background: ativo ? c.acentoFraco : 'transparent',
+                  borderLeftColor: ativo ? c.acentoMarca : 'transparent',
+                  color: ativo ? c.tinta : c.tinta2,
+                }}
+              >
+                <span style={{ fontWeight: ativo ? 700 : 500 }}>{m.rotulo}</span>
+                <span style={S.itemNota}>{m.nota}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div style={S.rodape}>
+          <div style={S.pessoaNome}>{pessoa.nome}</div>
+          <div style={S.pessoaPapel}>{pessoa.papel}</div>
+          <button style={S.sair} onClick={() => { sair(); setPessoa(null); }}>
+            Trocar de usuário
+          </button>
+        </div>
+      </aside>
+
+      <main style={S.conteudo}>
+        <div style={S.faixaDev}>
+          Ambiente de desenvolvimento — entrada sem senha, dados locais.
+        </div>
+        <div style={S.miolo}>
+          {rota === 'vencimentos' && <Vencimentos />}
+          {rota === 'instrumentos' && <Instrumentos />}
+          {rota === 'clientes' && <Clientes />}
+        </div>
+        <div style={S.rodapeApp}>{appInfo.client} · {appInfo.name}</div>
+      </main>
     </div>
   );
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a,#1e293b,#0f172a)', color: '#e2e8f0', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  wrap: { width: 560, padding: 32 },
-  brandRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 },
-  dot: { width: 14, height: 14, borderRadius: '50%', background: 'radial-gradient(circle at 30% 30%,#7dd3fc,#6366f1)' },
-  brand: { color: '#94a3b8', fontSize: 13, letterSpacing: '.03em' },
-  h1: { fontSize: 34, margin: '0 0 6px', fontWeight: 700 },
-  sub: { color: '#94a3b8', margin: '0 0 24px' },
-  card: { background: 'rgba(30,41,59,.6)', border: '1px solid #334155', borderRadius: 14, padding: '18px 20px' },
-  cardHead: { fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em', color: '#94a3b8', marginBottom: 12 },
-  empty: { color: '#64748b', fontSize: 14 },
-  list: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 },
-  li: { display: 'flex', alignItems: 'center', gap: 8 },
-  code: { background: '#0b1220', color: '#7dd3fc', padding: '2px 7px', borderRadius: 6, fontSize: 13 },
-  ver: { color: '#94a3b8', fontFamily: 'monospace', fontSize: 13 },
-  layer: { fontSize: 11, color: '#cbd5e1', border: '1px solid #475569', borderRadius: 20, padding: '1px 8px' },
-  foot: { color: '#475569', fontSize: 12, marginTop: 20 },
+  pagina: {
+    minHeight: '100vh', display: 'flex', background: c.fundo,
+    color: c.tinta, fontFamily: fonte.texto,
+  },
+  lateral: {
+    width: 232, flexShrink: 0, background: c.superficie,
+    borderRight: `1px solid ${c.linhaForte}`, display: 'flex', flexDirection: 'column',
+  },
+  marca: { padding: '20px 18px', borderBottom: `1px solid ${c.linha}` },
+  marcaNome: { fontSize: 16, fontWeight: 700, letterSpacing: '-.01em' },
+  marcaSub: {
+    fontSize: 10.5, letterSpacing: '.14em', textTransform: 'uppercase',
+    color: c.suave, fontWeight: 600, marginTop: 3,
+  },
+  nav: { padding: '10px 0', flex: 1, display: 'flex', flexDirection: 'column' },
+  item: {
+    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1,
+    padding: '10px 18px', border: 'none', borderLeft: '3px solid transparent',
+    fontFamily: fonte.texto, fontSize: 14.5, cursor: 'pointer', textAlign: 'left', width: '100%',
+  },
+  itemNota: { fontSize: 11.5, color: c.suave },
+  rodape: { padding: '16px 18px', borderTop: `1px solid ${c.linha}` },
+  pessoaNome: { fontSize: 13.5, fontWeight: 600 },
+  pessoaPapel: { fontSize: 11.5, color: c.suave, marginTop: 2 },
+  sair: {
+    marginTop: 10, padding: 0, border: 'none', background: 'none',
+    color: c.acento, fontFamily: fonte.texto, fontSize: 12.5,
+    cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2,
+  },
+  conteudo: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' },
+  faixaDev: {
+    background: c.acentoFraco, borderBottom: `1px solid ${c.acentoMarca}`,
+    color: c.acento, fontSize: 11.5, fontWeight: 600, padding: '6px 28px',
+  },
+  miolo: { flex: 1, padding: '28px 28px 40px', maxWidth: 1080 },
+  rodapeApp: {
+    padding: '14px 28px', borderTop: `1px solid ${c.linha}`,
+    fontSize: 11.5, color: c.suave,
+  },
 };
