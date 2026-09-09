@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@astralitics/module-identity-access": [
+        "./packages/db/src/index.ts"
+      ],
+      "@astralitics/definitions": [
+        "./packages/db/src/_definitions/index.ts"
+      ],
+      "@astralitics/entities": [
+        "./packages/db/src/entities/index.ts"
+      ],
+      "@astralitics/module-platform-core": [
+        "./packages/db/src/modules/platform-core/index.ts"
+      ],
+      "@astralitics/module-customer-management": [
+        "./packages/db/src/modules/customer-management/index.ts"
+      ],
+      "@astralitics/module-materials-inventory": [
+        "./packages/db/src/modules/materials-inventory/index.ts"
+      ],
+      "@astralitics/module-compliance-certifications": [
+        "./packages/db/src/modules/compliance-certifications/index.ts"
+      ],
+      "@astralitics/module-scheduling-field-service": [
+        "./packages/db/src/modules/scheduling-field-service/index.ts"
+      ],
+      "@astralitics/module-facility-spaces": [
+        "./packages/db/src/modules/facility-spaces/index.ts"
+      ],
+      "@astralitics/module-equipment-maintenance": [
+        "./packages/db/src/modules/equipment-maintenance/index.ts"
+      ]
+    }
+  }
+}

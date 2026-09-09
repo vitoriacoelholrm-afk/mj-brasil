@@ -1,0 +1,13 @@
+{
+  "name": "MJ Brasil",
+  "slug": "mj-brasil",
+  "client": "MJ Servicos Industriais Ltda",
+  "domain": "",
+  "stages": ["dev", "staging", "prod"],
+  "catalogVersion": "dev",
+  "chassisVersion": "0.1.0",
+  "tenancy": "single-org",
+  "appRole": "mj_brasil_app",
+  "publicProcedureAllowlist": ["public-intake.ts", "auth.ts"],
+  "connections": []
+}

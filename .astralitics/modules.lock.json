@@ -1,0 +1,139 @@
+{
+  "modules": {
+    "identity-access": {
+      "version": "0.5.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\src\\_definitions\\types.ts": "c7cdf9755f10aa1b",
+        "packages\\db\\src\\_definitions\\registry.ts": "4931a32eec96b2ff",
+        "packages\\db\\src\\_definitions\\index.ts": "5982d57dcbd4076f",
+        "apps\\web\\src\\modules\\identity-access\\ui\\MembersTable.tsx": "ab07270f18d48628",
+        "apps\\web\\src\\modules\\identity-access\\ui\\RoleBadge.tsx": "6689c7af3fdfb210"
+      }
+    },
+    "platform-core": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0012_platform_core.sql": "9d0f269c05ed24a8",
+        "packages\\db\\src\\entities\\Document.ts": "32a3b761a8a988c1",
+        "packages\\db\\src\\entities\\AuditEvent.ts": "aac52b1f2ad47029",
+        "packages\\db\\src\\entities\\NotificationTemplate.ts": "e07a2f32c53e9a7c",
+        "packages\\db\\src\\entities\\index.ts": "62576ad19529b601",
+        "packages\\db\\src\\modules\\platform-core\\functions\\index.ts": "976837edd3f3bdfd",
+        "packages\\db\\src\\modules\\platform-core\\functions\\logEvent.ts": "1669b0eb6fc8c262",
+        "packages\\db\\src\\modules\\platform-core\\functions\\renderTemplate.ts": "bd114ffacb2a03ab",
+        "packages\\db\\src\\modules\\platform-core\\index.ts": "650f3c6e78d57dee",
+        "apps\\web\\src\\modules\\platform-core\\ui\\NotificationItem.tsx": "5af073dec206ae71"
+      }
+    },
+    "customer-management": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0013_customer_management.sql": "c0adf2651f133c5a",
+        "packages\\db\\src\\entities\\Customer.ts": "5a002cff8694a391",
+        "packages\\db\\src\\entities\\index.ts": "7f5da0aa4f4dbc69",
+        "packages\\db\\src\\modules\\customer-management\\functions\\functions.ts": "a35f9de5604fd363",
+        "packages\\db\\src\\modules\\customer-management\\functions\\index.ts": "1af703f5e1ecb8ad",
+        "packages\\db\\src\\modules\\customer-management\\functions\\transitions.ts": "ddd9cc1a6ad65332",
+        "packages\\db\\src\\modules\\customer-management\\index.ts": "0023b9def90bec5f",
+        "packages\\trpc\\src\\routers\\customer-management.ts": "f0ff57d2802153f4"
+      }
+    },
+    "materials-inventory": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0014_materials_inventory.sql": "188052215aeb395d",
+        "packages\\db\\src\\entities\\Material.ts": "e57d66412e3662da",
+        "packages\\db\\src\\entities\\MaterialLot.ts": "41009ec8c6065bac",
+        "packages\\db\\src\\entities\\StockMovement.ts": "ba1d56a5cd4ad302",
+        "packages\\db\\src\\entities\\ParLevel.ts": "f47a8275a62c63d5",
+        "packages\\db\\src\\entities\\index.ts": "e82a3792957c1b55",
+        "packages\\db\\src\\modules\\materials-inventory\\functions\\functions.ts": "66159d12391f11c9",
+        "packages\\db\\src\\modules\\materials-inventory\\functions\\index.ts": "3d08bc8a24b06aaf",
+        "packages\\db\\src\\modules\\materials-inventory\\functions\\transitions.ts": "e6976c8aec2e8c15",
+        "packages\\db\\src\\modules\\materials-inventory\\index.ts": "e76cbc54d2462510",
+        "packages\\trpc\\src\\routers\\materials-inventory.ts": "484a29cb3fdf0789"
+      }
+    },
+    "compliance-certifications": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0015_compliance_certifications.sql": "080135e576a627bb",
+        "packages\\db\\src\\entities\\ComplianceObligation.ts": "8c88bd22f67bd0d9",
+        "packages\\db\\src\\entities\\CredentialRecord.ts": "6bc054b053a3c1c4",
+        "packages\\db\\src\\entities\\ComplianceEvent.ts": "b8c5a3f9ea28922c",
+        "packages\\db\\src\\entities\\IssuedDocument.ts": "1c3ab85b14ae9ca3",
+        "packages\\db\\src\\entities\\index.ts": "9c3d75fa2c1ca666",
+        "packages\\db\\src\\modules\\compliance-certifications\\functions\\functions.ts": "92e0dacb61dd722f",
+        "packages\\db\\src\\modules\\compliance-certifications\\functions\\index.ts": "81a0e99f98ba834e",
+        "packages\\db\\src\\modules\\compliance-certifications\\functions\\transitions.ts": "29e62ec6f024106a",
+        "packages\\db\\src\\modules\\compliance-certifications\\index.ts": "334a7906e046f37c",
+        "packages\\trpc\\src\\routers\\compliance-certifications.ts": "bda092e6327b354d"
+      }
+    },
+    "scheduling-field-service": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0016_scheduling_field_service.sql": "fa1ffd60a9c1cfbc",
+        "packages\\db\\src\\entities\\ScheduleRule.ts": "08044c0d04950a6d",
+        "packages\\db\\src\\entities\\ScheduleRuleItem.ts": "ac168c8bfd1bc023",
+        "packages\\db\\src\\entities\\Task.ts": "06def3056dca56b2",
+        "packages\\db\\src\\entities\\TaskAssignment.ts": "cf0e506f618024f3",
+        "packages\\db\\src\\entities\\index.ts": "cda72b139205ab42",
+        "packages\\db\\src\\modules\\scheduling-field-service\\functions\\functions.ts": "bcb529699eae343c",
+        "packages\\db\\src\\modules\\scheduling-field-service\\functions\\index.ts": "0caa3c0f767799c3",
+        "packages\\db\\src\\modules\\scheduling-field-service\\functions\\transitions.ts": "e53e27e6a331ab74",
+        "packages\\db\\src\\modules\\scheduling-field-service\\index.ts": "bfb6e9042892b283",
+        "packages\\trpc\\src\\routers\\scheduling-field-service.ts": "08f5c8730f299f06"
+      }
+    },
+    "facility-spaces": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0017_facility_spaces.sql": "218ac7b5506555c7",
+        "packages\\db\\src\\entities\\Location.ts": "9758419bad1fa07f",
+        "packages\\db\\src\\entities\\SpaceStatusEvent.ts": "2c85429ca05e1280",
+        "packages\\db\\src\\entities\\index.ts": "6f692125119d0dae",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\applyStatusTransition.ts": "88ecb99936b0f747",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\getCurrentHouse.ts": "75f154439a3fc8f1",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\getLegalTransitions.ts": "4b1d7e90b2ab695c",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\getLocation.ts": "d1f601d67aeb807f",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\getLocationTree.ts": "441d380f3aa1d896",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\getStatusHistory.ts": "936584b37c5a3df1",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\index.ts": "814351b176450546",
+        "packages\\db\\src\\modules\\facility-spaces\\functions\\transitions.ts": "986792de02e52aa3",
+        "packages\\db\\src\\modules\\facility-spaces\\index.ts": "1a348e31940e365a",
+        "packages\\trpc\\src\\routers\\facility-spaces.ts": "1f7829ed027aa6eb"
+      }
+    },
+    "equipment-maintenance": {
+      "version": "0.1.0",
+      "installedAt": "(stamped on real run)",
+      "files": {
+        "packages\\db\\migrations\\0018_equipment_maintenance.sql": "0a25fbd319bb7884",
+        "packages\\db\\migrations\\0019_maintenance_order_details.sql": "acff17ae3d4a3984",
+        "packages\\db\\src\\entities\\Asset.ts": "61234e69395a07dc",
+        "packages\\db\\src\\entities\\AssetMeter.ts": "9cb5e4e3fcbc9218",
+        "packages\\db\\src\\entities\\MeterReading.ts": "ff349ec889eacfde",
+        "packages\\db\\src\\entities\\AssetEvent.ts": "a5873f78f1aa4bd9",
+        "packages\\db\\src\\entities\\MaintenanceOrderDetail.ts": "b48cc2ae93de5fe6",
+        "packages\\db\\src\\entities\\index.ts": "e1d37821e199f031",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\assets.ts": "dadf2bd71a293aca",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\costs.ts": "6e12a8e1d587dbd3",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\index.ts": "487c9069916806d5",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\meters.ts": "cf5bde30e1f98426",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\orders.ts": "a17bd66256071391",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\transitions.ts": "3dea7b9057031bbd",
+        "packages\\db\\src\\modules\\equipment-maintenance\\functions\\_internal.ts": "8c85c37d7ae764b4",
+        "packages\\db\\src\\modules\\equipment-maintenance\\index.ts": "52964661076dea82",
+        "packages\\trpc\\src\\routers\\equipment-maintenance.ts": "0c2a90536b84210d"
+      }
+    }
+  }
+}

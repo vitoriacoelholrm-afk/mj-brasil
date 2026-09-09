@@ -1,0 +1,37 @@
+{
+  "app": "..\\mj-brasil",
+  "modules": {
+    "identity-access": {
+      "version": "0.5.0",
+      "layer": "foundation"
+    },
+    "platform-core": {
+      "version": "0.1.0",
+      "layer": "foundation"
+    },
+    "customer-management": {
+      "version": "0.1.0",
+      "layer": "operations"
+    },
+    "materials-inventory": {
+      "version": "0.1.0",
+      "layer": "operations"
+    },
+    "compliance-certifications": {
+      "version": "0.1.0",
+      "layer": "operations"
+    },
+    "scheduling-field-service": {
+      "version": "0.1.0",
+      "layer": "operations"
+    },
+    "facility-spaces": {
+      "version": "0.1.0",
+      "layer": "operations"
+    },
+    "equipment-maintenance": {
+      "version": "0.1.0",
+      "layer": "operations"
+    }
+  }
+}

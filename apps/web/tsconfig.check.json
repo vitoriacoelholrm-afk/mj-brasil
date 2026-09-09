@@ -1,0 +1,15 @@
+{
+  "//": "Typecheck config for the app's OWN web code (shell + chassis). Excludes installed module",
+  "//2": "cells under src/modules: they import catalog packages not present in the web app, so they",
+  "//3": "typecheck in the catalog, not here (architecture-feedback G20). The @/ alias mirrors vite.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "baseUrl": "src",
+    "paths": { "@/*": ["*"] }
+  },
+  "include": ["src"],
+  "exclude": ["src/modules"]
+}
