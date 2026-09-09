@@ -1,5 +1,6 @@
 import { defineConfig, type Connect } from 'vite';
 import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -48,7 +49,11 @@ function trpcDevApi() {
 }
 
 export default defineConfig({
-  plugins: [react(), trpcDevApi()],
+  // tsconfigPaths resolves the per-app @astralitics/* aliases that `astralitics install` writes into
+  // tsconfig.base.json. Without it vite has no idea what '@astralitics/entities' is, so the dev-API
+  // middleware fails to load ANY installed module's Functions - typecheck and vitest passed while
+  // the running app's request path was broken.
+  plugins: [tsconfigPaths({ projects: ['../../tsconfig.base.json'] }), react(), trpcDevApi()],
   resolve: { alias: { '@': join(__dirname, 'src') } },
   // Transpile the workspace TS packages the dev-API imports (instead of externalizing them as CJS).
   ssr: { noExternal: ['@app/trpc', '@app/db'] },
