@@ -6,17 +6,19 @@ import { pessoaAtual, sair } from '@/lib/session';
 import { Entrar } from '@/telas/Entrar';
 import { Situacao } from '@/telas/Situacao';
 import { Diagnostico } from '@/telas/Diagnostico';
+import { PlanoServico } from '@/telas/PlanoServico';
 import { Vencimentos } from '@/telas/Vencimentos';
 import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { c, fonte } from '@/ui/estilo';
 
-export type Rota = 'situacao' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes';
+export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
 const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota }[] }[] = [
   { rotulo: 'Situação', rota: 'situacao' },
+  { rotulo: 'Ordens de Serviço', rota: 'plano' },
   { rotulo: 'Qualidade', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
@@ -29,6 +31,7 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
 
 const DOMINIO: Record<Rota, string> = {
   situacao: 'Situação',
+  plano: 'Ordens de Serviço',
   diagnostico: 'Qualidade',
   vencimentos: 'Qualidade',
   instrumentos: 'Qualidade',
@@ -71,9 +74,6 @@ export function App() {
               </button>
             );
           })}
-          <span style={{ ...S.navItem, color: c.suave, cursor: 'default', fontWeight: 500 }}>
-            Ordens de Serviço
-          </span>
         </nav>
 
         <div style={S.pessoa}>
@@ -107,6 +107,7 @@ export function App() {
 
       <main style={S.miolo}>
         {rota === 'situacao' && <Situacao irPara={setRota} />}
+        {rota === 'plano' && <PlanoServico />}
         {rota === 'diagnostico' && <Diagnostico />}
         {rota === 'vencimentos' && <Vencimentos />}
         {rota === 'instrumentos' && <Instrumentos />}
