@@ -5,10 +5,11 @@
 // impede o app de emitir um documento com um código que o auditor não acha na Lista Mestra.
 import { useMemo, useState } from 'react';
 import {
-  CONFLITO_ROTULO, LISTA_MESTRA, LISTA_MESTRA_META, NATUREZA_ROTULO, SEM_CODIGO,
-  conflitos, porCategoria, significadoDoPrefixo,
+  CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
+  conflitos, listaMestra, listaMestraMeta, porCategoria, significadoDoPrefixo,
   type Conflito, type DocumentoMestre, type TipoConflito,
 } from '@/documentos/listaMestra';
+import { empresaAtiva } from '@/plataforma/empresa';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
@@ -19,7 +20,10 @@ const ORDEM_CONFLITO: TipoConflito[] = [
 
 export function ListaMestra() {
   const [filtro, setFiltro] = useState<'todos' | 'formulario' | 'problema'>('todos');
-  const cs = useMemo(() => conflitos(), []);
+  const empresa = empresaAtiva();
+  const LISTA_MESTRA = listaMestra();
+  const LISTA_MESTRA_META = listaMestraMeta();
+  const cs = useMemo(() => conflitos(), [empresa.id]);
   const atraso = diasAte(LISTA_MESTRA_META.proximaRevisao);
 
   const comProblema = useMemo(() => new Set(cs.map((x) => x.codigo).filter(Boolean)), [cs]);
@@ -36,7 +40,7 @@ export function ListaMestra() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo="Lista Mestra de Documentos"
-        sub="A autoridade sobre código. Toda alteração de identificação se faz aqui, e as telas acompanham."
+        sub={`A autoridade sobre código de ${empresa.identidade.nome}. Toda alteração de identificação se faz aqui, e as telas acompanham.`}
       />
 
       <div style={S.cabecalhoDoc}>

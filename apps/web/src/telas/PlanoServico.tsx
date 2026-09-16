@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '@/os/regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
 import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
-import { carimbo } from '@/documentos/listaMestra';
+import { carimboDoPapel } from '@/documentos/listaMestra';
 import { PainelRelatorio } from './Relatorio';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
@@ -38,7 +38,9 @@ export function PlanoServico() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo="Ordens de Serviço"
-        sub={`${carimbo('FM-001')} — o código vem da Lista Mestra. Aqui a especificação e a medição entram uma vez só, e o relatório sai daqui.`}
+        sub={carimboDoPapel('ordem_servico')
+          ? `${carimboDoPapel('ordem_servico')} — o código vem da Lista Mestra desta empresa. Aqui a especificação e a medição entram uma vez só, e o relatório sai daqui.`
+          : 'Esta empresa ainda não tem um formulário de ordem de serviço cadastrado na Lista Mestra.'}
       />
 
       <div style={S.abas}>

@@ -6,6 +6,7 @@
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
+import { catalogados, conflitos, listaMestraMeta } from '@/documentos/listaMestra';
 
 interface Credencial {
   id: string; holder_label: string; kind: string;
@@ -91,13 +92,7 @@ export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
           selo={{ texto: 'a construir', tom: 'neutro' }}
           icone={<IconeAlerta cor={c.suave} />}
         />
-        <Cartao
-          titulo="Lista Mestra"
-          numero="47"
-          nota="documentos na lista de 03/06/2025"
-          selo={{ texto: 'revisão vencida', tom: 'critico' }}
-          icone={<IconeDoc />}
-        />
+        <CartaoListaMestra irPara={irPara} />
       </div>
 
       {/* o que vence primeiro */}
@@ -192,6 +187,25 @@ const IconeAlerta = ({ cor }: { cor?: string }) => (
 const IconeCerto = () => (
   <svg {...svg} width={26} height={26} strokeWidth={2.2} stroke={c.ok}><path d="M20 6 9 17l-5-5" /></svg>
 );
+
+/** O cartão da lista mestra lê tudo do perfil da empresa ativa — nada aqui é fixo. */
+function CartaoListaMestra({ irPara }: { irPara: (r: 'lista-mestra') => void }) {
+  const meta = listaMestraMeta();
+  const graves = conflitos().filter((x) => x.gravidade === 'alta').length;
+  return (
+    <div onClick={() => irPara('lista-mestra')} style={{ cursor: 'pointer' }}>
+      <Cartao
+        titulo="Lista Mestra"
+        numero={String(catalogados().length)}
+        nota={`documentos na lista de ${dataBR(meta.emissao)}`}
+        selo={graves
+          ? { texto: `${graves} conflito${graves > 1 ? 's' : ''}`, tom: 'critico' }
+          : { texto: 'sem conflitos', tom: 'ok' }}
+        icone={<IconeDoc />}
+      />
+    </div>
+  );
+}
 
 const S: Record<string, React.CSSProperties> = {
   vazio: {

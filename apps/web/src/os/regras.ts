@@ -3,7 +3,8 @@
 // A regra central é `avaliarMedicao`: dado o especificado e o encontrado, ela diz se está
 // conforme. Hoje esses dois valores são digitados à mão em formulários separados e ninguém os
 // compara; aqui a comparação é do sistema.
-import { GRANDEZA_POR_CHAVE, TOLERANCIA, desvioPercentual, faixaTolerada, type Etapa, type Resultado } from './vocabulario';
+import { GRANDEZA_POR_CHAVE, desvioPercentual, faixaTolerada, type Etapa, type Resultado } from './vocabulario';
+import { toleranciaAtiva, type Tolerancia } from '@/plataforma/empresa';
 
 /** Uma linha do formulário: o átomo que se repete no jateamento e em cada demão. */
 export interface Medicao {
@@ -55,7 +56,7 @@ export function normalizar(txt: string): string {
 
 /* ── A avaliação ─────────────────────────────────────────────────────────────────────────── */
 
-export function avaliarMedicao(m: Medicao): { resultado: Resultado; motivo?: string } {
+export function avaliarMedicao(m: Medicao, tol: Tolerancia = toleranciaAtiva()): { resultado: Resultado; motivo?: string } {
   const g = GRANDEZA_POR_CHAVE.get(m.grandeza);
   if (!g) return { resultado: 'pendente', motivo: 'grandeza desconhecida' };
   if (!m.especificado?.trim() || !m.encontrado?.trim()) return { resultado: 'pendente' };
@@ -88,7 +89,7 @@ export function avaliarMedicao(m: Medicao): { resultado: Resultado; motivo?: str
   }
 
   const un = g.unidade ?? '';
-  const tolerada = faixaTolerada(nominal.min, nominal.max);
+  const tolerada = faixaTolerada(nominal.min, nominal.max, tol);
   const EPS = 1e-9;
 
   if (n >= tolerada.min - EPS && n <= tolerada.max + EPS) return { resultado: 'conforme' };
@@ -96,7 +97,7 @@ export function avaliarMedicao(m: Medicao): { resultado: Resultado; motivo?: str
   const acima = n > tolerada.max;
   const alvo = acima ? nominal.max : nominal.min;
   const desvio = desvioPercentual(alvo, n);
-  const limite = acima ? TOLERANCIA.acima : TOLERANCIA.abaixo;
+  const limite = acima ? tol.acima : tol.abaixo;
   const lado = acima ? 'acima' : 'abaixo';
 
   return {
@@ -157,7 +158,7 @@ export interface ResumoOs {
   liberavel: boolean;
 }
 
-export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
+export function resumirOs(etapas: readonly EtapaPreenchida[], tol: Tolerancia = toleranciaAtiva()): ResumoOs {
   let medidas = 0, conformes = 0, naoConformes = 0, pendentes = 0, pendentesQueTravam = 0;
   const problemas: Problema[] = [];
   const divergencias: ResumoOs['divergencias'] = [];
@@ -165,7 +166,7 @@ export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
   for (const e of etapas) {
     if (!e.ativa) continue;
     for (const m of e.medicoes) {
-      const r = avaliarMedicao(m);
+      const r = avaliarMedicao(m, tol);
       if (r.resultado === 'conforme') { medidas++; conformes++; }
       else if (r.resultado === 'nao_conforme') {
         medidas++; naoConformes++;

@@ -1,0 +1,246 @@
+// MOTOR de controle de documentos. Não sabe de nenhuma empresa.
+//
+// Aqui só existem as REGRAS: o que é um documento controlado, o que conta como conflito de
+// identificação, como se acha o próximo código livre. Os documentos em si — os de cada empresa
+// atendida — entram por parâmetro, nunca importados daqui.
+//
+// A prova de que isto é genérico está em `plataforma/empresa.test.ts`: duas empresas com
+// codificações diferentes passam pelas mesmas funções e produzem conflitos diferentes, sem que
+// uma linha deste arquivo mude.
+
+export type SituacaoDoc = 'vigente' | 'obsoleto' | 'em_revisao';
+export type Acesso = 'irrestrito' | 'restrito' | 'confidencial';
+export type Natureza = 'manual' | 'procedimento' | 'instrucao' | 'formulario' | 'registro';
+
+export const NATUREZA_ROTULO: Record<Natureza, string> = {
+  manual: 'Manual',
+  procedimento: 'Procedimento',
+  instrucao: 'Instrução de trabalho',
+  formulario: 'Formulário',
+  registro: 'Registro',
+};
+
+/** Sem código de verdade: o lugar de código fica vazio, não com um rótulo inventado. */
+export const SEM_CODIGO = 'SEM-CODIGO';
+
+export interface DocumentoMestre {
+  /** O código da lista mestra da empresa. É o oficial — o que o app carimba. */
+  codigo: string;
+  titulo: string;
+  natureza: Natureza;
+  categoria: string;
+  revisao: string | null;
+  emissao: string | null;
+  proximaRevisao: string | null;
+  situacao: SituacaoDoc;
+  acesso: Acesso;
+  responsavel: string | null;
+  /** Cláusulas da norma que este documento atende. */
+  clausulas: string[];
+  local: string | null;
+  /** Códigos que o arquivo real carrega, quando não são o da lista mestra. */
+  codigosParalelos?: string[];
+  /** Revisão que o arquivo real declara, quando não bate com a da lista. */
+  revisaoNoArquivo?: { revisao: string; data: string };
+  /** A tela do app que emite ou consome este documento. */
+  tela?: string;
+  /** Verdadeiro quando o documento circula sem entrada própria na lista mestra. */
+  foraDaLista?: boolean;
+  nota?: string;
+}
+
+/** O cabeçalho da lista mestra de uma empresa. */
+export interface ListaMestraMeta {
+  codigo: string;
+  revisao: string;
+  emissao: string;
+  proximaRevisao: string;
+  totalCatalogado: number;
+  norma: string;
+  aprovadoPor: string | null;
+  elaboradoPor: string | null;
+  /** Outros códigos pelos quais a própria lista responde. Vazio é o estado saudável. */
+  codigosParalelos: string[];
+  nota?: string;
+}
+
+/** A codificação de uma empresa: quais prefixos existem e o que cada um quer dizer.
+ *  Cada empresa tem a sua — não há prefixo universal. */
+export type Legenda = Record<string, string>;
+
+/** Tudo que o motor precisa saber sobre a documentação de uma empresa. */
+export interface Documentacao {
+  meta: ListaMestraMeta;
+  legenda: Legenda;
+  documentos: DocumentoMestre[];
+}
+
+const br = (iso: string) => iso.slice(0, 10).split('-').reverse().join('/');
+const codigoReal = (d: DocumentoMestre) => (d.codigo.startsWith(SEM_CODIGO) ? null : d.codigo);
+
+/* ── Consulta ──────────────────────────────────────────────────────────────────────────────── */
+
+export function indexar(docs: DocumentoMestre[]): Map<string, DocumentoMestre[]> {
+  const mapa = new Map<string, DocumentoMestre[]>();
+  for (const d of docs) mapa.set(d.codigo, [...(mapa.get(d.codigo) ?? []), d]);
+  return mapa;
+}
+
+/** O documento sob este código. Estoura se não estiver catalogado — é o que impede uma tela de
+ *  carimbar um código que a lista mestra da empresa não conhece. */
+export function acharDoc(docs: DocumentoMestre[], codigo: string): DocumentoMestre {
+  const achado = docs.find((d) => d.codigo === codigo);
+  if (!achado) {
+    throw new Error(`Código "${codigo}" não está na lista mestra desta empresa. Cadastre-o no perfil dela antes de usá-lo numa tela.`);
+  }
+  return achado;
+}
+
+/** O carimbo que vai no rodapé de um documento emitido pelo app. */
+export function montarCarimbo(d: DocumentoMestre): string {
+  return d.revisao ? `${d.codigo} rev. ${d.revisao}` : d.codigo;
+}
+
+/** O que o prefixo de um código significa na legenda da empresa. Null se ela não o conhece. */
+export function significadoDoPrefixo(legenda: Legenda, codigo: string): string | null {
+  return legenda[codigo.split('-')[0]] ?? null;
+}
+
+/** O próximo código livre de um prefixo — para cadastrar o que hoje circula sem entrada. */
+export function proximoCodigoLivre(docs: DocumentoMestre[], prefixo: string): string {
+  const usados = docs
+    .map((d) => d.codigo)
+    .filter((c) => c.startsWith(`${prefixo}-`))
+    .map((c) => Number(c.slice(prefixo.length + 1)))
+    .filter((n) => Number.isFinite(n));
+  const proximo = usados.length ? Math.max(...usados) + 1 : 1;
+  return `${prefixo}-${String(proximo).padStart(3, '0')}`;
+}
+
+export function porCategoria(docs: DocumentoMestre[]): { categoria: string; total: number }[] {
+  const mapa = new Map<string, number>();
+  for (const d of docs) mapa.set(d.categoria, (mapa.get(d.categoria) ?? 0) + 1);
+  return [...mapa].map(([categoria, total]) => ({ categoria, total })).sort((a, b) => b.total - a.total);
+}
+
+/** Os documentos que atendem uma cláusula da norma — é o que o auditor pergunta. */
+export function porClausula(docs: DocumentoMestre[], clausula: string): DocumentoMestre[] {
+  return docs.filter((d) => d.clausulas.some((c) => c === clausula || c.startsWith(`${clausula}.`)));
+}
+
+/* ── Conflitos ─────────────────────────────────────────────────────────────────────────────── */
+
+export type TipoConflito =
+  | 'codigo_duplicado' | 'fora_da_lista' | 'codigo_paralelo'
+  | 'revisao_vencida' | 'revisao_divergente' | 'prefixo_desconhecido' | 'sem_aprovacao';
+
+export interface Conflito {
+  tipo: TipoConflito;
+  /** O código sob conflito, ou null quando o documento não tem código nenhum. */
+  codigo: string | null;
+  titulo: string;
+  detalhe: string;
+  gravidade: 'alta' | 'media';
+}
+
+export const CONFLITO_ROTULO: Record<TipoConflito, string> = {
+  codigo_duplicado: 'Dois documentos, o mesmo código',
+  fora_da_lista: 'Circula sem entrada na lista mestra',
+  codigo_paralelo: 'O arquivo real usa outro código',
+  revisao_vencida: 'Revisão vencida',
+  revisao_divergente: 'A revisão da lista não bate com a do arquivo',
+  prefixo_desconhecido: 'Prefixo que a legenda não conhece',
+  sem_aprovacao: 'Sem aprovação registrada',
+};
+
+/** Tudo que impede a lista mestra de ser a única fonte de identificação. Sete verificações, e
+ *  nenhuma delas sabe de que empresa é — todas leem o que veio por parâmetro. */
+export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[] {
+  const out: Conflito[] = [];
+  const { meta, legenda, documentos } = docs;
+
+  for (const [codigo, iguais] of indexar(documentos)) {
+    if (iguais.length > 1) {
+      out.push({
+        tipo: 'codigo_duplicado', codigo, titulo: iguais.map((d) => d.titulo).join(' × '),
+        detalhe: `${iguais.length} documentos vigentes disputam o código ${codigo}.`,
+        gravidade: 'alta',
+      });
+    }
+  }
+
+  for (const d of documentos) {
+    if (d.foraDaLista) {
+      out.push({
+        tipo: 'fora_da_lista', codigo: codigoReal(d), titulo: d.titulo,
+        detalhe: d.nota ?? 'Documento em uso, sem entrada própria na lista mestra.',
+        gravidade: d.natureza === 'formulario' ? 'alta' : 'media',
+      });
+    }
+    if (d.codigosParalelos?.length) {
+      out.push({
+        tipo: 'codigo_paralelo', codigo: codigoReal(d), titulo: d.titulo,
+        detalhe: `O arquivo real se identifica como ${d.codigosParalelos.join(' e ')}. São o mesmo documento com códigos diferentes.`,
+        gravidade: 'media',
+      });
+    }
+    if (d.revisaoNoArquivo) {
+      out.push({
+        tipo: 'revisao_divergente', codigo: codigoReal(d), titulo: d.titulo,
+        detalhe: `A lista traz rev. ${d.revisao}; o arquivo declara rev. ${d.revisaoNoArquivo.revisao} de ${br(d.revisaoNoArquivo.data)}.`,
+        gravidade: 'alta',
+      });
+    }
+    if (!d.codigo.startsWith(SEM_CODIGO) && !significadoDoPrefixo(legenda, d.codigo)) {
+      out.push({
+        tipo: 'prefixo_desconhecido', codigo: d.codigo, titulo: d.titulo,
+        detalhe: `A legenda desta empresa reconhece ${Object.keys(legenda).join(', ')} — "${d.codigo.split('-')[0]}" não está entre eles.`,
+        gravidade: 'alta',
+      });
+    }
+  }
+
+  // Vencimento é do sistema, não de cada linha. Quando tudo foi emitido no mesmo dia, tudo vence
+  // no mesmo dia — e uma carta por documento esconderia justamente isso.
+  const vencidos = new Map<string, DocumentoMestre[]>();
+  for (const d of documentos) {
+    if (d.proximaRevisao && new Date(d.proximaRevisao) < hoje) {
+      vencidos.set(d.proximaRevisao, [...(vencidos.get(d.proximaRevisao) ?? []), d]);
+    }
+  }
+  for (const [data, iguais] of vencidos) {
+    const emissoes = new Set(iguais.map((d) => d.emissao).filter(Boolean));
+    const mesmaEmissao = emissoes.size === 1 ? [...emissoes][0]! : null;
+    out.push({
+      tipo: 'revisao_vencida', codigo: null,
+      titulo: `${iguais.length} documento${iguais.length > 1 ? 's' : ''} da lista mestra`,
+      detalhe: `Revisão prevista para ${br(data)} e ainda não feita.${mesmaEmissao ? ` Vence tudo na mesma data porque tudo foi emitido na mesma data — ${br(mesmaEmissao)}.` : ''}`,
+      gravidade: 'alta',
+    });
+  }
+
+  // A própria lista mestra não se cataloga, então é verificada à parte.
+  if (new Date(meta.proximaRevisao) < hoje) {
+    out.push({
+      tipo: 'revisao_vencida', codigo: meta.codigo, titulo: 'Lista mestra de documentos',
+      detalhe: `Emitida em ${br(meta.emissao)}, revisão prevista para ${br(meta.proximaRevisao)}.`,
+      gravidade: 'alta',
+    });
+  }
+  if (meta.codigosParalelos.length) {
+    out.push({
+      tipo: 'codigo_duplicado', codigo: meta.codigo, titulo: 'Lista mestra de documentos',
+      detalhe: meta.nota ?? `A própria lista responde também por ${meta.codigosParalelos.join(' e ')}.`,
+      gravidade: 'alta',
+    });
+  }
+  if (!meta.aprovadoPor || !meta.elaboradoPor) {
+    out.push({
+      tipo: 'sem_aprovacao', codigo: meta.codigo, titulo: 'Lista mestra de documentos',
+      detalhe: `Os campos "Elaborado por" e "Aprovado por" estão em branco. A ${meta.norma} §7.5.2 pede aprovação registrada.`,
+      gravidade: 'alta',
+    });
+  }
+
+  return out;
+}

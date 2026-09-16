@@ -12,6 +12,8 @@ import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { c, fonte } from '@/ui/estilo';
+import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
+import '@/documentos/listaMestra';   // registra as empresas
 
 export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra';
 
@@ -44,6 +46,8 @@ const DOMINIO: Record<Rota, string> = {
 export function App() {
   const [pessoa, setPessoa] = useState(pessoaAtual);
   const [rota, setRota] = useState<Rota>('situacao');
+  const [empresaId, setEmpresaId] = useState(() => empresaAtiva().id);
+  const empresa = empresaAtiva();
 
   if (!pessoa) return <Entrar aoEntrar={() => setPessoa(pessoaAtual())} />;
 
@@ -54,8 +58,20 @@ export function App() {
     <div style={S.pagina}>
       <header style={S.topo}>
         <div style={S.marca}>
-          <div style={S.marcaNome}>Minasjato</div>
-          <div style={S.marcaSub}>Sistema da Qualidade</div>
+          <div style={{ ...S.marcaNome, color: empresa.identidade.acento }}>{empresa.identidade.nome}</div>
+          <div style={S.marcaSub}>{empresa.identidade.subtitulo}</div>
+          {empresas().length > 1 && (
+            <select
+              value={empresaId}
+              onChange={(e) => { definirEmpresaAtiva(e.target.value); setEmpresaId(e.target.value); setRota('situacao'); }}
+              style={S.trocaEmpresa}
+              title="A empresa atendida. Trocar aqui troca a codificação, a tolerância e a marca — nenhuma regra muda."
+            >
+              {empresas().map((x) => (
+                <option key={x.id} value={x.id}>{x.identidade.nome}{x.modelo ? ' (modelo)' : ''}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <nav style={S.nav}>
@@ -137,6 +153,11 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0,
   },
   marcaNome: { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em' },
+  trocaEmpresa: {
+    marginTop: 6, fontFamily: fonte.texto, fontSize: 11.5, color: c.tinta2,
+    padding: '2px 6px', borderRadius: 3, border: `1px solid ${c.linha}`, background: c.superficie,
+    maxWidth: 170,
+  },
   marcaSub: {
     fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
     color: c.suave, fontWeight: 600, marginTop: 2,

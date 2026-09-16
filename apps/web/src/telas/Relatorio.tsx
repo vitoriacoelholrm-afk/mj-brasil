@@ -1,4 +1,7 @@
-// O relatório de inspeção — FM-002 — gerado a partir da ordem de serviço.
+// O relatório de inspeção, gerado a partir da ordem de serviço.
+//
+// O código do formulário não está escrito aqui: vem do perfil da empresa, pelo PAPEL que ele
+// cumpre. Numa empresa é FM-002, noutra pode ser FOR-007 — a tela é a mesma.
 //
 // Não existe campo para digitar aqui. Tudo que aparece foi lido da OS: a especificação, a
 // medição, os lotes, as condições, os instrumentos, as datas. É por isso que ele não pode
@@ -11,7 +14,7 @@ import {
   gerarRelatorio, impedimentosDoRelatorio,
   type Anexo, type OrdemServico, type Relatorio,
 } from '@/os/exemplos';
-import { carimbo } from '@/documentos/listaMestra';
+import { carimboDoPapel } from '@/documentos/listaMestra';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 
 export function PainelRelatorio({
@@ -26,11 +29,27 @@ export function PainelRelatorio({
   const [gerado, setGerado] = useState<Relatorio | null>(null);
   const impedimentos = impedimentosDoRelatorio(os);
   const podeAprovar = impedimentos.length === 0;
+  const selo = carimboDoPapel('relatorio_inspecao');
+
+  // A empresa pode não ter esse formulário na lista mestra dela. Aí o app avisa, em vez de
+  // emitir um documento com um código que o auditor não acha.
+  if (!selo) {
+    return (
+      <div style={{ ...s.cartao, padding: '16px 18px' }}>
+        <div style={S.blocoTit}>Relatório de inspeção</div>
+        <div style={S.vazio}>
+          Esta empresa ainda não tem um formulário de relatório de inspeção cadastrado na lista
+          mestra dela. Cadastre-o no perfil e o botão de gerar aparece — o app não emite documento
+          com código que a lista não conhece.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ ...s.cartao, overflow: 'hidden' }}>
       <div style={S.faixa}>
-        <span>Relatório de inspeção · {carimbo('FM-002')}</span>
+        <span>Relatório de inspeção · {selo}</span>
         <span style={pastilha(podeAprovar ? 'ok' : 'critico')}>
           {podeAprovar ? 'sai aprovado' : 'sai reprovado'}
         </span>
@@ -164,13 +183,14 @@ const ORDINAL = ['1ª', '2ª', '3ª', '4ª'];
 function Documento({ rel, anexos }: { rel: Relatorio; anexos: Anexo[] }) {
   const aprovado = rel.resultado === 'aprovado';
   const comFoto = anexos.filter((a) => a.tipo === 'foto');
+  const selo = carimboDoPapel('relatorio_inspecao') ?? '';
 
   return (
     <div style={S.folha}>
       <div style={S.folhaTopo}>
         <div>
           <div style={S.folhaTitulo}>Relatório de Inspeção de Jateamento e Pintura</div>
-          <div style={S.folhaSub}>{carimbo('FM-002')} · emitido pelo sistema a partir da OS {rel.osReferida}</div>
+          <div style={S.folhaSub}>{selo} · emitido pelo sistema a partir da OS {rel.osReferida}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontFamily: fonte.mono, fontSize: 15, fontWeight: 700, color: c.tinta }}>{rel.numero}</div>

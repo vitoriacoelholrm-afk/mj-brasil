@@ -15,6 +15,7 @@
 //           e mesmo assim os dois documentos não se encaixam.
 //
 // São obras diferentes, de clientes diferentes, em datas diferentes. Não se juntam.
+import '@/empresas/minasjato';   // os dados abaixo são dela; carregar o perfil é o que dá tolerância ao motor
 import type { EtapaPreenchida } from './regras';
 import type { OrdemServico, PerfilRelatorio, Relatorio, Tinta } from './documentos';
 

@@ -2,9 +2,14 @@
 // carimbar um código que não está catalogado, o app quebra aqui e não na auditoria.
 import { describe, it, expect } from 'vitest';
 import {
-  CATALOGADOS, LISTA_MESTRA, LISTA_MESTRA_META, PREFIXO_ROTULO,
-  carimbo, conflitos, doc, porCategoria, porClausula, proximoCodigoLivre, significadoDoPrefixo,
+  carimbo, catalogados, conflitos, doc, legenda, listaMestra, listaMestraMeta,
+  porCategoria, porClausula, proximoCodigoLivre, significadoDoPrefixo,
 } from './listaMestra';
+
+const CATALOGADOS = catalogados();
+const LISTA_MESTRA = listaMestra();
+const LISTA_MESTRA_META = listaMestraMeta();
+const PREFIXO_ROTULO = legenda();
 
 const EM = new Date('2026-09-16');
 
@@ -54,8 +59,8 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
   });
 
   it('um código que não está catalogado estoura, e diz o que fazer', () => {
-    expect(() => doc('FM-999')).toThrowError(/não está na Lista Mestra/);
-    expect(() => doc('FM-999')).toThrowError(/listaMestra\.ts/);
+    expect(() => doc('FM-999')).toThrowError(/não está na lista mestra desta empresa/);
+    expect(() => doc('FM-999')).toThrowError(/perfil dela/);
   });
 
   it('o carimbo sai pronto para o rodapé, com a revisão', () => {
@@ -107,7 +112,7 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const v = por('revisao_vencida');
     expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
     const emBloco = v.find((x) => x.codigo === null)!;
-    expect(emBloco.titulo).toBe('47 documentos da Lista Mestra');
+    expect(emBloco.titulo).toBe('47 documentos da lista mestra');
     expect(emBloco.detalhe).toContain('04/07/2026');
     expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
   });

@@ -6,6 +6,8 @@
 //
 // Os dados de exemplo são ANONIMIZADOS — cliente e obra entram como identificadores neutros.
 
+import { toleranciaAtiva, type Tolerancia } from '@/plataforma/empresa';
+
 /** As etapas do plano. Não são "1ª, 2ª, 3ª demão": são POSIÇÕES FIXAS no esquema de pintura. */
 export const ETAPA = ['jateamento', 'fundo', 'intermediario_i', 'intermediario_ii', 'acabamento'] as const;
 export type Etapa = (typeof ETAPA)[number];
@@ -25,20 +27,21 @@ export const ETAPA_ROTULO: Record<Etapa, string> = {
 export const TIPO_MEDIDA = ['faixa', 'tolerancia', 'categorico'] as const;
 export type TipoMedida = (typeof TIPO_MEDIDA)[number];
 
-/** A tolerância combinada com o cliente: o medido pode passar até 40% ACIMA do especificado e
- *  não pode ficar mais de 10% ABAIXO.
+/** A tolerância NÃO mora aqui: é número combinado com cada empresa, e vive no perfil dela
+ *  (`plataforma/empresa.ts`). A Minasjato usa -10% / +40%; o próximo cliente usará o dele.
  *
  *  A assimetria é de propósito e vem da física: camada fina demais não protege, e por isso o
  *  limite de baixo é apertado; camada grossa protege, e só vira problema bem mais longe.
- *  Decidido pela Vitória em 16/09/2026 — era 20% acima. */
-export const TOLERANCIA = { abaixo: 0.10, acima: 0.40 } as const;
+ *
+ *  As funções abaixo aceitam a tolerância por parâmetro — o padrão é só a da empresa ativa. */
+export type { Tolerancia } from '@/plataforma/empresa';
 
 /** O intervalo realmente aceito, depois da tolerância. Para um alvo único, min e max são o mesmo
  *  número; para uma faixa, a tolerância abre cada ponta para o seu lado. */
-export function faixaTolerada(min: number, max = min): { min: number; max: number } {
+export function faixaTolerada(min: number, max = min, tol: Tolerancia = toleranciaAtiva()): { min: number; max: number } {
   return {
-    min: arredondar(min * (1 - TOLERANCIA.abaixo)),
-    max: arredondar(max * (1 + TOLERANCIA.acima)),
+    min: arredondar(min * (1 - tol.abaixo)),
+    max: arredondar(max * (1 + tol.acima)),
   };
 }
 

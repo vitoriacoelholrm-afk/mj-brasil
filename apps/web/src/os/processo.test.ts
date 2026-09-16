@@ -3,7 +3,8 @@
 // seu esquema, suas etapas ativas e seu resultado.
 import { describe, it, expect } from 'vitest';
 import { avaliarMedicao, resumirOs, lerFaixa, lerNumero, normalizar, validarMedicao } from './regras';
-import { TOLERANCIA, faixaTolerada } from './vocabulario';
+import { faixaTolerada } from './vocabulario';
+import { toleranciaAtiva } from '@/plataforma/empresa';
 import { ORDENS } from './exemplos';
 
 const os748 = ORDENS.find((o) => o.folio === '748')!;  // completo
@@ -40,9 +41,9 @@ describe('avaliação de medição', () => {
   const rug = (esp: string, enc: string) => avaliarMedicao({ ...base, grandeza: 'padrao_rugosidade', especificado: esp, encontrado: enc });
   const seca = (esp: string, enc: string) => avaliarMedicao({ ...base, grandeza: 'camada_seca', especificado: esp, encontrado: enc });
 
-  it('a tolerância é assimétrica de propósito: -10% embaixo, +40% em cima', () => {
+  it('a tolerância vem do perfil da empresa, não de uma constante no código', () => {
     // Camada fina não protege, e por isso o limite de baixo é apertado. Camada grossa protege.
-    expect(TOLERANCIA).toEqual({ abaixo: 0.10, acima: 0.40 });
+    expect(toleranciaAtiva()).toEqual({ abaixo: 0.10, acima: 0.40 });
   });
 
   it('faixa: a tolerância abre cada ponta para o seu lado', () => {
@@ -68,14 +69,14 @@ describe('avaliação de medição', () => {
     const baixo = seca('140', '120');
     expect(baixo.resultado).toBe('nao_conforme');
     expect(baixo.motivo).toContain('14.3% abaixo de 140µm');
-    expect(baixo.motivo).toContain(`a tolerância abaixo é ${TOLERANCIA.abaixo * 100}%`);
+    expect(baixo.motivo).toContain(`a tolerância abaixo é ${toleranciaAtiva().abaixo * 100}%`);
   });
 
   it('acima de 40% ainda reprova, e o motivo diz de quanto foi', () => {
     const alto = seca('100', '145');
     expect(alto.resultado).toBe('nao_conforme');
     expect(alto.motivo).toContain('45% acima de 100µm');
-    expect(alto.motivo).toContain(`a tolerância acima é ${TOLERANCIA.acima * 100}%`);
+    expect(alto.motivo).toContain(`a tolerância acima é ${toleranciaAtiva().acima * 100}%`);
   });
 
   it('categórico: grafia diferente do mesmo grau passa; grau diferente não', () => {
