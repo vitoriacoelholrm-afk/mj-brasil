@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react';
 import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '@/os/regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
-import { ORDENS, type OrdemServico } from '@/os/exemplos';
+import { ORDENS, compararComRelatorio, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
@@ -15,6 +15,7 @@ export function PlanoServico() {
   const os = ordens[ativa];
   const etapas = os.etapas;
   const resumo = useMemo(() => resumirOs(etapas), [etapas]);
+  const divergencias = useMemo(() => compararComRelatorio(os), [os]);
 
   function editar(etapaIdx: number, medIdx: number, campo: 'especificado' | 'encontrado', valor: string) {
     setOrdens((todas) => todas.map((o, oi) => oi !== ativa ? o : {
@@ -36,6 +37,7 @@ export function PlanoServico() {
       <div style={S.abas}>
         {ordens.map((o, i) => {
           const r = resumirOs(o.etapas);
+          const contra = compararComRelatorio(o).length;
           const sel = i === ativa;
           return (
             <button key={o.id} onClick={() => setAtiva(i)} style={{
@@ -46,9 +48,12 @@ export function PlanoServico() {
             }}>
               <span style={{ fontWeight: sel ? 700 : 500, fontSize: 14 }}>{o.folio}</span>
               <span style={S.abaSub}>{o.cliente} · {o.equipamento}</span>
-              <span style={pastilha(r.liberavel ? 'ok' : r.naoConformes ? 'critico' : 'alerta')}>
-                {r.liberavel ? 'liberável' : r.naoConformes ? `${r.naoConformes} divergência${r.naoConformes > 1 ? 's' : ''}` : `${r.pendentes} pendente${r.pendentes > 1 ? 's' : ''}`}
+              <span style={pastilha(r.naoConformes ? 'critico' : r.liberavel ? 'ok' : 'alerta')}>
+                {r.naoConformes ? `${r.naoConformes} não conforme${r.naoConformes > 1 ? 's' : ''}`
+                  : r.liberavel ? 'liberável'
+                  : `${r.pendentes} pendente${r.pendentes > 1 ? 's' : ''}`}
               </span>
+              {contra > 0 && <span style={pastilha('critico')}>{contra} × RIP</span>}
             </button>
           );
         })}
@@ -78,6 +83,7 @@ export function PlanoServico() {
         <div style={S.contador}><div style={{ ...S.num, color: resumo.naoConformes ? c.critico : c.tinta }}>{resumo.naoConformes}</div><div style={S.rot}>não conformes</div></div>
         <div style={S.contador}><div style={{ ...S.num, color: c.suave }}>{resumo.pendentes}</div><div style={S.rot}>pendentes</div></div>
         <div style={S.contador}><div style={{ ...S.num, color: resumo.problemas.length ? c.alerta : c.tinta }}>{resumo.problemas.length}</div><div style={S.rot}>evidências faltando</div></div>
+        <div style={S.contador}><div style={{ ...S.num, color: divergencias.length ? c.critico : c.tinta }}>{os.relatorio ? divergencias.length : '—'}</div><div style={S.rot}>contra o relatório</div></div>
         <div style={{ ...S.contador, borderRight: 'none' }}>
           <div style={{ marginTop: 4 }}>
             <span style={pastilha(resumo.liberavel ? 'ok' : 'alerta')}>
@@ -87,6 +93,8 @@ export function PlanoServico() {
           <div style={S.rot}>situação</div>
         </div>
       </div>
+
+      {os.relatorio && <Confronto rel={os.relatorio} divergencias={divergencias} />}
 
       <div style={S.esquema}>
         <span style={S.esquemaRot}>Esquema de pintura do cliente</span>
@@ -115,8 +123,8 @@ export function PlanoServico() {
                 <Campo rot="Fabricante" val={tinta.fabricante} />
                 <Campo rot="Cor" val={tinta.cor} />
                 <Campo rot="Aplicação" val={tinta.metodoAplicacao} />
-                <Campo rot="Lote A" val={`${tinta.loteA} · val. ${tinta.validadeA}`} mono />
-                <Campo rot="Lote B" val={`${tinta.loteB} · val. ${tinta.validadeB}`} mono />
+                <Campo rot="Lote A" val={tinta.loteA && `${tinta.loteA} · val. ${tinta.validadeA}`} mono />
+                <Campo rot="Lote B" val={tinta.loteB && `${tinta.loteB} · val. ${tinta.validadeB}`} mono />
               </div>
             )}
 
@@ -192,11 +200,114 @@ export function PlanoServico() {
   );
 }
 
-function Campo({ rot, val, mono }: { rot: string; val: string; mono?: boolean }) {
+/** O confronto entre a OS e o relatório que saiu dela. É a conferência que hoje depende de
+ *  alguém pôr um papel ao lado do outro — aqui ela é do sistema. */
+function Confronto({ rel, divergencias }: { rel: Relatorio; divergencias: Divergencia[] }) {
+  const graves = divergencias.filter((d) => d.gravidade === 'alta').length;
+
+  return (
+    <div style={{ ...s.cartao, overflow: 'hidden' }}>
+      <div style={S.faixaConfronto}>
+        <span>Confronto com o relatório {rel.numero}</span>
+        <span style={pastilha(divergencias.length === 0 ? 'ok' : graves ? 'critico' : 'alerta')}>
+          {divergencias.length === 0
+            ? 'os dois documentos batem'
+            : `${divergencias.length} diferença${divergencias.length > 1 ? 's' : ''}`}
+        </span>
+      </div>
+
+      <div style={S.relIdent}>
+        <Campo rot="Relatório" val={`${rel.numero} · folha ${rel.folha}`} mono />
+        <Campo rot="OS que ele declara" val={rel.osReferida} mono />
+        <Campo rot="Emitido em" val={dataBR(rel.dataEmissao)} mono />
+        <Campo rot="Demãos" val={`${rel.demaos.length}`} />
+        <Campo rot="Instrumentos" val={rel.instrumentos.join(' · ')} mono />
+        <Campo rot="Resultado" val={rel.resultado === 'aprovado' ? 'Aprovado' : 'Reprovado'} />
+      </div>
+
+      {divergencias.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={s.tabela}>
+            <thead>
+              <tr>
+                <th style={s.th}>Onde</th>
+                <th style={{ ...s.th, width: 200 }}>Na ordem de serviço</th>
+                <th style={{ ...s.th, width: 200 }}>No relatório do cliente</th>
+              </tr>
+            </thead>
+            <tbody>
+              {divergencias.map((d, i) => (
+                <tr key={i}>
+                  <td style={{ ...s.td, color: c.tinta, fontWeight: 500 }}>
+                    {d.onde}
+                    {d.nota && <div style={S.notaDiv}>{d.nota}</div>}
+                  </td>
+                  <td style={{ ...s.td, ...s.mono, color: d.naOs === null ? c.suave : c.tinta }}>
+                    {d.naOs === null ? 'em branco' : formatar(d.naOs)}
+                  </td>
+                  <td style={{ ...s.td, ...s.mono, color: d.gravidade === 'alta' ? c.critico : c.tinta2, fontWeight: d.gravidade === 'alta' ? 700 : 400 }}>
+                    {d.noRelatorio === null ? 'em branco' : formatar(d.noRelatorio)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div style={S.soNoRelatorio}>
+        <div style={S.tituloBloco}>O que só existe no relatório</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={s.tabela}>
+            <thead>
+              <tr>
+                <th style={s.th}>Demão</th>
+                <th style={s.th}>Tinta</th>
+                <th style={s.th}>Lote A · B</th>
+                <th style={s.th}>Ambiente</th>
+                <th style={s.th}>Aderência</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rel.demaos.map((d) => (
+                <tr key={d.ordem}>
+                  <td style={{ ...s.td, color: c.tinta, fontWeight: 500 }}>{d.ordem}ª · {dataBR(d.data)}</td>
+                  <td style={s.td}>{d.tinta}<div style={S.respSec}>{d.cor} · {d.fabricante}</div></td>
+                  <td style={{ ...s.td, ...s.mono, fontSize: 12 }}>
+                    {d.loteA} <span style={{ color: c.suave }}>({d.validadeA})</span>
+                    <div>{d.loteB} <span style={{ color: c.suave }}>({d.validadeB})</span></div>
+                  </td>
+                  <td style={{ ...s.td, ...s.mono, fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {d.tempAmbiente}°C · {d.umidadeRelativa}%<div style={{ color: c.suave }}>substrato {d.tempSubstrato}°C</div>
+                  </td>
+                  <td style={s.td}>{d.aderencia}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={S.normas}>
+          {rel.normas.join(' · ')}
+          {rel.ressalvas.map((r) => <div key={r} style={{ marginTop: 4 }}>{r}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Data ISO vira data brasileira; o resto passa como está. */
+function formatar(v: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? dataBR(v) : v;
+}
+
+function Campo({ rot, val, mono }: { rot: string; val: string | null | undefined; mono?: boolean }) {
+  const vazio = !val;
   return (
     <div>
       <div style={S.campoRot}>{rot}</div>
-      <div style={{ fontSize: 13.5, color: c.tinta, fontFamily: mono ? fonte.mono : fonte.texto, marginTop: 2 }}>{val}</div>
+      <div style={{ fontSize: 13.5, color: vazio ? c.suave : c.tinta, fontStyle: vazio ? 'italic' : 'normal', fontFamily: mono && !vazio ? fonte.mono : fonte.texto, marginTop: 2 }}>
+        {val || 'em branco no papel'}
+      </div>
     </div>
   );
 }
@@ -268,4 +379,16 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${c.linhaForte}`, background: c.superficie2, color: c.tinta2,
   },
   rodape: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, lineHeight: 1.6 },
+  faixaConfronto: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+    padding: '10px 18px', background: c.superficie2, borderBottom: `1px solid ${c.linhaForte}`,
+    fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: c.tinta2,
+  },
+  relIdent: {
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 14,
+    padding: '14px 18px', borderBottom: `1px solid ${c.linha}`,
+  },
+  notaDiv: { fontSize: 11.5, color: c.suave, marginTop: 4, lineHeight: 1.4, fontWeight: 400 },
+  soNoRelatorio: { padding: '16px 18px 14px', borderTop: `1px solid ${c.linhaForte}`, background: c.superficie2 },
+  normas: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, marginTop: 10, lineHeight: 1.6 },
 };
