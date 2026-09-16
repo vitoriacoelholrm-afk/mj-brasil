@@ -101,7 +101,7 @@ export function App() {
 
         <div style={{ ...S.pessoa, padding: celular ? '12px 16px' : '12px 24px', borderLeft: celular ? 'none' : `1px solid ${c.linha}` }}>
           <div style={S.pessoaNome}>{pessoa.nome}</div>
-          <div style={S.pessoaPapel}>{pessoa.papel}</div>
+          <div style={S.pessoaPapel}>{pessoa.cargo}</div>
           <button style={S.sair} onClick={() => { sair(); setPessoa(null); }}>Trocar de usuário</button>
         </div>
       </header>

@@ -15,12 +15,14 @@ import {
   type Anexo, type OrdemServico, type Relatorio,
 } from '@/os/exemplos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
+import { pode, type Papel } from '@/plataforma/acesso';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 
 export function PainelRelatorio({
-  os, anexos, aoAdicionar, aoAlterar, aoRemover,
+  os, papel, anexos, aoAdicionar, aoAlterar, aoRemover,
 }: {
   os: OrdemServico;
+  papel: Papel;
   anexos: Anexo[];
   aoAdicionar: (novos: Anexo[]) => void;
   aoAlterar: (id: string, campo: 'legenda' | 'comentario', valor: string) => void;
@@ -30,6 +32,8 @@ export function PainelRelatorio({
   const impedimentos = impedimentosDoRelatorio(os);
   const podeAprovar = impedimentos.length === 0;
   const selo = carimboDoPapel('relatorio_inspecao');
+  const podeEmitir = pode(papel, 'relatorio.emitir');
+  const podeAnexar = pode(papel, 'os.anexar');
 
   // A empresa pode não ter esse formulário na lista mestra dela. Aí o app avisa, em vez de
   // emitir um documento com um código que o auditor não acha.
@@ -56,14 +60,18 @@ export function PainelRelatorio({
       </div>
 
       <div style={S.acao}>
-        <button
-          style={podeAprovar ? s.botaoPrimario : { ...s.botao, borderColor: c.critico, color: c.critico }}
-          onClick={() => setGerado(gerarRelatorio(os))}
-        >
-          {gerado ? 'Gerar de novo' : 'Gerar RIP'}
-        </button>
+        {podeEmitir && (
+          <button
+            style={podeAprovar ? s.botaoPrimario : { ...s.botao, borderColor: c.critico, color: c.critico }}
+            onClick={() => setGerado(gerarRelatorio(os))}
+          >
+            {gerado ? 'Gerar de novo' : 'Gerar RIP'}
+          </button>
+        )}
         <span style={S.explica}>
-          {podeAprovar
+          {!podeEmitir
+            ? 'Emitir o relatório é de quem inspeciona. Daqui você vê o veredito que sairia e o que o impede.'
+            : podeAprovar
             ? 'Tudo medido e dentro da tolerância. O relatório sai pronto, sem redigitar nada.'
             : 'Dá para gerar, mas o resultado vem reprovado — e o motivo vai no documento.'}
         </span>
@@ -78,7 +86,10 @@ export function PainelRelatorio({
         </div>
       )}
 
-      <Anexos anexos={anexos} aoAdicionar={aoAdicionar} aoAlterar={aoAlterar} aoRemover={aoRemover} />
+      <Anexos
+        anexos={anexos} podeAnexar={podeAnexar}
+        aoAdicionar={aoAdicionar} aoAlterar={aoAlterar} aoRemover={aoRemover}
+      />
 
       {gerado && <Documento rel={gerado} anexos={anexos} />}
     </div>
@@ -88,9 +99,10 @@ export function PainelRelatorio({
 /* ── Evidência ─────────────────────────────────────────────────────────────────────────────── */
 
 function Anexos({
-  anexos, aoAdicionar, aoAlterar, aoRemover,
+  anexos, podeAnexar, aoAdicionar, aoAlterar, aoRemover,
 }: {
   anexos: Anexo[];
+  podeAnexar: boolean;
   aoAdicionar: (novos: Anexo[]) => void;
   aoAlterar: (id: string, campo: 'legenda' | 'comentario', valor: string) => void;
   aoRemover: (id: string) => void;
@@ -118,9 +130,11 @@ function Anexos({
     <div style={S.bloco}>
       <div style={S.blocoTopo}>
         <div style={S.blocoTit}>Evidência anexada</div>
-        <button style={{ ...s.botao, padding: '6px 12px', fontSize: 13 }} onClick={() => input.current?.click()}>
-          Adicionar foto ou arquivo
-        </button>
+        {podeAnexar && (
+          <button style={{ ...s.botao, padding: '6px 12px', fontSize: 13 }} onClick={() => input.current?.click()}>
+            Adicionar foto ou arquivo
+          </button>
+        )}
         <input
           ref={input} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
           style={{ display: 'none' }} onChange={(e) => void escolher(e.target.files)}
@@ -129,8 +143,9 @@ function Anexos({
 
       {anexos.length === 0 ? (
         <div style={S.vazio}>
-          Nenhuma evidência ainda. A foto do ensaio de aderência e o certificado do abrasivo entram aqui —
-          a legenda sai impressa no relatório, o comentário fica só no registro interno.
+          {podeAnexar
+            ? 'Nenhuma evidência ainda. A foto do ensaio de aderência e o certificado do abrasivo entram aqui — a legenda sai impressa no relatório, o comentário fica só no registro interno.'
+            : 'Nenhuma evidência anexada a esta ordem de serviço.'}
         </div>
       ) : (
         <div style={S.grade}>
@@ -144,19 +159,25 @@ function Anexos({
               <div style={S.anexoCorpo}>
                 <div style={S.anexoNome} title={a.nome}>{a.nome}</div>
                 <label style={S.rotuloCampo}>Legenda — sai no relatório</label>
-                <input
-                  style={S.campoTexto} value={a.legenda} placeholder="Ex.: ensaio de aderência em X — X0Y0"
-                  onChange={(e) => aoAlterar(a.id, 'legenda', e.target.value)}
-                />
+                {podeAnexar
+                  ? <input
+                      style={S.campoTexto} value={a.legenda} placeholder="Ex.: ensaio de aderência em X — X0Y0"
+                      onChange={(e) => aoAlterar(a.id, 'legenda', e.target.value)}
+                    />
+                  : <div style={S.textoFixo}>{a.legenda || <em style={{ color: c.suave }}>sem legenda</em>}</div>}
+
                 <label style={S.rotuloCampo}>Comentário — fica no registro interno</label>
-                <textarea
-                  style={{ ...S.campoTexto, minHeight: 46, resize: 'vertical' }} value={a.comentario}
-                  placeholder="Contexto, quem pediu, o que observar na imagem"
-                  onChange={(e) => aoAlterar(a.id, 'comentario', e.target.value)}
-                />
+                {podeAnexar
+                  ? <textarea
+                      style={{ ...S.campoTexto, minHeight: 46, resize: 'vertical' }} value={a.comentario}
+                      placeholder="Contexto, quem pediu, o que observar na imagem"
+                      onChange={(e) => aoAlterar(a.id, 'comentario', e.target.value)}
+                    />
+                  : <div style={S.textoFixo}>{a.comentario || <em style={{ color: c.suave }}>sem comentário</em>}</div>}
+
                 <div style={S.anexoRodape}>
                   <span style={{ fontFamily: fonte.mono, fontSize: 11, color: c.suave }}>{dataBR(a.data)}</span>
-                  <button style={S.remover} onClick={() => aoRemover(a.id)}>remover</button>
+                  {podeAnexar && <button style={S.remover} onClick={() => aoRemover(a.id)}>remover</button>}
                 </div>
               </div>
             </div>
@@ -342,6 +363,7 @@ const S: Record<string, React.CSSProperties> = {
     width: '100%', fontFamily: fonte.texto, fontSize: 13, padding: '6px 8px', marginBottom: 8,
     borderRadius: 3, border: `1px solid ${c.linhaForte}`, background: c.superficie, color: c.tinta,
   },
+  textoFixo: { fontSize: 13, color: c.tinta2, marginBottom: 8, lineHeight: 1.5 },
   anexoRodape: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   remover: {
     border: 'none', background: 'none', color: c.critico, cursor: 'pointer',

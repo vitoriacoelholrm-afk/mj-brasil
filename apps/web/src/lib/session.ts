@@ -8,22 +8,32 @@
 // Quando a autenticação real entrar, este arquivo sai inteiro e lib/trpc.ts volta a ler só a
 // sessão do Supabase.
 
+import type { Papel } from '@/plataforma/acesso';
+
 const CHAVE = 'mj.dev.membership';
 
 export interface Pessoa {
   id: string;
   nome: string;
-  papel: string;
+  /** O nome que a empresa dá ao posto. Aparece na tela. */
+  cargo: string;
+  /** O papel que decide o acesso. Cargo é rótulo; papel é regra. */
+  papel: Papel;
 }
 
 /** A equipe conforme as assinaturas dos procedimentos e o questionário RINA. */
 export const EQUIPE: Pessoa[] = [
-  { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', papel: 'Coordenadora da Qualidade' },
-  { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', papel: 'Diretor' },
-  { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', papel: 'Verificação' },
-  { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', papel: 'Inspetor de Pintura N1' },
-  { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', papel: 'Financeiro' },
+  { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', cargo: 'Coordenadora da Qualidade', papel: 'coordenacao_qualidade' },
+  { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', cargo: 'Diretor', papel: 'direcao' },
+  { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'Verificação', papel: 'execucao' },
+  { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Inspetor de Pintura N1', papel: 'inspecao' },
+  { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro', papel: 'apoio' },
 ];
+
+/** O papel de quem está usando o app agora. Sem sessão, o mínimo: só consulta. */
+export function papelAtual(): Papel {
+  return pessoaAtual()?.papel ?? 'coordenacao_qualidade';
+}
 
 export function membershipAtual(): string | null {
   try {

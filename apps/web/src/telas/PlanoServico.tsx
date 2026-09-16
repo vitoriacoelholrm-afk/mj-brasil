@@ -8,24 +8,42 @@ import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
 import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { PainelRelatorio } from './Relatorio';
+import { motivoDaLeituraApenas, pode, somenteLeitura, type Papel } from '@/plataforma/acesso';
+import { papelAtual } from '@/lib/session';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
 export function PlanoServico() {
   const [ordens, setOrdens] = useState<OrdemServico[]>(ORDENS);
-  const [ativa, setAtiva] = useState(0);
-  const os = ordens[ativa];
+  const [aberta, setAberta] = useState<string | null>(null);
+  const papel = papelAtual();
+  const os = aberta ? ordens.find((o) => o.id === aberta) ?? null : null;
+
+  function mexerNaOs(mudar: (o: OrdemServico) => OrdemServico) {
+    setOrdens((todas) => todas.map((o) => (o.id === aberta ? mudar(o) : o)));
+  }
+
+  return os
+    ? <Detalhe os={os} papel={papel} aoVoltar={() => setAberta(null)} mexerNaOs={mexerNaOs} />
+    : <Lista ordens={ordens} aoAbrir={setAberta} />;
+}
+
+/* ── A ordem aberta ───────────────────────────────────────────────────────────────────────── */
+
+function Detalhe({ os, papel, aoVoltar, mexerNaOs }: {
+  os: OrdemServico;
+  papel: Papel;
+  aoVoltar: () => void;
+  mexerNaOs: (mudar: (o: OrdemServico) => OrdemServico) => void;
+}) {
   const etapas = os.etapas;
   const resumo = useMemo(() => resumirOs(etapas), [etapas]);
   const divergencias = useMemo(() => compararComRelatorio(os), [os]);
   const anexos = os.anexos ?? [];
-
-  function mexerNaOs(mudar: (o: OrdemServico) => OrdemServico) {
-    setOrdens((todas) => todas.map((o, i) => (i === ativa ? mudar(o) : o)));
-  }
+  const podeEditar = pode(papel, 'os.editar');
 
   function editar(etapaIdx: number, medIdx: number, campo: 'especificado' | 'encontrado', valor: string) {
-    setOrdens((todas) => todas.map((o, oi) => oi !== ativa ? o : {
+    mexerNaOs((o) => ({
       ...o,
       etapas: o.etapas.map((e, i) => i !== etapaIdx ? e : {
         ...e,
@@ -36,40 +54,21 @@ export function PlanoServico() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <button onClick={aoVoltar} style={S.voltar}>← Todas as ordens de serviço</button>
+
       <Cabecalho
-        titulo="Ordens de Serviço"
+        titulo={`Ordem de serviço ${os.folio}`}
         sub={carimboDoPapel('ordem_servico')
-          ? `${carimboDoPapel('ordem_servico')} — o código vem da Lista Mestra desta empresa. Aqui a especificação e a medição entram uma vez só, e o relatório sai daqui.`
-          : 'Esta empresa ainda não tem um formulário de ordem de serviço cadastrado na Lista Mestra.'}
+          ? `${carimboDoPapel('ordem_servico')} — ${os.cliente} · ${os.equipamento}`
+          : `${os.cliente} · ${os.equipamento}`}
       />
 
-      {/* No celular as abas não cabem: viram faixa que rola, com a próxima meio à mostra
-         para se anunciar. Sem isto, a última OS fica inalcançável. */}
-      <div className="rolagem-lateral" style={S.abas}>
-        {ordens.map((o, i) => {
-          const r = resumirOs(o.etapas);
-          const contra = compararComRelatorio(o).length;
-          const sel = i === ativa;
-          return (
-            <button key={o.id} onClick={() => setAtiva(i)} style={{
-              ...S.aba,
-              flexShrink: 0,
-              background: sel ? c.superficie : 'transparent',
-              borderColor: sel ? c.acentoMarca : c.linha,
-              borderBottomColor: sel ? c.superficie : c.linha,
-            }}>
-              <span style={{ fontWeight: sel ? 700 : 500, fontSize: 14 }}>{o.folio}</span>
-              <span style={S.abaSub}>{o.cliente} · {o.equipamento}</span>
-              <span style={pastilha(r.naoConformes ? 'critico' : r.liberavel ? 'ok' : 'alerta')}>
-                {r.naoConformes ? `${r.naoConformes} não conforme${r.naoConformes > 1 ? 's' : ''}`
-                  : r.liberavel ? 'liberável'
-                  : `${r.pendentes} pendente${r.pendentes > 1 ? 's' : ''}`}
-              </span>
-              {contra > 0 && <span style={pastilha('critico')}>{contra} × RIP</span>}
-            </button>
-          );
-        })}
-      </div>
+      {somenteLeitura(papel) && (
+        <div style={S.avisoLeitura}>
+          <span style={pastilha('neutro')}>consulta</span>
+          <span style={{ ...s.prosa, lineHeight: 1.55 }}>{motivoDaLeituraApenas(papel)}</span>
+        </div>
+      )}
 
       <div style={S.ident}>
         <Campo rot="Cliente" val={os.cliente} />
@@ -110,6 +109,7 @@ export function PlanoServico() {
 
       <PainelRelatorio
         os={os}
+        papel={papel}
         anexos={anexos}
         aoAdicionar={(novos) => mexerNaOs((o) => ({ ...o, anexos: [...(o.anexos ?? []), ...novos] }))}
         aoAlterar={(id, campo, valor) => mexerNaOs((o) => ({
@@ -180,14 +180,18 @@ export function PlanoServico() {
                           {g?.unidade && <span style={S.un}>{g.unidade}</span>}
                         </td>
                         <td style={s.td}>
-                          <input style={S.campo} value={m.especificado ?? ''} onChange={(ev) => editar(ei, mi, 'especificado', ev.target.value)} />
+                          {podeEditar
+                            ? <input style={S.campo} value={m.especificado ?? ''} onChange={(ev) => editar(ei, mi, 'especificado', ev.target.value)} />
+                            : <span style={S.valorFixo}>{m.especificado ?? '—'}</span>}
                           {m.noPapel?.especificado && <div style={S.noPapel}>no papel: {m.noPapel.especificado}</div>}
                         </td>
                         <td style={s.td}>
-                          <input
-                            style={{ ...S.campo, borderColor: r.resultado === 'nao_conforme' ? c.critico : c.linhaForte, color: r.resultado === 'nao_conforme' ? c.critico : c.tinta, fontWeight: r.resultado === 'nao_conforme' ? 700 : 400 }}
-                            value={m.encontrado ?? ''} onChange={(ev) => editar(ei, mi, 'encontrado', ev.target.value)}
-                          />
+                          {podeEditar
+                            ? <input
+                                style={{ ...S.campo, borderColor: r.resultado === 'nao_conforme' ? c.critico : c.linhaForte, color: r.resultado === 'nao_conforme' ? c.critico : c.tinta, fontWeight: r.resultado === 'nao_conforme' ? 700 : 400 }}
+                                value={m.encontrado ?? ''} onChange={(ev) => editar(ei, mi, 'encontrado', ev.target.value)}
+                              />
+                            : <span style={{ ...S.valorFixo, color: r.resultado === 'nao_conforme' ? c.critico : c.tinta, fontWeight: r.resultado === 'nao_conforme' ? 700 : 400 }}>{m.encontrado ?? '—'}</span>}
                           {m.noPapel?.encontrado && <div style={S.noPapel}>no papel: {m.noPapel.encontrado}</div>}
                         </td>
                         <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>
@@ -227,11 +231,84 @@ export function PlanoServico() {
       </div>
 
       <div style={S.rodape}>
-        Unificado com o relatório do cliente. Sem banco ainda — o que mudar aqui, inclusive os anexos, vive só nesta aba.
+        Unificado com o relatório do cliente. Sem banco ainda — o que mudar aqui vive só nesta sessão.
       </div>
     </div>
   );
 }
+
+/* ── A lista ──────────────────────────────────────────────────────────────────────────────── */
+
+/** A entrada da tela: uma linha por ordem de serviço, com o estado dela à vista. Abas serviam
+ *  para quatro; para cinquenta, não. Cada linha abre o detalhe inteiro. */
+function Lista({ ordens, aoAbrir }: { ordens: OrdemServico[]; aoAbrir: (id: string) => void }) {
+  const linhas = ordens.map((o) => {
+    const r = resumirOs(o.etapas);
+    return { os: o, resumo: r, contra: compararComRelatorio(o).length };
+  });
+
+  const liberaveis = linhas.filter((l) => l.resumo.liberavel).length;
+  const comProblema = linhas.filter((l) => l.resumo.naoConformes > 0).length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Cabecalho
+        titulo="Ordens de Serviço"
+        sub={carimboDoPapel('ordem_servico')
+          ? `${carimboDoPapel('ordem_servico')} — o código vem da Lista Mestra desta empresa. Abra uma ordem para ver a especificação, as medições e o relatório.`
+          : 'Esta empresa ainda não tem um formulário de ordem de serviço cadastrado na Lista Mestra.'}
+      />
+
+      <div style={S.contadores}>
+        <div style={S.contador}><div style={S.num}>{linhas.length}</div><div style={S.rot}>ordens</div></div>
+        <div style={S.contador}><div style={{ ...S.num, color: c.ok }}>{liberaveis}</div><div style={S.rot}>liberáveis</div></div>
+        <div style={{ ...S.contador, borderRight: 'none' }}>
+          <div style={{ ...S.num, color: comProblema ? c.critico : c.tinta }}>{comProblema}</div>
+          <div style={S.rot}>com não conformidade</div>
+        </div>
+      </div>
+
+      <div style={{ ...s.cartao, overflow: 'hidden' }}>
+        {linhas.map(({ os, resumo, contra }, i) => (
+          <button
+            key={os.id}
+            onClick={() => aoAbrir(os.id)}
+            style={{ ...S.linha, borderTop: i === 0 ? 'none' : `1px solid ${c.linha}` }}
+          >
+            <span style={S.linhaFolio}>{os.folio}</span>
+
+            <span style={S.linhaMeio}>
+              <span style={S.linhaCliente}>{os.cliente}</span>
+              <span style={S.linhaSub}>
+                {os.equipamento}
+                {os.obra ? ` · ${os.obra}` : ''}
+              </span>
+            </span>
+
+            <span style={S.linhaSelos}>
+              <span style={pastilha(resumo.naoConformes ? 'critico' : resumo.liberavel ? 'ok' : 'alerta')}>
+                {resumo.naoConformes
+                  ? `${resumo.naoConformes} não conforme${resumo.naoConformes > 1 ? 's' : ''}`
+                  : resumo.liberavel ? 'liberável'
+                  : `${resumo.pendentes} pendente${resumo.pendentes > 1 ? 's' : ''}`}
+              </span>
+              {contra > 0 && <span style={pastilha('critico')}>{contra} × RIP</span>}
+              {os.ripNumero && <span style={S.linhaRip}>{os.ripNumero}</span>}
+            </span>
+
+            <span style={S.seta} aria-hidden>›</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={S.rodape}>
+        {linhas.length === 1 ? '1 ordem de serviço' : `${linhas.length} ordens de serviço`}. Clique numa linha para abrir.
+      </div>
+    </div>
+  );
+}
+
+/* ── O confronto ──────────────────────────────────────────────────────────────────────────── */
 
 /** O confronto entre a OS e o relatório que saiu dela. É a conferência que hoje depende de
  *  alguém pôr um papel ao lado do outro — aqui ela é do sistema. */
@@ -415,6 +492,32 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${c.linhaForte}`, background: c.superficie2, color: c.tinta2,
   },
   rodape: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, lineHeight: 1.6 },
+  voltar: {
+    alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0,
+    color: c.acento, fontFamily: fonte.texto, fontSize: 13.5, cursor: 'pointer',
+  },
+  avisoLeitura: {
+    display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap',
+    padding: '12px 16px', borderRadius: 3,
+    background: c.superficie2, border: `1px solid ${c.linhaForte}`,
+    fontSize: 13, color: c.tinta2,
+  },
+  valorFixo: { fontFamily: fonte.mono, fontSize: 13, color: c.tinta, display: 'inline-block', padding: '6px 0' },
+  linha: {
+    display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+    padding: '14px 18px', border: 'none', background: 'none', cursor: 'pointer',
+    fontFamily: fonte.texto,
+  },
+  linhaFolio: {
+    fontFamily: fonte.mono, fontSize: 15, fontWeight: 700, color: c.tinta,
+    minWidth: 54, flexShrink: 0,
+  },
+  linhaMeio: { display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 },
+  linhaCliente: { fontSize: 14, fontWeight: 600, color: c.tinta },
+  linhaSub: { fontSize: 12.5, color: c.suave },
+  linhaSelos: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' },
+  linhaRip: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave },
+  seta: { color: c.suave, fontSize: 20, flexShrink: 0, lineHeight: 1 },
   noPapel: { fontFamily: fonte.mono, fontSize: 10.5, color: c.alerta, marginTop: 4, whiteSpace: 'nowrap' },
   condicoes: {
     marginLeft: 12, fontFamily: fonte.mono, fontSize: 10.5, color: c.suave,

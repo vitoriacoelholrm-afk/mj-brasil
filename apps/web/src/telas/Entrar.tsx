@@ -2,6 +2,7 @@
 // token: só grava o id da membership que o middleware de dev aceita. Some quando a autenticação
 // real entrar.
 import { EQUIPE, entrar } from '@/lib/session';
+import { somenteLeitura } from '@/plataforma/acesso';
 import { c, fonte, s } from '@/ui/estilo';
 
 export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
@@ -22,7 +23,8 @@ export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
               onMouseOut={(e) => { e.currentTarget.style.borderColor = c.linhaForte; e.currentTarget.style.background = c.superficie; }}
             >
               <span style={S.nome}>{p.nome}</span>
-              <span style={S.papel}>{p.papel}</span>
+              <span style={S.papel}>{p.cargo}</span>
+              {somenteLeitura(p.papel) && <span style={S.soLeitura}>só consulta</span>}
             </button>
           ))}
         </div>
@@ -57,6 +59,10 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: fonte.texto, transition: 'background .12s, border-color .12s',
   },
   nome: { fontSize: 15, fontWeight: 600, color: c.tinta },
+  soLeitura: {
+    display: 'block', fontSize: 10.5, color: c.suave, marginTop: 3,
+    letterSpacing: '.05em', textTransform: 'uppercase',
+  },
   papel: { fontSize: 12.5, color: c.suave },
   aviso: {
     marginTop: 22, paddingTop: 16, borderTop: `1px solid ${c.linha}`,
