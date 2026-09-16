@@ -5,18 +5,20 @@ import appInfo from './app-info.json';
 import { pessoaAtual, sair } from '@/lib/session';
 import { Entrar } from '@/telas/Entrar';
 import { Situacao } from '@/telas/Situacao';
+import { Diagnostico } from '@/telas/Diagnostico';
 import { Vencimentos } from '@/telas/Vencimentos';
 import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { c, fonte } from '@/ui/estilo';
 
-export type Rota = 'situacao' | 'vencimentos' | 'instrumentos' | 'clientes';
+export type Rota = 'situacao' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
 const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota }[] }[] = [
   { rotulo: 'Situação', rota: 'situacao' },
   { rotulo: 'Qualidade', filhas: [
+    { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
     { rotulo: 'Instrumentos', rota: 'instrumentos' },
   ] },
@@ -27,6 +29,7 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
 
 const DOMINIO: Record<Rota, string> = {
   situacao: 'Situação',
+  diagnostico: 'Qualidade',
   vencimentos: 'Qualidade',
   instrumentos: 'Qualidade',
   clientes: 'Cadastros',
@@ -104,6 +107,7 @@ export function App() {
 
       <main style={S.miolo}>
         {rota === 'situacao' && <Situacao irPara={setRota} />}
+        {rota === 'diagnostico' && <Diagnostico />}
         {rota === 'vencimentos' && <Vencimentos />}
         {rota === 'instrumentos' && <Instrumentos />}
         {rota === 'clientes' && <Clientes />}
