@@ -20,10 +20,17 @@ export function useEhCelular(corte = CORTE_CELULAR): boolean {
 
   useEffect(() => {
     const mq = window.matchMedia(consulta);
-    const aoMudar = (e: MediaQueryListEvent) => setEstreita(e.matches);
+    const aoMudar = (e: MediaQueryListEvent | MediaQueryList) => setEstreita(e.matches);
     setEstreita(mq.matches);
-    mq.addEventListener('change', aoMudar);
-    return () => mq.removeEventListener('change', aoMudar);
+
+    // Safari só passou a aceitar addEventListener em MediaQueryList na versão 14. Em Mac ou
+    // iPad mais antigo, sem este desvio, a tela abriria certa e depois não reagiria ao girar.
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', aoMudar);
+      return () => mq.removeEventListener('change', aoMudar);
+    }
+    mq.addListener(aoMudar);
+    return () => mq.removeListener(aoMudar);
   }, [consulta]);
 
   return estreita;
