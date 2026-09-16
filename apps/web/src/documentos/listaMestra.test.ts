@@ -65,7 +65,7 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
 
   it('o carimbo sai pronto para o rodapé, com a revisão', () => {
     expect(carimbo('FM-001')).toBe('FM-001 rev. 00');
-    expect(carimbo('MQ-001')).toBe('MQ-001 rev. 01');
+    expect(carimbo('MQ-001')).toBe('MQ-001 rev. 00');   // vale o arquivo, não a planilha
   });
 
   it('a Legenda diz o que cada prefixo significa', () => {
@@ -121,9 +121,9 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     // A lista traz rev. 01 de 03/06/2025; o arquivo em uso é rev. 00 de 05/03/2026.
     expect(doc('MQ-001').foraDaLista).toBeUndefined();
     const r = por('revisao_divergente').find((x) => x.codigo === 'MQ-001')!;
-    expect(r.detalhe).toContain('rev. 01');
-    expect(r.detalhe).toContain('rev. 00 de 05/03/2026');
-    expect(r.gravidade).toBe('alta');
+    expect(r.detalhe).toContain('planilha da lista mestra traz rev. 01');
+    expect(r.detalhe).toContain('arquivo em uso é rev. 00 de 05/03/2026');
+    expect(r.detalhe).toContain('Vale o arquivo');
   });
 
   it('o arquivo real de oito documentos usa outro código', () => {

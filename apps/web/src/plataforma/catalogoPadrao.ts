@@ -57,6 +57,14 @@ export interface DocumentoPadrao {
   categoria: string;
   clausulas: string[];
   exigencia: Exigencia;
+  /** MANTER é o documento — existe, vive, tem revisão. Um manual atende dezenas de cláusulas
+   *  assim. RETER é o registro — nasce quando o fato acontece, e nenhum texto o substitui.
+   *  Confundir os dois é o erro mais caro: a empresa escreve no manual "retemos informação
+   *  documentada", o auditor pede o registro, e não existe. */
+  retencao: 'manter' | 'reter';
+  /** O que fazer para atender, em uma frase. É a diferença entre saber que falta e saber o que
+   *  criar. */
+  comoAtender?: string;
   origem: string;
   /** O código que a empresa recebe se adotar a codificação padrão. */
   codigoSugerido: string;
@@ -69,15 +77,20 @@ const d = (
   chave: string, titulo: string, natureza: Natureza, categoria: string,
   clausulas: string[], exigencia: Exigencia, codigoSugerido: string,
   extra: Partial<DocumentoPadrao> = {},
-): DocumentoPadrao => ({ chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido, origem: NUCLEO, ...extra });
+): DocumentoPadrao => ({
+  chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido,
+  retencao: natureza === 'formulario' || natureza === 'registro' ? 'reter' : 'manter',
+  origem: NUCLEO, ...extra,
+});
 
 /* ══ NÚCLEO — vale para qualquer empresa certificada ISO 9001:2015 ═══════════════════════════ */
 
 const NUCLEO_DOCS: DocumentoPadrao[] = [
   // — O que a norma manda MANTER (documento vivo, com revisão) —
   d('escopo_sgq', 'Escopo do Sistema de Gestão da Qualidade', 'manual', 'Gestão da Qualidade', ['4.3'], 'norma', 'MQ-001',
-    { nota: 'A norma exige que o escopo esteja disponível como informação documentada, com os requisitos que a empresa considera não aplicáveis e a justificativa.' }),
-  d('politica_qualidade', 'Política da Qualidade', 'manual', 'Gestão da Qualidade', ['5.2.2'], 'norma', 'MQ-002'),
+    { comoAtender: 'Costuma viver dentro do manual da qualidade, escrito por extenso. Se estiver lá, aponte a chave para o manual em vez de criar documento novo.', nota: 'A norma exige que o escopo esteja disponível como informação documentada, com os requisitos que a empresa considera não aplicáveis e a justificativa.' }),
+  d('politica_qualidade', 'Política da Qualidade', 'manual', 'Gestão da Qualidade', ['5.2.2'], 'norma', 'MQ-002',
+    { comoAtender: 'Idem: normalmente está no manual. Um documento pode cumprir vários padrões.' }),
   d('objetivos_qualidade', 'Objetivos da Qualidade e Planejamento', 'manual', 'Gestão da Qualidade', ['6.2.1'], 'norma', 'MQ-003'),
   d('caracteristicas_produto', 'Características do Produto e Serviço a Entregar', 'procedimento', 'Operações', ['8.5.1'], 'norma', 'PR-001',
     { nota: 'O que vai ser feito e que resultado tem de ser alcançado. Em serviço, costuma viver na ordem de serviço.' }),
@@ -92,12 +105,16 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
     { papel: 'avaliacao_fornecedor' }),
   d('rastreabilidade', 'Identificação e Rastreabilidade', 'formulario', 'Operações', ['8.5.2'], 'norma', 'FR-005',
     { nota: 'Exigido quando rastreabilidade é requisito. É a cláusula do lote de tinta que fica em branco.' }),
-  d('propriedade_cliente', 'Propriedade do Cliente Perdida ou Danificada', 'formulario', 'Operações', ['8.5.3'], 'norma', 'FR-006'),
-  d('mudanca_producao', 'Análise Crítica de Mudanças na Produção', 'formulario', 'Operações', ['8.5.6'], 'norma', 'FR-007'),
+  d('propriedade_cliente', 'Propriedade do Cliente Perdida ou Danificada', 'formulario', 'Operações', ['8.5.3'], 'norma', 'FR-006',
+    { comoAtender: 'Formulário novo, curto: peça, cliente, o que houve, quando, a quem foi comunicado e quando. A 8.5.3 pede as duas coisas — comunicar ao cliente E reter o registro. Em quem jateia e pinta peça de terceiro, é o registro que falta com mais frequência.' }),
+  d('mudanca_producao', 'Análise Crítica de Mudanças na Produção', 'formulario', 'Operações', ['8.5.6'], 'norma', 'FR-007',
+    { comoAtender: 'Formulário novo: o que mudou no processo, por quê, quem analisou, quem autorizou e o que foi verificado depois. Trocar de tinta, de abrasivo ou de esquema no meio de uma obra é exatamente isto.' }),
   d('liberacao_produto', 'Liberação de Produto e Serviço', 'formulario', 'Qualidade', ['8.6'], 'norma', 'FR-008',
     { nota: 'Tem de trazer a evidência de conformidade E quem autorizou a liberação. É o que falta quando um laudo sai assinado sem conferência.' }),
-  d('saida_nao_conforme', 'Controle de Saída Não Conforme', 'formulario', 'Qualidade', ['8.7.2'], 'norma', 'FR-009'),
-  d('monitoramento_medicao', 'Resultados de Monitoramento e Medição', 'formulario', 'Qualidade', ['9.1.1'], 'norma', 'FR-010'),
+  d('saida_nao_conforme', 'Controle de Saída Não Conforme', 'formulario', 'Qualidade', ['8.7.2'], 'norma', 'FR-009',
+    { comoAtender: 'Talvez já exista: confira se o formulário de RNC tem os quatro campos que a 8.7.2 pede — descrição da não conformidade, ações tomadas, concessão obtida e quem decidiu. Se tiver, é só apontar a chave para ele. Se faltar campo, acrescente.' }),
+  d('monitoramento_medicao', 'Resultados de Monitoramento e Medição', 'formulario', 'Qualidade', ['9.1.1'], 'norma', 'FR-010',
+    { comoAtender: 'Parte já existe no relatório de inspeção, que mede o produto. O que falta é o registro dos indicadores do SGQ — o número que a análise crítica pela direção consome. Uma planilha por período resolve.' }),
   d('auditoria_interna', 'Programa e Resultados de Auditoria Interna', 'formulario', 'Gestão da Qualidade', ['9.2.2'], 'norma', 'FR-011',
     { papel: 'plano_auditoria' }),
   d('analise_critica_direcao', 'Resultados da Análise Crítica pela Direção', 'formulario', 'Gestão da Qualidade', ['9.3.3'], 'norma', 'FR-012'),
@@ -138,7 +155,11 @@ const st = (
   chave: string, titulo: string, natureza: Natureza, categoria: string,
   clausulas: string[], exigencia: Exigencia, codigoSugerido: string,
   extra: Partial<DocumentoPadrao> = {},
-): DocumentoPadrao => ({ chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido, origem: ST, ...extra });
+): DocumentoPadrao => ({
+  chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido,
+  retencao: natureza === 'formulario' || natureza === 'registro' ? 'reter' : 'manter',
+  origem: ST, ...extra,
+});
 
 const SURFACE_TREATMENT: DocumentoPadrao[] = [
   st('st_ordem_servico', 'Ordem de Serviço / Plano de Serviço', 'formulario', 'Operações', ['8.5.1'], 'norma', 'FR-101',
@@ -171,7 +192,7 @@ const ssma = (
   codigoSugerido: string, nota: string,
 ): DocumentoPadrao => ({
   chave, titulo, natureza: 'procedimento', categoria, clausulas,
-  exigencia: 'legal', origem: SSMA, codigoSugerido, nota,
+  exigencia: 'legal', retencao: 'manter', origem: SSMA, codigoSugerido, nota,
 });
 
 const SSMA_DOCS: DocumentoPadrao[] = [
@@ -222,8 +243,9 @@ export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cob
   const catalogo = catalogoPara(modulos);
   const porChave = new Map<string, DocumentoMestre[]>();
   for (const doc of documentos) {
-    if (!doc.padrao) continue;
-    porChave.set(doc.padrao, [...(porChave.get(doc.padrao) ?? []), doc]);
+    for (const chave of doc.padroes ?? []) {
+      porChave.set(chave, [...(porChave.get(chave) ?? []), doc]);
+    }
   }
 
   const atendidos: Cobertura['atendidos'] = [];
@@ -237,7 +259,7 @@ export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cob
   return {
     atendidos,
     faltando,
-    extras: documentos.filter((doc) => !doc.padrao && !doc.codigo.startsWith('SEM-CODIGO')),
+    extras: documentos.filter((doc) => !doc.padroes?.length && !doc.codigo.startsWith('SEM-CODIGO')),
   };
 }
 

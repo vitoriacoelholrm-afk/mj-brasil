@@ -154,13 +154,13 @@ export function planoDeUnificacao(docs: Documentacao, modulos: string[]): PlanoD
 
   /* ── 4. A revisão da lista não bate com a do arquivo ───────────────────────────────────── */
   for (const d of documentos) {
-    if (!d.revisaoNoArquivo) continue;
+    if (!d.divergenciaNaLista) continue;
     propostas.push({
       tipo: 'conciliar_revisao',
       titulo: d.titulo,
-      de: `lista diz rev. ${d.revisao}; arquivo diz rev. ${d.revisaoNoArquivo.revisao}`,
-      para: `rev. ${String(Number(d.revisao ?? 0) + 1).padStart(2, '0')}`,
-      porque: 'O arquivo é mais novo e declara revisão mais antiga. Emitir a próxima revisão com as duas datas certas encerra a dúvida sem ter de descobrir qual dos dois mentiu.',
+      de: `planilha: rev. ${d.divergenciaNaLista.revisao}`,
+      para: `rev. ${d.revisao}`,
+      porque: 'Quem tem razão é o arquivo: é ele que a pessoa abre e é ele que traz elaboração, verificação e aprovação assinadas. A linha da planilha é que precisa ser corrigida.',
       gravidade: 'alta',
     });
   }

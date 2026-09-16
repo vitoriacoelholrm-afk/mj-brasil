@@ -23,7 +23,7 @@ const DOCUMENTOS: DocumentoMestre[] = catalogoPara(MODULOS).map((padrao) => ({
   natureza: padrao.natureza,
   categoria: padrao.categoria,
   clausulas: padrao.clausulas,
-  padrao: padrao.chave,
+  padroes: [padrao.chave],
   revisao: '00',
   emissao: EMISSAO,
   proximaRevisao: PROXIMA,

@@ -40,13 +40,19 @@ export interface DocumentoMestre {
   local: string | null;
   /** Códigos que o arquivo real carrega, quando não são o da lista mestra. */
   codigosParalelos?: string[];
-  /** Revisão que o arquivo real declara, quando não bate com a da lista. */
-  revisaoNoArquivo?: { revisao: string; data: string };
+  /** Quando a planilha da lista mestra diz outra coisa que o arquivo. O que vale aqui é sempre o
+   *  ARQUIVO — é ele que a pessoa abre. Isto guarda o que a planilha alega, para a correção ter
+   *  para onde apontar. */
+  divergenciaNaLista?: { revisao: string; emissao: string };
   /** A tela do app que emite ou consome este documento. */
   tela?: string;
-  /** A chave do documento padrão que este aqui cumpre. É a IDENTIDADE — o código é só o apelido
-   *  local. Sem isto não dá para comparar duas empresas nem saber o que falta. */
-  padrao?: string;
+  /** As chaves dos documentos padrão que este aqui cumpre. É a IDENTIDADE — o código é só o
+   *  apelido local. São VÁRIAS porque um manual da qualidade sozinho costuma atender o escopo,
+   *  a política e mais meia dúzia de cláusulas. */
+  padroes?: string[];
+  /** Requisitos da norma que a empresa declarou não aplicáveis, com a justificativa. A 4.3 exige
+   *  que a exclusão esteja documentada — sem justificativa, é lacuna, não exclusão. */
+  exclusoes?: { requisito: string; justificativa: string }[];
   /** Verdadeiro quando o documento circula sem entrada própria na lista mestra. */
   foraDaLista?: boolean;
   nota?: string;
@@ -187,10 +193,10 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
         gravidade: 'media',
       });
     }
-    if (d.revisaoNoArquivo) {
+    if (d.divergenciaNaLista) {
       out.push({
         tipo: 'revisao_divergente', codigo: codigoReal(d), titulo: d.titulo,
-        detalhe: `A lista traz rev. ${d.revisao}; o arquivo declara rev. ${d.revisaoNoArquivo.revisao} de ${br(d.revisaoNoArquivo.data)}.`,
+        detalhe: `A planilha da lista mestra traz rev. ${d.divergenciaNaLista.revisao} de ${br(d.divergenciaNaLista.emissao)}; o arquivo em uso é rev. ${d.revisao} de ${br(d.emissao ?? '')}. Vale o arquivo.`,
         gravidade: 'alta',
       });
     }

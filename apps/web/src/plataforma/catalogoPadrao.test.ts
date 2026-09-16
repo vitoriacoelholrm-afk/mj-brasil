@@ -79,7 +79,7 @@ describe('abrir um cliente novo é escolher módulos, não digitar lista', () =>
   it('a lista mestra da empresa modelo é o catálogo, documento por documento', () => {
     const esperado = catalogoPara(MODELO.modulos);
     expect(MODELO.documentacao.documentos).toHaveLength(esperado.length);
-    expect(MODELO.documentacao.documentos.map((d) => d.padrao).sort())
+    expect(MODELO.documentacao.documentos.flatMap((d) => d.padroes ?? []).sort())
       .toEqual(esperado.map((p) => p.chave).sort());
   });
 
@@ -103,15 +103,26 @@ describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
   it('depois do alinhamento, todo documento dela aponta para um padrão', () => {
-    expect(c.atendidos.length).toBe(41);
-    expect(percentualCoberto(c)!).toBeGreaterThan(0.85);
+    expect(c.atendidos.length).toBe(43);
+    expect(percentualCoberto(c)!).toBeGreaterThan(0.9);
+  });
+
+  it('o manual sozinho atende três padrões: ele mesmo, o escopo e a política', () => {
+    // Os textos estão nele por extenso. Era o modelo de um-padrão-por-documento que os
+    // fazia aparecer como falta.
+    const manual = MINASJATO.documentacao.documentos.find((d) => d.codigo === 'MQ-001')!;
+    expect(manual.padroes).toEqual(['manual_qualidade', 'escopo_sgq', 'politica_qualidade']);
+    expect(manual.revisao).toBe('00');
+    expect(manual.exclusoes?.[0].requisito).toContain('8.3');
   });
 
   it('o que falta é tudo coisa que a norma exige — nenhuma falta é de prática', () => {
     expect(faltasDeNorma(c).map((x) => x.chave)).toEqual([
-      'escopo_sgq', 'politica_qualidade', 'propriedade_cliente',
-      'mudanca_producao', 'saida_nao_conforme', 'monitoramento_medicao',
+      'propriedade_cliente', 'mudanca_producao', 'saida_nao_conforme', 'monitoramento_medicao',
     ]);
+    // E todas as quatro são RETER — registro que nasce do fato, não texto que se escreve.
+    expect(faltasDeNorma(c).every((x) => x.retencao === 'reter')).toBe(true);
+    expect(faltasDeNorma(c).every((x) => Boolean(x.comoAtender))).toBe(true);
     expect(c.faltando.filter((x) => x.exigencia === 'pratica')).toEqual([]);
   });
 
@@ -125,10 +136,12 @@ describe('a Minasjato medida contra o padrão', () => {
   });
 
   it('o código é apelido: a mesma chave tem código diferente em cada empresa', () => {
-    const mj = MINASJATO.documentacao.documentos.find((d) => d.padrao === 'st_ordem_servico')!;
-    const mod = MODELO.documentacao.documentos.find((d) => d.padrao === 'st_ordem_servico')!;
+    const achar = (docs: typeof MINASJATO.documentacao.documentos) =>
+      docs.find((d) => d.padroes?.includes('st_ordem_servico'))!;
+    const mj = achar(MINASJATO.documentacao.documentos);
+    const mod = achar(MODELO.documentacao.documentos);
     expect(mj.codigo).toBe('FM-001');
     expect(mod.codigo).toBe('FR-101');
-    expect(mj.padrao).toBe(mod.padrao);
+    expect(mj.padroes).toEqual(mod.padroes);
   });
 });

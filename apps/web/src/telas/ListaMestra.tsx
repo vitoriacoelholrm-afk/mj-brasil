@@ -284,7 +284,15 @@ function LinhaPadrao({ p, grave }: { p: DocumentoPadrao; grave?: boolean }) {
           sugerido: {p.codigoSugerido}
         </span>
         <span style={{ fontSize: 11, color: c.suave }}>{EXIGENCIA_ROTULO[p.exigencia]}</span>
+        <span style={pastilha(p.retencao === 'reter' ? 'alerta' : 'neutro')}>
+          {p.retencao === 'reter' ? 'registro' : 'documento'}
+        </span>
       </div>
+      {p.comoAtender && (
+        <div style={{ ...S.comoAtender, ...s.prosa }}>
+          <strong style={{ color: c.tinta }}>Como atender: </strong>{p.comoAtender}
+        </div>
+      )}
       {p.nota && <div style={{ ...S.conflitoDetalhe, ...s.prosa }}>{p.nota}</div>}
     </div>
   );
@@ -390,6 +398,10 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 11.5, fontWeight: 600, color: c.tinta2,
   },
   extras: { padding: '14px 18px', borderTop: `1px solid ${c.linhaForte}`, background: c.superficie2 },
+  comoAtender: {
+    fontSize: 13, color: c.tinta2, marginTop: 7, lineHeight: 1.55,
+    padding: '8px 12px', borderRadius: 3, background: c.acentoFraco, border: `1px solid ${c.acentoMarca}`,
+  },
   de: { fontFamily: fonte.mono, fontSize: 12.5, color: c.critico, textDecoration: 'line-through' },
   para: { fontFamily: fonte.mono, fontSize: 13, color: c.ok, fontWeight: 700 },
   grupo: { display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 10 },

@@ -51,7 +51,8 @@ describe('cada duplicidade vira uma decisão com código concreto', () => {
   it('a revisão do manual é conciliada emitindo a próxima', () => {
     const p = plano.propostas.find((x) => x.tipo === 'conciliar_revisao')!;
     expect(p.titulo).toContain('Manual');
-    expect(p.para).toBe('rev. 02');
+    expect(p.de).toBe('planilha: rev. 01');
+    expect(p.para).toBe('rev. 00');   // corrige-se a planilha, não o documento
   });
 });
 
@@ -87,12 +88,12 @@ describe('depois do alinhamento', () => {
   it('nenhum documento da Minasjato ficou fora do catálogo padrão', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
     expect(c.extras).toEqual([]);
-    expect(c.atendidos.length).toBe(41);
+    expect(c.atendidos.length).toBe(43);
   });
 
   it('o que falta continua sendo só o que a norma exige', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
-    expect(c.faltando).toHaveLength(6);
+    expect(c.faltando).toHaveLength(4);
     expect(c.faltando.every((f) => f.exigencia === 'norma')).toBe(true);
   });
 
