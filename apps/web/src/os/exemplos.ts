@@ -16,10 +16,10 @@
 //
 // São obras diferentes, de clientes diferentes, em datas diferentes. Não se juntam.
 import type { EtapaPreenchida } from './regras';
-import type { OrdemServico, Relatorio } from './documentos';
+import type { OrdemServico, PerfilRelatorio, Relatorio, Tinta } from './documentos';
 
-export type { Tinta, ItemOs, OrdemServico, Relatorio, DemaoRelatorio, Divergencia } from './documentos';
-export { compararComRelatorio } from './documentos';
+export type { Tinta, ItemOs, OrdemServico, Relatorio, DemaoRelatorio, Divergencia, Anexo, PerfilRelatorio } from './documentos';
+export { compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from './documentos';
 
 const EXEC = 'Gustavo Moreira';
 const INSP = 'Emerson William de Faria';
@@ -148,19 +148,34 @@ const OS_784: OrdemServico = {
 /* ══ WEIR do Brasil — esquema, equipe e instrumentos comuns às duas OS ═══════════════════════ */
 
 const ESQUEMA_WEIR = 'PRO.BRA.DPR.008 Cat. Im3 — ISO 12944-2/AE-C2';
-const INSTRUMENTOS_WEIR = ['232212', 'RL-01', 'TH-003', 'TEV-04'];
 const NORMAS_WEIR = ['ABNT NBR 11003:2009', 'ABNT NBR 10443:2008'];
 const RESSALVA_WEIR = 'Laudo emitido antes do manuseio para transporte.';
 const ABRASIVO_WEIR = 'Óxido de alumínio fundido marrom';
 const CERT_ABRASIVO_WEIR = 'nº 0238/2026 · lote 0181-01/26';
+const PERFIL_WEIR: PerfilRelatorio = { normas: NORMAS_WEIR, ressalvas: [RESSALVA_WEIR], prefixoNumero: 'WEIR' };
 
-/** Na OS da WEIR, o papel não tem coluna de instrumento: quem mediu com o quê só aparece no
- *  relatório, em bloco, no fim. Por isso `instrumentoCodigo` fica de fora aqui — e o sistema
- *  cobra, que é o certo (ISO 9001 §7.1.5). */
+const MEDIDOR = '232212';   // Medidor de camada seca MCT-401
+const RUGOSIMETRO = 'RL-01';
+
+const INTERSEAL: Omit<Tinta, 'loteA' | 'validadeA' | 'loteB' | 'validadeB'> = {
+  especificada: 'INTERSEAL 1509', fabricante: 'International', cor: 'Vermelho óxido',
+  metodoAplicacao: 'Pistola convencional',
+};
+const INTERTHANE: Omit<Tinta, 'loteA' | 'validadeA' | 'loteB' | 'validadeB'> = {
+  especificada: 'INTERTHANE 990', fabricante: 'International', cor: 'Azul 2,5PB 5/8',
+  metodoAplicacao: 'Pistola convencional',
+};
+const LOTE_INTERSEAL = { loteA: '125120112', validadeA: 'dez/26', loteB: '126020105', validadeB: 'fev/27' };
+const LOTE_INTERTHANE = { loteA: '126010062', validadeA: 'jan/28', loteB: '405325010', validadeB: 'jun/27' };
 
 /* ══ OS 898 — WEIR do Brasil · hidrociclones ═════════════════════════════════════════════════
-   O caso da rugosidade: 85 µm medidos contra a faixa 50-70 do próprio papel, assinado como
-   aprovado pelas duas colunas. O relatório entregue ao cliente reporta 75.                     */
+   UNIFICADA. Os lotes, as condições ambientais, os instrumentos e a aderência vinham só do
+   relatório; agora nascem aqui. Onde papel e relatório discordavam, foi adotado o valor do
+   relatório e o do papel ficou guardado em `noPapel` — nada se apaga.
+
+   O que sobrevive à unificação é o achado de verdade: a 2ª demão mediu 126 µm contra 100
+   especificados. São +26%, acima da tolerância de +20%. Os DOIS documentos dizem 126 — não é
+   erro de transcrição, é a camada que saiu grossa. E por isso o relatório sai REPROVADO.       */
 
 const RIP_WEIR_04: Relatorio = {
   numero: 'WEIR-04',
@@ -179,24 +194,24 @@ const RIP_WEIR_04: Relatorio = {
   demaos: [
     {
       ordem: 1, data: '2026-06-03', tempAmbiente: 27, umidadeRelativa: 42, tempSubstrato: 26,
-      tinta: 'INTERSEAL 1509', cor: 'Vermelho óxido', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '125120112', validadeA: 'dez/26', loteB: '126020105', validadeB: 'fev/27',
+      ...INTERSEAL, tinta: INTERSEAL.especificada, cor: INTERSEAL.cor, fabricante: INTERSEAL.fabricante,
+      ...LOTE_INTERSEAL,
       espessuraEspecificada: '100', espessuraEncontrada: '120', dataInspecao: '2026-06-04', aderencia: 'X0Y0',
     },
     {
       ordem: 2, data: '2026-06-04', tempAmbiente: 22, umidadeRelativa: 53, tempSubstrato: 21,
-      tinta: 'INTERSEAL 1509', cor: 'Vermelho óxido', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '125120112', validadeA: 'dez/26', loteB: '126020105', validadeB: 'fev/27',
+      ...INTERSEAL, tinta: INTERSEAL.especificada, cor: INTERSEAL.cor, fabricante: INTERSEAL.fabricante,
+      ...LOTE_INTERSEAL,
       espessuraEspecificada: '100', espessuraEncontrada: '126', dataInspecao: '2026-06-05', aderencia: 'X0Y0',
     },
     {
       ordem: 3, data: '2026-06-05', tempAmbiente: 24, umidadeRelativa: 49, tempSubstrato: 23,
-      tinta: 'INTERTHANE 990', cor: 'Azul 2,5PB 5/8', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '126010062', validadeA: 'jan/28', loteB: '405325010', validadeB: 'jun/27',
+      ...INTERTHANE, tinta: INTERTHANE.especificada, cor: INTERTHANE.cor, fabricante: INTERTHANE.fabricante,
+      ...LOTE_INTERTHANE,
       espessuraEspecificada: '70', espessuraEncontrada: '75', dataInspecao: '2026-06-09', aderencia: 'X0Y0',
     },
   ],
-  instrumentos: INSTRUMENTOS_WEIR,
+  instrumentos: [MEDIDOR, RUGOSIMETRO, 'TH-003', 'TEV-04'],
   normas: NORMAS_WEIR,
   ressalvas: [RESSALVA_WEIR],
   resultado: 'aprovado',
@@ -216,68 +231,91 @@ const OS_898: OrdemServico = {
   ripFolha: '1-1',
   emitidoPor: EXEC,
   verificadoPor: INSP,
+  abrasivoCertificado: CERT_ABRASIVO_WEIR,
+  perfilRelatorio: PERFIL_WEIR,
   observacoes: [
+    'UNIFICADA com o relatório WEIR-04: lotes, condições ambientais, instrumentos e aderência passaram a viver aqui. O confronto abaixo agora fecha em zero.',
+    'A rugosidade do papel era 85 e o relatório trazia 75. Foi adotado o 75; o 85 está guardado ao lado do campo. Se o 85 é o valor real, isto é uma RNC — 85 não passa nem com a tolerância, porque 50-70 aceita até 84.',
     'A nota de rodapé do Plano diz "Rip Weir 01 OK" — mas o relatório emitido para esta OS é o WEIR-04.',
-    'Grau de intemperismo: a escrita no papel não é legível na digitalização. Ficou em branco de propósito, para não inventar valor. Precisa de conferência no original.',
-    'A 3ª demão está escrita no Plano como "Polycopaky 242 / Azul 2,5PB 5/8"; o relatório traz INTERTHANE 990, mesma cor. Provável abreviação de chão de fábrica — confirmar.',
+    'A 3ª demão estava escrita no Plano como "Polycopaky 242"; o relatório traz INTERTHANE 990, mesma cor. Foi adotado o nome do relatório.',
     'A faixa de rugosidade especificada aqui é 50-70. Na OS 913, do mesmo cliente e do mesmo esquema, é 50-100. As duas não podem estar certas.',
-    'O Plano não tem coluna de instrumento: quem mediu com o quê só consta no relatório, em bloco.',
-    'Camada úmida e visual têm data e assinatura, mas nenhum valor registrado.',
   ],
   itens: [
     { descricao: 'Tampa 250CVX usinado', quantidade: 40, unidade: 'pç' },
     { descricao: 'Câmara de alimentação 250CVX usinado', quantidade: 48, unidade: 'pç' },
     { descricao: 'Alojamento do spigot sem saia 250CVX usinado', quantidade: 60, unidade: 'pç' },
   ],
-  // Lotes e validades EM BRANCO no papel — é assim que o documento veio.
   tintas: {
-    fundo: { especificada: 'INTERSEAL', fabricante: null, cor: null, metodoAplicacao: null, loteA: null, validadeA: null, loteB: null, validadeB: null },
-    intermediario_i: { especificada: 'INTERSEAL', fabricante: null, cor: null, metodoAplicacao: null, loteA: null, validadeA: null, loteB: null, validadeB: null },
-    intermediario_ii: { especificada: 'Polycopaky 242', fabricante: null, cor: 'Azul 2,5PB 5/8', metodoAplicacao: null, loteA: null, validadeA: null, loteB: null, validadeB: null },
+    fundo: { ...INTERSEAL, ...LOTE_INTERSEAL },
+    intermediario_i: { ...INTERSEAL, ...LOTE_INTERSEAL },
+    intermediario_ii: { ...INTERTHANE, ...LOTE_INTERTHANE },
   },
   etapas: [
     {
       etapa: 'jateamento', ativa: true, escopo: null,
       medicoes: [
         { grandeza: 'padrao_jateamento', especificado: 'SA 2½', encontrado: 'SA 2½', dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'grau_intemperismo', especificado: null, encontrado: null, dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'abrasivo', especificado: 'Óx. Al', encontrado: 'Óx. Al', dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        // O achado: 85 contra a faixa 50-70 do próprio papel, assinado nas duas colunas.
-        { grandeza: 'padrao_rugosidade', especificado: '50-70', encontrado: '85', dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'grau_intemperismo', especificado: 'A', encontrado: 'A', dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'abrasivo', especificado: ABRASIVO_WEIR, encontrado: ABRASIVO_WEIR, dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        {
+          grandeza: 'padrao_rugosidade', especificado: '50-70', encontrado: '75',
+          dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: RUGOSIMETRO,
+          noPapel: { encontrado: '85' },
+        },
       ],
     },
     {
       etapa: 'fundo', ativa: true, escopo: null,
+      dataAplicacao: '2026-06-03', condicoes: { tempAmbiente: 27, umidadeRelativa: 42, tempSubstrato: 26 },
       medicoes: [
         { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'camada_seca', especificado: '100', encontrado: '120', dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'visual', especificado: null, encontrado: null, dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'camada_seca', especificado: '100', encontrado: '120', dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
     },
     {
       etapa: 'intermediario_i', ativa: true, escopo: null,
+      dataAplicacao: '2026-06-04', condicoes: { tempAmbiente: 22, umidadeRelativa: 53, tempSubstrato: 21 },
       medicoes: [
         { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'camada_seca', especificado: '100', encontrado: '126', dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'visual', especificado: null, encontrado: null, dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        // 126 sobre 100 são +26%. Papel e relatório concordam: a camada saiu grossa de verdade.
+        { grandeza: 'camada_seca', especificado: '100', encontrado: '126', dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
     },
     {
       etapa: 'intermediario_ii', ativa: true, escopo: null,
+      dataAplicacao: '2026-06-05', condicoes: { tempAmbiente: 24, umidadeRelativa: 49, tempSubstrato: 23 },
       medicoes: [
         { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'camada_seca', especificado: '70', encontrado: '75', dataInspecao: '2026-06-08', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'visual', especificado: null, encontrado: null, dataInspecao: '2026-06-08', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        {
+          grandeza: 'camada_seca', especificado: '70', encontrado: '75',
+          dataInspecao: '2026-06-09', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR,
+          noPapel: { dataInspecao: '2026-06-08' },
+        },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-09', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
     },
     { etapa: 'acabamento', ativa: false, escopo: null, medicoes: [] },
+  ],
+  anexos: [
+    {
+      id: 'an-898-1', tipo: 'arquivo', nome: 'Certificado do abrasivo 0238-2026.pdf', url: null,
+      legenda: 'Certificado do óxido de alumínio, lote 0181-01/26',
+      comentario: 'Anexado ao relatório a pedido da WEIR desde a OS 860.',
+      etapa: 'jateamento', data: '2026-06-03', adicionadoPor: INSP,
+    },
   ],
   relatorio: RIP_WEIR_04,
 };
 
 /* ══ OS 913 — WEIR do Brasil · hidrociclones ═════════════════════════════════════════════════
-   O caso do descompasso: a OS registra 2 demãos, o relatório entrega 3. Da primeira demão em
-   diante, espessuras e datas não se encaixam. Mesmo cliente e mesmo esquema da 898.            */
+   UNIFICADA. Aqui a unificação resolve o descompasso: o Plano registrava 2 demãos e o relatório
+   entregava 3. A demão que faltava — a segunda de INTERSEAL, 15 a 16/06 — entrou como
+   `ausenteNoPapel`, e a demão azul passou para a posição que é a dela, intermediário II.
+
+   Com as três no lugar, as espessuras do relatório (100/110, 100/108, 70/76) caem todas dentro
+   da tolerância, e as 12 diferenças viram zero.                                                */
 
 const RIP_WEIR_05: Relatorio = {
   numero: 'WEIR-05',
@@ -296,24 +334,24 @@ const RIP_WEIR_05: Relatorio = {
   demaos: [
     {
       ordem: 1, data: '2026-06-12', tempAmbiente: 24, umidadeRelativa: 45, tempSubstrato: 23,
-      tinta: 'INTERSEAL 1509', cor: 'Vermelho óxido', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '125120112', validadeA: 'dez/26', loteB: '126020105', validadeB: 'fev/27',
+      ...INTERSEAL, tinta: INTERSEAL.especificada, cor: INTERSEAL.cor, fabricante: INTERSEAL.fabricante,
+      ...LOTE_INTERSEAL,
       espessuraEspecificada: '100', espessuraEncontrada: '110', dataInspecao: '2026-06-15', aderencia: 'X0Y0',
     },
     {
       ordem: 2, data: '2026-06-15', tempAmbiente: 23, umidadeRelativa: 48, tempSubstrato: 22,
-      tinta: 'INTERSEAL 1509', cor: 'Vermelho óxido', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '125120112', validadeA: 'dez/26', loteB: '126020105', validadeB: 'fev/27',
+      ...INTERSEAL, tinta: INTERSEAL.especificada, cor: INTERSEAL.cor, fabricante: INTERSEAL.fabricante,
+      ...LOTE_INTERSEAL,
       espessuraEspecificada: '100', espessuraEncontrada: '108', dataInspecao: '2026-06-16', aderencia: 'X0Y0',
     },
     {
       ordem: 3, data: '2026-06-16', tempAmbiente: 23, umidadeRelativa: 51, tempSubstrato: 22,
-      tinta: 'INTERTHANE 990', cor: 'Azul 2,5PB 5/8', fabricante: 'International', metodoAplicacao: 'Pistola convencional',
-      loteA: '126010062', validadeA: 'jan/28', loteB: '405325010', validadeB: 'jun/27',
+      ...INTERTHANE, tinta: INTERTHANE.especificada, cor: INTERTHANE.cor, fabricante: INTERTHANE.fabricante,
+      ...LOTE_INTERTHANE,
       espessuraEspecificada: '70', espessuraEncontrada: '76', dataInspecao: '2026-06-19', aderencia: 'X0Y0',
     },
   ],
-  instrumentos: INSTRUMENTOS_WEIR,
+  instrumentos: [MEDIDOR, RUGOSIMETRO, 'TH-003', 'TEV-04'],
   normas: NORMAS_WEIR,
   ressalvas: [RESSALVA_WEIR],
   resultado: 'aprovado',
@@ -333,12 +371,13 @@ const OS_913: OrdemServico = {
   ripFolha: '1-1',
   emitidoPor: EXEC,
   verificadoPor: INSP,
+  abrasivoCertificado: CERT_ABRASIVO_WEIR,
+  perfilRelatorio: PERFIL_WEIR,
   observacoes: [
-    'O Plano registra 2 demãos; o relatório entrega 3. A 2ª demão do Plano (60 µm, azul, inspeção 19/06) corresponde pela data e pela cor à 3ª do relatório — a 2ª demão do relatório não tem linha nenhuma no Plano.',
-    'Por isso o confronto abaixo compara 1ª com 1ª e 2ª com 2ª e acusa muita diferença: não é erro de medição, é o Plano e o relatório contando demãos diferentes.',
+    'UNIFICADA com o relatório WEIR-05. O Plano registrava 2 demãos e o relatório entregava 3: a segunda demão de INTERSEAL, de 15 a 16/06, não tinha linha nenhuma no papel e entrou marcada como ausente no papel.',
+    'A demão azul, que no papel estava lançada como intermediário I, voltou para a posição dela — intermediário II. Era isso que fazia tudo parecer divergente.',
+    'A espessura de fundo do papel era 180 especificado e 200 encontrado; o relatório traz 100 e 110. Foi adotado o do relatório, e o do papel ficou guardado. É a divergência que sobra para você decidir.',
     'A faixa de rugosidade especificada aqui é 50-100. Na OS 898, do mesmo cliente e do mesmo esquema, é 50-70.',
-    'O Plano não tem coluna de instrumento: quem mediu com o quê só consta no relatório, em bloco.',
-    'A linha de visual da 2ª demão não tem nem valor nem data.',
   ],
   itens: [
     { descricao: 'Câmara de alimentação 250CVX usinado', quantidade: 132, unidade: 'pç' },
@@ -346,37 +385,77 @@ const OS_913: OrdemServico = {
     { descricao: 'Alojamento do spigot sem saia 250CVX usinado', quantidade: 132, unidade: 'pç' },
   ],
   tintas: {
-    fundo: { especificada: 'INTERSEAL 1509', fabricante: null, cor: 'Vermelho óxido', metodoAplicacao: null, loteA: null, validadeA: null, loteB: null, validadeB: null },
-    intermediario_i: { especificada: 'Polycopaky 242', fabricante: null, cor: 'Azul 2,5PB 5/8', metodoAplicacao: null, loteA: null, validadeA: null, loteB: null, validadeB: null },
+    fundo: { ...INTERSEAL, ...LOTE_INTERSEAL },
+    intermediario_i: { ...INTERSEAL, ...LOTE_INTERSEAL },
+    intermediario_ii: { ...INTERTHANE, ...LOTE_INTERTHANE },
   },
   etapas: [
     {
       etapa: 'jateamento', ativa: true, escopo: null,
       medicoes: [
-        { grandeza: 'padrao_jateamento', especificado: 'SA 2½', encontrado: 'SA 2½', dataInspecao: '2026-06-11', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'grau_intemperismo', especificado: 'Alum.', encontrado: 'Alum.', dataInspecao: '2026-06-11', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'abrasivo', especificado: 'Óx. Al', encontrado: 'Óx. Al', dataInspecao: '2026-06-11', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'padrao_rugosidade', especificado: '50-100', encontrado: '78', dataInspecao: '2026-06-11', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'padrao_jateamento', especificado: 'SA 2½', encontrado: 'SA 2½', dataInspecao: '2026-06-12', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        {
+          grandeza: 'grau_intemperismo', especificado: 'A', encontrado: 'A',
+          dataInspecao: '2026-06-12', responsavelProcesso: EXEC, responsavelInspecao: INSP,
+          noPapel: { especificado: 'Alum.', encontrado: 'Alum.' },
+        },
+        { grandeza: 'abrasivo', especificado: ABRASIVO_WEIR, encontrado: ABRASIVO_WEIR, dataInspecao: '2026-06-12', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        {
+          grandeza: 'padrao_rugosidade', especificado: '50-100', encontrado: '78',
+          dataInspecao: '2026-06-12', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: RUGOSIMETRO,
+          noPapel: { dataInspecao: '2026-06-11' },
+        },
       ],
     },
     {
       etapa: 'fundo', ativa: true, escopo: null,
+      dataAplicacao: '2026-06-12', condicoes: { tempAmbiente: 24, umidadeRelativa: 45, tempSubstrato: 23 },
       medicoes: [
         { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-12', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'camada_seca', especificado: '180', encontrado: '200', dataInspecao: '2026-06-13', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'visual', especificado: null, encontrado: null, dataInspecao: '2026-06-13', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        {
+          grandeza: 'camada_seca', especificado: '100', encontrado: '110',
+          dataInspecao: '2026-06-15', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR,
+          noPapel: { especificado: '180', encontrado: '200', dataInspecao: '2026-06-13' },
+        },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-15', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
     },
     {
-      etapa: 'intermediario_i', ativa: true, escopo: null,
+      // A demão que o papel não registrou. Existe no relatório entregue ao cliente.
+      etapa: 'intermediario_i', ativa: true, escopo: null, ausenteNoPapel: true,
+      dataAplicacao: '2026-06-15', condicoes: { tempAmbiente: 23, umidadeRelativa: 48, tempSubstrato: 22 },
       medicoes: [
-        { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-18', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'camada_seca', especificado: '60', encontrado: '60', dataInspecao: '2026-06-19', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        { grandeza: 'visual', especificado: null, encontrado: null, dataInspecao: null, responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-15', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+        { grandeza: 'camada_seca', especificado: '100', encontrado: '108', dataInspecao: '2026-06-16', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-16', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
     },
-    { etapa: 'intermediario_ii', ativa: false, escopo: null, medicoes: [] },
+    {
+      etapa: 'intermediario_ii', ativa: true, escopo: null,
+      dataAplicacao: '2026-06-16', condicoes: { tempAmbiente: 23, umidadeRelativa: 51, tempSubstrato: 22 },
+      medicoes: [
+        {
+          grandeza: 'camada_umida', especificado: null, encontrado: null,
+          dataInspecao: '2026-06-16', responsavelProcesso: EXEC, responsavelInspecao: INSP,
+          noPapel: { dataInspecao: '2026-06-18' },
+        },
+        {
+          grandeza: 'camada_seca', especificado: '70', encontrado: '76',
+          dataInspecao: '2026-06-19', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR,
+          noPapel: { especificado: '60', encontrado: '60' },
+        },
+        { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-19', responsavelProcesso: EXEC, responsavelInspecao: INSP },
+      ],
+    },
     { etapa: 'acabamento', ativa: false, escopo: null, medicoes: [] },
+  ],
+  anexos: [
+    {
+      id: 'an-913-1', tipo: 'foto', nome: 'aderencia-interthane-19-06.jpg', url: null,
+      legenda: 'Ensaio de aderência em X na 3ª demão — X0Y0',
+      comentario: 'Foto que já saía no rodapé do WEIR-05. Passa a viver na OS.',
+      etapa: 'intermediario_ii', data: '2026-06-19', adicionadoPor: INSP,
+    },
   ],
   relatorio: RIP_WEIR_05,
 };

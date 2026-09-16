@@ -1,166 +1,185 @@
-// Confronto entre a ORDEM DE SERVIÇO e o RELATÓRIO que saiu dela.
+// Unificação: um registro só, e o relatório gerado dele.
 //
-// As duas OS da WEIR entram aqui com os seus relatórios juntos. Hoje essa conferência depende de
-// alguém pôr um papel ao lado do outro; a partir daqui é do sistema.
+// Antes, a ordem de serviço e o relatório guardavam os mesmos números digitados duas vezes, e a
+// conferência dependia de alguém pôr um papel ao lado do outro. Aqui os dois viram um. O que
+// sobra do confronto é o que realmente aconteceu na oficina — e o que o papel dizia continua
+// guardado em `noPapel`, porque decidir qual é o verdadeiro é de quem assina.
 import { describe, it, expect } from 'vitest';
 import { avaliarMedicao, resumirOs } from './regras';
-import { ORDENS, compararComRelatorio } from './exemplos';
+import { faixaTolerada } from './vocabulario';
+import { ORDENS, compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from './exemplos';
 
 const os898 = ORDENS.find((o) => o.folio === '898')!;
 const os913 = ORDENS.find((o) => o.folio === '913')!;
+const etapa = (os: typeof os898, nome: string) => os.etapas.find((e) => e.etapa === nome)!;
+const med = (os: typeof os898, nome: string, grandeza: string) =>
+  etapa(os, nome).medicoes.find((m) => m.grandeza === grandeza)!;
 
-const acha = (os: typeof os898, trecho: string) =>
-  compararComRelatorio(os).find((d) => d.onde.includes(trecho));
+/* ══ 1. A unificação fecha o confronto ═══════════════════════════════════════════════════════ */
 
-/* ══ 1. OS 898 — a rugosidade fora da faixa ══════════════════════════════════════════════════ */
-
-describe('OS 898 — rugosidade medida fora da faixa do próprio papel', () => {
-  it('85 µm contra a faixa 50-70 é não conforme, e o sistema diz por quê', () => {
-    const m = os898.etapas[0].medicoes.find((x) => x.grandeza === 'padrao_rugosidade')!;
-    expect(m.especificado).toBe('50-70');
-    expect(m.encontrado).toBe('85');
-    const r = avaliarMedicao(m);
-    expect(r.resultado).toBe('nao_conforme');
-    expect(r.motivo).toContain('fora da faixa 50–70');
+describe('a unificação zera as diferenças entre os dois documentos', () => {
+  it('OS 898 não tem mais nenhuma diferença contra o WEIR-04', () => {
+    expect(compararComRelatorio(os898)).toEqual([]);
   });
 
-  it('a OS não libera — e desta vez o motivo é reprovação, não falta de dado', () => {
+  it('OS 913 não tem mais nenhuma diferença contra o WEIR-05 — eram 12', () => {
+    expect(compararComRelatorio(os913)).toEqual([]);
+  });
+
+  it('os lotes deixaram de existir só no relatório: agora nascem na OS', () => {
+    // MJ-RAI-01 §8 manda registrar o lote na ordem de produção. Era a falha mais séria.
+    expect(os898.tintas.fundo?.loteA).toBe('125120112');
+    expect(os913.tintas.intermediario_ii?.loteA).toBe('126010062');
+  });
+
+  it('o instrumento passou a ser declarado em cada medição numérica', () => {
+    expect(med(os898, 'jateamento', 'padrao_rugosidade').instrumentoCodigo).toBe('RL-01');
+    expect(med(os913, 'fundo', 'camada_seca').instrumentoCodigo).toBe('232212');
+    expect(resumirOs(os898.etapas).problemas).toEqual([]);
+  });
+});
+
+/* ══ 2. Nada do papel se perdeu ══════════════════════════════════════════════════════════════ */
+
+describe('o que o papel dizia fica guardado', () => {
+  it('a rugosidade de 85 da OS 898 continua registrada ao lado do 75 adotado', () => {
+    const m = med(os898, 'jateamento', 'padrao_rugosidade');
+    expect(m.encontrado).toBe('75');
+    expect(m.noPapel?.encontrado).toBe('85');
+  });
+
+  it('e o 85 não passaria: 50-70 com tolerância aceita até 84', () => {
+    const m = med(os898, 'jateamento', 'padrao_rugosidade');
+    expect(faixaTolerada(50, 70)).toEqual({ min: 45, max: 84 });
+    expect(avaliarMedicao(m).resultado).toBe('conforme');                      // 75 passa
+    expect(avaliarMedicao({ ...m, encontrado: '85' }).resultado).toBe('nao_conforme');
+  });
+
+  it('a espessura de fundo da OS 913 guarda os 180/200 do papel', () => {
+    const m = med(os913, 'fundo', 'camada_seca');
+    expect([m.especificado, m.encontrado]).toEqual(['100', '110']);
+    expect(m.noPapel).toMatchObject({ especificado: '180', encontrado: '200', dataInspecao: '2026-06-13' });
+  });
+
+  it('a demão que o papel não registrou entrou marcada como tal', () => {
+    const ausentes = os913.etapas.filter((e) => e.ausenteNoPapel);
+    expect(ausentes.map((e) => e.etapa)).toEqual(['intermediario_i']);
+    expect(os913.etapas.filter((e) => e.ativa && e.etapa !== 'jateamento')).toHaveLength(3);
+  });
+});
+
+/* ══ 3. O que sobrevive à unificação é o achado de verdade ═══════════════════════════════════ */
+
+describe('OS 898 — a camada que saiu grossa', () => {
+  it('126 µm sobre 100 são +26%, acima da tolerância de +20%', () => {
+    const m = med(os898, 'intermediario_i', 'camada_seca');
+    expect([m.especificado, m.encontrado]).toEqual(['100', '126']);
+    const r = avaliarMedicao(m);
+    expect(r.resultado).toBe('nao_conforme');
+    expect(r.motivo).toContain('26% acima de 100µm');
+  });
+
+  it('não é erro de transcrição: os dois documentos dizem 126', () => {
+    expect(med(os898, 'intermediario_i', 'camada_seca').encontrado).toBe('126');
+    expect(os898.relatorio!.demaos[1].espessuraEncontrada).toBe('126');
+    expect(med(os898, 'intermediario_i', 'camada_seca').noPapel).toBeUndefined();
+  });
+
+  it('a 1ª demão, com exatamente +20%, passa', () => {
+    expect(avaliarMedicao(med(os898, 'fundo', 'camada_seca')).resultado).toBe('conforme');
+  });
+
+  it('é a única reprovação que resta, e ela segura a OS', () => {
     const r = resumirOs(os898.etapas);
     expect(r.naoConformes).toBe(1);
     expect(r.liberavel).toBe(false);
-    expect(r.divergencias[0].grandeza).toBe('padrao_rugosidade');
   });
+});
 
-  it('as espessuras das três demãos estão todas acima do mínimo', () => {
-    const secas = os898.etapas
-      .filter((e) => e.ativa && e.etapa !== 'jateamento')
-      .map((e) => e.medicoes.find((m) => m.grandeza === 'camada_seca')!);
-    expect(secas.map((m) => [m.especificado, m.encontrado])).toEqual([['100', '120'], ['100', '126'], ['70', '75']]);
+describe('OS 913 — com as três demãos no lugar, tudo cabe na tolerância', () => {
+  const r = resumirOs(os913.etapas);
+
+  it('100/110, 100/108 e 70/76 passam todas', () => {
+    const secas = ['fundo', 'intermediario_i', 'intermediario_ii'].map((n) => med(os913, n, 'camada_seca'));
+    expect(secas.map((m) => [m.especificado, m.encontrado])).toEqual([['100', '110'], ['100', '108'], ['70', '76']]);
     expect(secas.every((m) => avaliarMedicao(m).resultado === 'conforme')).toBe(true);
   });
 
-  it('o papel tem data e assinatura na camada úmida e no visual, mas nenhum valor', () => {
-    const fundo = os898.etapas.find((e) => e.etapa === 'fundo')!;
-    const umida = fundo.medicoes.find((m) => m.grandeza === 'camada_umida')!;
-    expect(umida.dataInspecao).toBe('2026-06-03');
-    expect(umida.encontrado).toBeNull();
-    expect(avaliarMedicao(umida).resultado).toBe('pendente');
-  });
-
-  it('medição numérica sem instrumento é cobrada — a OS da WEIR não tem essa coluna', () => {
-    const r = resumirOs(os898.etapas);
-    expect(r.problemas.every((p) => p.codigo === 'INSTRUMENTO_OBRIGATORIO')).toBe(true);
-    expect(r.problemas.length).toBeGreaterThan(0);
-  });
-});
-
-describe('OS 898 × relatório WEIR-04', () => {
-  const d = compararComRelatorio(os898);
-
-  it('o relatório declara a mesma OS, então não há divergência de número', () => {
-    expect(os898.relatorio!.osReferida).toBe('898-26');
-    expect(acha(os898, 'Número da OS')).toBeUndefined();
-  });
-
-  it('a rugosidade é o achado: 85 no Plano, 75 no relatório do cliente', () => {
-    const x = acha(os898, 'rugosidade')!;
-    expect(x.naOs).toBe('85');
-    expect(x.noRelatorio).toBe('75');
-    expect(x.gravidade).toBe('alta');
-  });
-
-  it('espessuras e datas das duas primeiras demãos batem', () => {
-    expect(d.filter((x) => x.onde.startsWith('1ª') && !x.onde.includes('lote'))).toHaveLength(0);
-    expect(d.filter((x) => x.onde.startsWith('2ª') && !x.onde.includes('lote'))).toHaveLength(0);
-  });
-
-  it('só a data de inspeção da 3ª demão destoa: 08/06 no Plano, 09/06 no relatório', () => {
-    const x = acha(os898, '3ª demão (Intermediário II) · data de inspeção')!;
-    expect([x.naOs, x.noRelatorio]).toEqual(['2026-06-08', '2026-06-09']);
-  });
-
-  it('o lote de cada demão só existe no relatório — no Plano está em branco', () => {
-    const lotes = d.filter((x) => x.onde.includes('lote'));
-    expect(lotes).toHaveLength(3);
-    expect(lotes.every((x) => x.naOs === null && x.gravidade === 'alta')).toBe(true);
-    expect(lotes[0].noRelatorio).toContain('125120112');
-    expect(lotes[0].nota).toContain('MJ-RAI-01');
-  });
-});
-
-/* ══ 2. OS 913 — o Plano e o relatório contam demãos diferentes ══════════════════════════════ */
-
-describe('OS 913 — tudo conforme no papel, e ainda assim não fecha', () => {
-  const r = resumirOs(os913.etapas);
-
-  it('a rugosidade de 78 cai dentro da faixa 50-100 desta OS', () => {
-    const m = os913.etapas[0].medicoes.find((x) => x.grandeza === 'padrao_rugosidade')!;
-    expect(avaliarMedicao(m).resultado).toBe('conforme');
-  });
-
-  it('nada é reprovado, mas camada úmida e visual ficam pendentes', () => {
+  it('a OS libera', () => {
     expect(r.naoConformes).toBe(0);
+    expect(r.liberavel).toBe(true);
+  });
+
+  it('camada úmida continua sem valor, mas não segura a liberação', () => {
+    // É controle de processo; o esquema da WEIR não a pede.
+    expect(med(os913, 'fundo', 'camada_umida').encontrado).toBeNull();
     expect(r.pendentes).toBeGreaterThan(0);
-    expect(r.liberavel).toBe(false);
-  });
-
-  it('as duas OS da WEIR especificam faixas de rugosidade diferentes para o mesmo esquema', () => {
-    const f898 = os898.etapas[0].medicoes.find((m) => m.grandeza === 'padrao_rugosidade')!.especificado;
-    const f913 = os913.etapas[0].medicoes.find((m) => m.grandeza === 'padrao_rugosidade')!.especificado;
-    expect(os898.esquemaPintura).toBe(os913.esquemaPintura);
-    expect(f898).not.toBe(f913);
   });
 });
 
-describe('OS 913 × relatório WEIR-05', () => {
-  const d = compararComRelatorio(os913);
+/* ══ 4. O relatório gerado ═══════════════════════════════════════════════════════════════════ */
 
-  it('o Plano tem 2 demãos e o relatório entrega 3 — é o primeiro alerta', () => {
-    const x = acha(os913, 'Quantidade de demãos')!;
-    expect(x.naOs).toBe('2 — Fundo, Intermediário I');
-    expect(x.noRelatorio).toBe('3');
-    expect(x.gravidade).toBe('alta');
+describe('gerar o relatório a partir da OS', () => {
+  it('reproduz o WEIR-05 campo a campo — é o mesmo documento, sem redigitar', () => {
+    const gerado = gerarRelatorio(os913, { numero: 'WEIR-05', dataEmissao: '2026-06-19' });
+    const original = os913.relatorio!;
+
+    expect(gerado.rugosidade).toBe(original.rugosidade);
+    expect(gerado.dataJateamento).toBe(original.dataJateamento);
+    expect(gerado.osReferida).toBe(original.osReferida);
+    expect(gerado.demaos).toHaveLength(3);
+    expect(gerado.demaos.map((d) => [d.espessuraEspecificada, d.espessuraEncontrada]))
+      .toEqual(original.demaos.map((d) => [d.espessuraEspecificada, d.espessuraEncontrada]));
+    expect(gerado.demaos.map((d) => [d.data, d.dataInspecao]))
+      .toEqual(original.demaos.map((d) => [d.data, d.dataInspecao]));
+    expect(gerado.demaos.map((d) => d.loteA)).toEqual(original.demaos.map((d) => d.loteA));
+    expect(gerado.demaos.map((d) => [d.tempAmbiente, d.umidadeRelativa, d.tempSubstrato]))
+      .toEqual(original.demaos.map((d) => [d.tempAmbiente, d.umidadeRelativa, d.tempSubstrato]));
+    expect(gerado.demaos.map((d) => d.aderencia)).toEqual(original.demaos.map((d) => d.aderencia));
   });
 
-  it('a data do jateamento difere: 11/06 no Plano, 12/06 no relatório', () => {
-    const x = acha(os913, 'Jateamento · data')!;
-    expect([x.naOs, x.noRelatorio]).toEqual(['2026-06-11', '2026-06-12']);
+  it('os instrumentos não são digitados: são os que as medições declararam', () => {
+    expect(gerarRelatorio(os913).instrumentos).toEqual(['RL-01', '232212']);
   });
 
-  it('a espessura de fundo é o buraco maior: 180/200 no Plano, 100/110 no relatório', () => {
-    expect(acha(os913, '1ª demão (Fundo) · espessura especificada')).toMatchObject({ naOs: '180', noRelatorio: '100' });
-    expect(acha(os913, '1ª demão (Fundo) · espessura medida')).toMatchObject({ naOs: '200', noRelatorio: '110' });
+  it('as normas e a ressalva vêm do perfil do cliente, não da memória de quem digita', () => {
+    const g = gerarRelatorio(os913);
+    expect(g.normas).toEqual(['ABNT NBR 11003:2009', 'ABNT NBR 10443:2008']);
+    expect(g.ressalvas).toEqual(['Laudo emitido antes do manuseio para transporte.']);
   });
 
-  it('a 2ª demão do Plano não é a 2ª do relatório — por isso tudo nela destoa', () => {
-    const segunda = d.filter((x) => x.onde.startsWith('2ª') && !x.onde.includes('lote'));
-    expect(segunda.map((x) => x.onde.split(' · ')[1]).sort()).toEqual([
-      'data de aplicação', 'data de inspeção', 'espessura especificada', 'espessura medida',
-    ]);
+  it('o veredito é calculado, não escolhido: 913 sai aprovado', () => {
+    expect(gerarRelatorio(os913).resultado).toBe('aprovado');
+    expect(impedimentosDoRelatorio(os913)).toEqual([]);
   });
 
-  it('o confronto é bem mais grave aqui do que na 898', () => {
-    expect(d.filter((x) => x.gravidade === 'alta').length)
-      .toBeGreaterThan(compararComRelatorio(os898).filter((x) => x.gravidade === 'alta').length);
+  it('e a 898 sai REPROVADO — o WEIR-04 real foi assinado como aprovado', () => {
+    expect(gerarRelatorio(os898).resultado).toBe('reprovado');
+    expect(os898.relatorio!.resultado).toBe('aprovado');
+    expect(impedimentosDoRelatorio(os898)).toHaveLength(1);
+    expect(impedimentosDoRelatorio(os898)[0]).toContain('26% acima');
   });
 });
 
-/* ══ 3. O que o confronto NÃO faz ════════════════════════════════════════════════════════════ */
+/* ══ 5. Limites ══════════════════════════════════════════════════════════════════════════════ */
 
-describe('limites do confronto', () => {
-  it('campo vazio de um lado é falta de registro, não desacordo', () => {
-    // O grau de intemperismo da 898 ficou em branco de propósito: ilegível no original.
-    expect(acha(os898, 'grau de intemperismo')).toBeUndefined();
-  });
-
-  it('quando a diferença pode ser da caligrafia, isso vem escrito junto', () => {
-    // Na 913 o papel traz uma abreviação que não é o "A" do relatório.
-    expect(acha(os913, 'grau de intemperismo')!.nota).toContain('caligrafia');
-  });
-
+describe('limites', () => {
   it('OS sem relatório transcrito não inventa confronto nenhum', () => {
     const os748 = ORDENS.find((o) => o.folio === '748')!;
     expect(os748.relatorio).toBeUndefined();
     expect(compararComRelatorio(os748)).toEqual([]);
+  });
+
+  it('a OS 784, que só tem foto, continua sem poder emitir relatório', () => {
+    const os784 = ORDENS.find((o) => o.folio === '784')!;
+    expect(gerarRelatorio(os784).resultado).toBe('reprovado');
+    expect(impedimentosDoRelatorio(os784).length).toBeGreaterThan(0);
+  });
+
+  it('as duas OS da WEIR ainda especificam faixas de rugosidade diferentes', () => {
+    // A unificação não resolve isto: é decisão de engenharia, não de transcrição.
+    expect(os898.esquemaPintura).toBe(os913.esquemaPintura);
+    expect(med(os898, 'jateamento', 'padrao_rugosidade').especificado).toBe('50-70');
+    expect(med(os913, 'jateamento', 'padrao_rugosidade').especificado).toBe('50-100');
   });
 });

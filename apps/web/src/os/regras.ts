@@ -3,7 +3,7 @@
 // A regra central é `avaliarMedicao`: dado o especificado e o encontrado, ela diz se está
 // conforme. Hoje esses dois valores são digitados à mão em formulários separados e ninguém os
 // compara; aqui a comparação é do sistema.
-import { GRANDEZA_POR_CHAVE, type Etapa, type Resultado } from './vocabulario';
+import { GRANDEZA_POR_CHAVE, TOLERANCIA, desvioPercentual, faixaTolerada, type Etapa, type Resultado } from './vocabulario';
 
 /** Uma linha do formulário: o átomo que se repete no jateamento e em cada demão. */
 export interface Medicao {
@@ -15,6 +15,9 @@ export interface Medicao {
   responsavelInspecao: string | null;
   /** O instrumento usado. Sem ele, medição numérica não tem rastreabilidade (ISO 7.1.5). */
   instrumentoCodigo?: string | null;
+  /** O que o papel manuscrito trazia, quando a unificação adotou o valor do relatório. Nada se
+   *  perde: o rastro fica, e decidir qual é o verdadeiro é de quem assina. */
+  noPapel?: { especificado?: string | null; encontrado?: string | null; dataInspecao?: string | null };
 }
 
 export interface Problema { codigo: string; grandeza?: string; detalhe: string }
@@ -72,20 +75,36 @@ export function avaliarMedicao(m: Medicao): { resultado: Resultado; motivo?: str
     return { resultado: 'nao_conforme', motivo: `"${enc}" não é um número` };
   }
 
-  if (g.tipo === 'faixa') {
-    const f = lerFaixa(esp);
-    if (!f) return { resultado: 'pendente', motivo: `especificação "${esp}" não é uma faixa` };
-    return n >= f.min && n <= f.max
-      ? { resultado: 'conforme' }
-      : { resultado: 'nao_conforme', motivo: `${n}${g.unidade ?? ''} fora da faixa ${f.min}–${f.max}${g.unidade ?? ''}` };
+  // Tanto a faixa quanto o alvo único passam pela mesma tolerância: até +20% acima, no máximo
+  // -10% abaixo. Numa faixa, cada ponta abre para o seu lado.
+  const nominal = g.tipo === 'faixa' ? lerFaixa(esp) : (() => {
+    const alvo = lerNumero(esp);
+    return alvo === null ? null : { min: alvo, max: alvo };
+  })();
+
+  if (!nominal) {
+    const oque = g.tipo === 'faixa' ? 'uma faixa' : 'um número';
+    return { resultado: 'pendente', motivo: `especificação "${esp}" não é ${oque}` };
   }
 
-  // minimo: o encontrado tem que alcançar ou passar o especificado
-  const min = lerNumero(esp);
-  if (min === null) return { resultado: 'pendente', motivo: `especificação "${esp}" não é um número` };
-  return n >= min
-    ? { resultado: 'conforme' }
-    : { resultado: 'nao_conforme', motivo: `${n}${g.unidade ?? ''} abaixo do mínimo ${min}${g.unidade ?? ''}` };
+  const un = g.unidade ?? '';
+  const tolerada = faixaTolerada(nominal.min, nominal.max);
+  const EPS = 1e-9;
+
+  if (n >= tolerada.min - EPS && n <= tolerada.max + EPS) return { resultado: 'conforme' };
+
+  const acima = n > tolerada.max;
+  const alvo = acima ? nominal.max : nominal.min;
+  const desvio = desvioPercentual(alvo, n);
+  const limite = acima ? TOLERANCIA.acima : TOLERANCIA.abaixo;
+  const lado = acima ? 'acima' : 'abaixo';
+
+  return {
+    resultado: 'nao_conforme',
+    motivo: desvio === null
+      ? `${n}${un} fora do tolerado (${tolerada.min}–${tolerada.max}${un})`
+      : `${n}${un} é ${Math.abs(desvio)}% ${lado} de ${alvo}${un} — a tolerância ${lado} é ${limite * 100}%`,
+  };
 }
 
 /* ── Guardas de registro (o que a ISO exige em toda evidência) ──────────────────────────────  */
@@ -106,13 +125,26 @@ export function validarMedicao(m: Medicao): Problema[] {
 
 /* ── Resumo da OS ────────────────────────────────────────────────────────────────────────── */
 
+/** Condições ambientais no momento da aplicação. Hoje só existem no relatório do cliente; com a
+ *  unificação passam a nascer aqui, no registro da etapa. */
+export interface Condicoes {
+  tempAmbiente: number | null;
+  umidadeRelativa: number | null;
+  tempSubstrato: number | null;
+}
+
 export interface EtapaPreenchida {
   etapa: Etapa;
   ativa: boolean; // o esquema do cliente pode não ter intermediário II nem acabamento
   /** Parte da obra a que esta etapa se aplica. Duas entradas da mesma etapa com escopos
    *  diferentes são registros independentes — é como a mesma demão vai a partes distintas. */
   escopo?: string | null;
+  /** Data em que a demão foi aplicada (a inspeção vem depois, na camada seca). */
+  dataAplicacao?: string | null;
+  condicoes?: Condicoes;
   medicoes: Medicao[];
+  /** Quando a etapa só apareceu na unificação, porque o papel não a registrou. */
+  ausenteNoPapel?: boolean;
 }
 
 export interface ResumoOs {
@@ -126,7 +158,7 @@ export interface ResumoOs {
 }
 
 export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
-  let medidas = 0, conformes = 0, naoConformes = 0, pendentes = 0;
+  let medidas = 0, conformes = 0, naoConformes = 0, pendentes = 0, pendentesQueTravam = 0;
   const problemas: Problema[] = [];
   const divergencias: ResumoOs['divergencias'] = [];
 
@@ -138,7 +170,12 @@ export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
       else if (r.resultado === 'nao_conforme') {
         medidas++; naoConformes++;
         divergencias.push({ grandeza: m.grandeza, etapa: e.etapa, escopo: e.escopo ?? null, motivo: r.motivo ?? '' });
-      } else pendentes++;
+      } else {
+        pendentes++;
+        // Camada úmida é controle de processo, não requisito do cliente: fica visível como
+        // pendência, mas não segura a liberação quando o esquema não a pede.
+        if (!GRANDEZA_POR_CHAVE.get(m.grandeza)?.opcional) pendentesQueTravam++;
+      }
       problemas.push(...validarMedicao(m));
     }
   }
@@ -146,6 +183,6 @@ export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
   return {
     medidas, conformes, naoConformes, pendentes, problemas, divergencias,
     // Liberar exige tudo medido, tudo conforme e nenhuma evidência faltando.
-    liberavel: pendentes === 0 && naoConformes === 0 && problemas.length === 0 && medidas > 0,
+    liberavel: pendentesQueTravam === 0 && naoConformes === 0 && problemas.length === 0 && medidas > 0,
   };
 }

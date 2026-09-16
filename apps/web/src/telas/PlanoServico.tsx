@@ -5,7 +5,9 @@
 import { useMemo, useState } from 'react';
 import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '@/os/regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
-import { ORDENS, compararComRelatorio, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
+import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
+import { carimbo } from '@/documentos/listaMestra';
+import { PainelRelatorio } from './Relatorio';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
@@ -16,6 +18,11 @@ export function PlanoServico() {
   const etapas = os.etapas;
   const resumo = useMemo(() => resumirOs(etapas), [etapas]);
   const divergencias = useMemo(() => compararComRelatorio(os), [os]);
+  const anexos = os.anexos ?? [];
+
+  function mexerNaOs(mudar: (o: OrdemServico) => OrdemServico) {
+    setOrdens((todas) => todas.map((o, i) => (i === ativa ? mudar(o) : o)));
+  }
 
   function editar(etapaIdx: number, medIdx: number, campo: 'especificado' | 'encontrado', valor: string) {
     setOrdens((todas) => todas.map((o, oi) => oi !== ativa ? o : {
@@ -31,7 +38,7 @@ export function PlanoServico() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo="Ordens de Serviço"
-        sub="Cada OS tem o esquema do seu cliente. O sistema compara especificado e encontrado."
+        sub={`${carimbo('FM-001')} — o código vem da Lista Mestra. Aqui a especificação e a medição entram uma vez só, e o relatório sai daqui.`}
       />
 
       <div style={S.abas}>
@@ -96,6 +103,16 @@ export function PlanoServico() {
 
       {os.relatorio && <Confronto rel={os.relatorio} divergencias={divergencias} />}
 
+      <PainelRelatorio
+        os={os}
+        anexos={anexos}
+        aoAdicionar={(novos) => mexerNaOs((o) => ({ ...o, anexos: [...(o.anexos ?? []), ...novos] }))}
+        aoAlterar={(id, campo, valor) => mexerNaOs((o) => ({
+          ...o, anexos: (o.anexos ?? []).map((a) => (a.id === id ? { ...a, [campo]: valor } : a)),
+        }))}
+        aoRemover={(id) => mexerNaOs((o) => ({ ...o, anexos: (o.anexos ?? []).filter((a) => a.id !== id) }))}
+      />
+
       <div style={S.esquema}>
         <span style={S.esquemaRot}>Esquema de pintura do cliente</span>
         <span style={S.esquemaVal}>{os.esquemaPintura}</span>
@@ -115,6 +132,12 @@ export function PlanoServico() {
             <div style={S.faixaEtapa}>
               {ETAPA_ROTULO[e.etapa]}
               {e.escopo && <span style={S.escopo}>{e.escopo}</span>}
+              {e.ausenteNoPapel && <span style={{ ...pastilha('alerta'), marginLeft: 10 }}>não constava no papel</span>}
+              {e.condicoes && (
+                <span style={S.condicoes}>
+                  aplicada {dataBR(e.dataAplicacao)} · {e.condicoes.tempAmbiente}°C · {e.condicoes.umidadeRelativa}% · substrato {e.condicoes.tempSubstrato}°C
+                </span>
+              )}
             </div>
 
             {tinta && (
@@ -153,14 +176,19 @@ export function PlanoServico() {
                         </td>
                         <td style={s.td}>
                           <input style={S.campo} value={m.especificado ?? ''} onChange={(ev) => editar(ei, mi, 'especificado', ev.target.value)} />
+                          {m.noPapel?.especificado && <div style={S.noPapel}>no papel: {m.noPapel.especificado}</div>}
                         </td>
                         <td style={s.td}>
                           <input
                             style={{ ...S.campo, borderColor: r.resultado === 'nao_conforme' ? c.critico : c.linhaForte, color: r.resultado === 'nao_conforme' ? c.critico : c.tinta, fontWeight: r.resultado === 'nao_conforme' ? 700 : 400 }}
                             value={m.encontrado ?? ''} onChange={(ev) => editar(ei, mi, 'encontrado', ev.target.value)}
                           />
+                          {m.noPapel?.encontrado && <div style={S.noPapel}>no papel: {m.noPapel.encontrado}</div>}
                         </td>
-                        <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>{dataBR(m.dataInspecao)}</td>
+                        <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>
+                          {dataBR(m.dataInspecao)}
+                          {m.noPapel?.dataInspecao && <div style={S.noPapel}>no papel: {dataBR(m.noPapel.dataInspecao)}</div>}
+                        </td>
                         <td style={s.td}>
                           <div style={S.resp}>{m.responsavelProcesso}</div>
                           <div style={S.respSec}>insp. {m.responsavelInspecao}</div>
@@ -194,7 +222,7 @@ export function PlanoServico() {
       </div>
 
       <div style={S.rodape}>
-        Transcrito dos documentos originais. Sem banco ainda — o que mudar aqui vive só nesta aba.
+        Unificado com o relatório do cliente. Sem banco ainda — o que mudar aqui, inclusive os anexos, vive só nesta aba.
       </div>
     </div>
   );
@@ -379,6 +407,11 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${c.linhaForte}`, background: c.superficie2, color: c.tinta2,
   },
   rodape: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, lineHeight: 1.6 },
+  noPapel: { fontFamily: fonte.mono, fontSize: 10.5, color: c.alerta, marginTop: 4, whiteSpace: 'nowrap' },
+  condicoes: {
+    marginLeft: 12, fontFamily: fonte.mono, fontSize: 10.5, color: c.suave,
+    textTransform: 'none', letterSpacing: 0, fontWeight: 400,
+  },
   faixaConfronto: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
     padding: '10px 18px', background: c.superficie2, borderBottom: `1px solid ${c.linhaForte}`,

@@ -8,8 +8,8 @@
 // Hoje os dois carregam os mesmos números, digitados em momentos diferentes por pessoas
 // diferentes. É daí que nasce a divergência. `compararComRelatorio` faz de máquina a conferência
 // que hoje depende de alguém pôr um papel ao lado do outro.
-import { lerNumero, normalizar, type EtapaPreenchida } from './regras';
-import { ETAPA_ROTULO } from './vocabulario';
+import { avaliarMedicao, lerNumero, normalizar, resumirOs, type EtapaPreenchida } from './regras';
+import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE, type Etapa } from './vocabulario';
 
 /* ── Ordem de Serviço ─────────────────────────────────────────────────────────────────────── */
 
@@ -42,8 +42,38 @@ export interface OrdemServico {
   itens: ItemOs[];
   tintas: Partial<Record<string, Tinta>>;
   etapas: EtapaPreenchida[];
-  /** O relatório emitido para o cliente, quando já foi transcrito. */
+  /** O relatório emitido para o cliente, quando já foi transcrito do papel. */
   relatorio?: Relatorio;
+  /** Fotos e arquivos que acompanham a OS e entram no relatório como evidência. */
+  anexos?: Anexo[];
+  /** O que o relatório deste cliente carrega além dos dados da OS. */
+  perfilRelatorio?: PerfilRelatorio;
+  /** Certificado do abrasivo — sai no relatório, não tem linha no Plano de Serviço. */
+  abrasivoCertificado?: string | null;
+}
+
+/** Evidência anexada: foto do ensaio, certificado do abrasivo, esquema do cliente. */
+export interface Anexo {
+  id: string;
+  tipo: 'foto' | 'arquivo';
+  nome: string;
+  /** No protótipo, o data URL que o navegador devolve ao escolher o arquivo. */
+  url: string | null;
+  /** A frase curta que aparece embaixo da imagem no relatório. */
+  legenda: string;
+  /** Observação mais longa — não sai no relatório, fica no registro interno. */
+  comentario: string;
+  etapa?: Etapa | null;
+  data: string | null;
+  adicionadoPor: string | null;
+}
+
+/** Cada cliente tem o seu modelo de relatório. O que muda de um para outro mora aqui. */
+export interface PerfilRelatorio {
+  normas: string[];
+  ressalvas: string[];
+  /** Prefixo da numeração: WEIR-04, CAR-01-2026. */
+  prefixoNumero: string;
 }
 
 /* ── Relatório de Inspeção de Jateamento e Pintura ────────────────────────────────────────── */
@@ -221,4 +251,115 @@ export function compararComRelatorio(os: OrdemServico): Divergencia[] {
   }
 
   return d;
+}
+
+/* ── A geração ────────────────────────────────────────────────────────────────────────────────
+   Aqui o processo se fecha. O relatório deixa de ser um documento digitado de novo e passa a ser
+   uma LEITURA da ordem de serviço: mesma especificação, mesma medição, mesmos lotes, mesmas
+   datas. Não existe campo para redigitar, então não existe como divergir.
+
+   E há uma regra que o papel não tinha como ter: o veredito não é escolhido, é calculado. Uma OS
+   que não libera não emite relatório aprovado.                                                 */
+
+const ORDEM_DAS_ETAPAS: Etapa[] = ['fundo', 'intermediario_i', 'intermediario_ii', 'acabamento'];
+
+function medicao(e: EtapaPreenchida, grandeza: string) {
+  return e.medicoes.find((m) => m.grandeza === grandeza);
+}
+
+export interface OpcoesGeracao {
+  numero?: string;
+  dataEmissao?: string;
+  folha?: string;
+}
+
+export function gerarRelatorio(os: OrdemServico, opcoes: OpcoesGeracao = {}): Relatorio {
+  const jat = os.etapas.find((e) => e.etapa === 'jateamento');
+  const resumo = resumirOs(os.etapas);
+  const ano = (opcoes.dataEmissao ?? new Date().toISOString()).slice(2, 4);
+
+  const ativas = ORDEM_DAS_ETAPAS
+    .map((nome) => os.etapas.find((e) => e.etapa === nome && e.ativa))
+    .filter((e): e is EtapaPreenchida => Boolean(e));
+
+  const demaos: DemaoRelatorio[] = ativas.map((e, i) => {
+    const tinta = os.tintas[e.etapa];
+    const seca = medicao(e, 'camada_seca');
+    return {
+      ordem: i + 1,
+      data: e.dataAplicacao ?? medicao(e, 'camada_umida')?.dataInspecao ?? null,
+      tempAmbiente: e.condicoes?.tempAmbiente ?? null,
+      umidadeRelativa: e.condicoes?.umidadeRelativa ?? null,
+      tempSubstrato: e.condicoes?.tempSubstrato ?? null,
+      tinta: tinta?.especificada ?? null,
+      cor: tinta?.cor ?? null,
+      fabricante: tinta?.fabricante ?? null,
+      metodoAplicacao: tinta?.metodoAplicacao ?? null,
+      loteA: tinta?.loteA ?? null, validadeA: tinta?.validadeA ?? null,
+      loteB: tinta?.loteB ?? null, validadeB: tinta?.validadeB ?? null,
+      espessuraEspecificada: seca?.especificado ?? null,
+      espessuraEncontrada: seca?.encontrado ?? null,
+      dataInspecao: seca?.dataInspecao ?? null,
+      aderencia: medicao(e, 'visual')?.encontrado ?? null,
+    };
+  });
+
+  // Os instrumentos não são digitados: são os que as medições declararam ter usado.
+  const instrumentos = [...new Set(
+    os.etapas.flatMap((e) => e.medicoes.map((m) => m.instrumentoCodigo).filter(Boolean)),
+  )] as string[];
+
+  const ultimaInspecao = demaos
+    .map((d) => d.dataInspecao)
+    .filter((x): x is string => Boolean(x))
+    .sort()
+    .at(-1);
+
+  return {
+    numero: opcoes.numero ?? os.ripNumero ?? `${os.perfilRelatorio?.prefixoNumero ?? 'RIP'}-${os.folio}`,
+    folha: opcoes.folha ?? '1-1',
+    dataEmissao: opcoes.dataEmissao ?? ultimaInspecao ?? new Date().toISOString().slice(0, 10),
+    esquema: os.esquemaPintura,
+    obra: os.obra ?? '',
+    equipamento: os.equipamento,
+    osReferida: `${os.folio}-${ano}`,
+    padraoJateamento: medicao(jat!, 'padrao_jateamento')?.encontrado ?? null,
+    grauIntemperismo: medicao(jat!, 'grau_intemperismo')?.encontrado ?? null,
+    abrasivo: medicao(jat!, 'abrasivo')?.encontrado ?? null,
+    abrasivoCertificado: os.abrasivoCertificado ?? null,
+    dataJateamento: medicao(jat!, 'padrao_rugosidade')?.dataInspecao ?? null,
+    rugosidade: medicao(jat!, 'padrao_rugosidade')?.encontrado ?? null,
+    demaos,
+    instrumentos,
+    normas: os.perfilRelatorio?.normas ?? [],
+    ressalvas: os.perfilRelatorio?.ressalvas ?? [],
+    // O veredito não é escolhido. Uma OS que não libera não emite relatório aprovado.
+    resultado: resumo.liberavel ? 'aprovado' : 'reprovado',
+    emitidoPor: os.emitidoPor,
+    verificadoPor: os.verificadoPor,
+  };
+}
+
+/** Por que o relatório ainda não pode sair aprovado. Vazio = pode. */
+export function impedimentosDoRelatorio(os: OrdemServico): string[] {
+  const r = resumirOs(os.etapas);
+  const fora: string[] = [];
+
+  for (const d of r.divergencias) fora.push(`${ETAPA_ROTULO[d.etapa]}: ${d.motivo}`);
+  for (const p of r.problemas) fora.push(p.detalhe);
+
+  // Falta de medição também impede. Só as grandezas que o esquema pede.
+  for (const e of os.etapas) {
+    if (!e.ativa) continue;
+    for (const m of e.medicoes) {
+      const g = GRANDEZA_POR_CHAVE.get(m.grandeza);
+      if (g?.opcional) continue;
+      if (avaliarMedicao(m).resultado !== 'pendente') continue;
+      const falta = !m.encontrado?.trim() ? 'ainda não foi medida' : 'não tem especificação para comparar';
+      fora.push(`${ETAPA_ROTULO[e.etapa]}: ${g?.rotulo ?? m.grandeza} ${falta}.`);
+    }
+  }
+
+  if (r.medidas === 0) fora.push('Nenhuma medição registrada.');
+  return [...new Set(fora)];
 }

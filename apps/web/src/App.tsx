@@ -10,9 +10,10 @@ import { PlanoServico } from '@/telas/PlanoServico';
 import { Vencimentos } from '@/telas/Vencimentos';
 import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
+import { ListaMestra } from '@/telas/ListaMestra';
 import { c, fonte } from '@/ui/estilo';
 
-export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes';
+export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
@@ -21,6 +22,7 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
   { rotulo: 'Ordens de Serviço', rota: 'plano' },
   { rotulo: 'Qualidade', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
+    { rotulo: 'Lista Mestra', rota: 'lista-mestra' },
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
     { rotulo: 'Instrumentos', rota: 'instrumentos' },
   ] },
@@ -33,6 +35,7 @@ const DOMINIO: Record<Rota, string> = {
   situacao: 'Situação',
   plano: 'Ordens de Serviço',
   diagnostico: 'Qualidade',
+  'lista-mestra': 'Qualidade',
   vencimentos: 'Qualidade',
   instrumentos: 'Qualidade',
   clientes: 'Cadastros',
@@ -112,6 +115,7 @@ export function App() {
         {rota === 'vencimentos' && <Vencimentos />}
         {rota === 'instrumentos' && <Instrumentos />}
         {rota === 'clientes' && <Clientes />}
+        {rota === 'lista-mestra' && <ListaMestra />}
       </main>
 
       <div style={S.rodape}>{appInfo.client} · {appInfo.name}</div>
