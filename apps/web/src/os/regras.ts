@@ -1,8 +1,8 @@
 // surface-treatment — as regras do Plano de Serviço. Puras, sem banco.
 //
 // A regra central é `avaliarMedicao`: dado o especificado e o encontrado, ela diz se está
-// conforme. É o que teria pego a divergência de rugosidade entre o Plano de Serviço da OS 748
-// (70 µm) e o RIP CAR-01-2026 (60 µm) — hoje os dois são digitados à mão, em arquivos separados.
+// conforme. Hoje esses dois valores são digitados à mão em formulários separados e ninguém os
+// compara; aqui a comparação é do sistema.
 import { GRANDEZA_POR_CHAVE, type Etapa, type Resultado } from './vocabulario';
 
 /** Uma linha do formulário: o átomo que se repete no jateamento e em cada demão. */
@@ -68,7 +68,7 @@ export function avaliarMedicao(m: Medicao): { resultado: Resultado; motivo?: str
 
   const n = lerNumero(enc);
   if (n === null) {
-    // O campo de rugosidade do RIP Metta foi preenchido com uma data. É este o caso.
+    // Campo numérico preenchido com texto ou data — o caso que o INT-06 descreve.
     return { resultado: 'nao_conforme', motivo: `"${enc}" não é um número` };
   }
 
@@ -109,6 +109,9 @@ export function validarMedicao(m: Medicao): Problema[] {
 export interface EtapaPreenchida {
   etapa: Etapa;
   ativa: boolean; // o esquema do cliente pode não ter intermediário II nem acabamento
+  /** Parte da obra a que esta etapa se aplica. Duas entradas da mesma etapa com escopos
+   *  diferentes são registros independentes — é como a mesma demão vai a partes distintas. */
+  escopo?: string | null;
   medicoes: Medicao[];
 }
 
@@ -118,7 +121,7 @@ export interface ResumoOs {
   naoConformes: number;
   pendentes: number;
   problemas: Problema[];
-  divergencias: { grandeza: string; etapa: Etapa; motivo: string }[];
+  divergencias: { grandeza: string; etapa: Etapa; escopo: string | null; motivo: string }[];
   liberavel: boolean;
 }
 
@@ -134,7 +137,7 @@ export function resumirOs(etapas: readonly EtapaPreenchida[]): ResumoOs {
       if (r.resultado === 'conforme') { medidas++; conformes++; }
       else if (r.resultado === 'nao_conforme') {
         medidas++; naoConformes++;
-        divergencias.push({ grandeza: m.grandeza, etapa: e.etapa, motivo: r.motivo ?? '' });
+        divergencias.push({ grandeza: m.grandeza, etapa: e.etapa, escopo: e.escopo ?? null, motivo: r.motivo ?? '' });
       } else pendentes++;
       problemas.push(...validarMedicao(m));
     }

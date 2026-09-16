@@ -1,8 +1,10 @@
 // surface-treatment — vocabulário do Plano de Serviço.
 //
-// Tudo aqui saiu do formulário real (PLANO DE SERVIÇO, e a OS 748 preenchida do Consórcio
-// Ápia-Real). Nomes amplos de propósito: o módulo tem que servir a jateamento, pintura,
-// galvanização ou metalização sem duplicar por cliente.
+// Tudo aqui saiu dos formulários reais em uso (Plano de Serviço e Relatório de Inspeção).
+// Nomes amplos de propósito: o módulo tem que servir a jateamento, pintura, galvanização ou
+// metalização sem duplicar por cliente.
+//
+// Os dados de exemplo são ANONIMIZADOS — cliente e obra entram como identificadores neutros.
 
 /** As etapas do plano. Não são "1ª, 2ª, 3ª demão": são POSIÇÕES FIXAS no esquema de pintura. */
 export const ETAPA = ['jateamento', 'fundo', 'intermediario_i', 'intermediario_ii', 'acabamento'] as const;
@@ -19,6 +21,10 @@ export const ETAPA_ROTULO: Record<Etapa, string> = {
 /** Como a conformidade de uma medição é julgada. */
 export const TIPO_MEDIDA = ['faixa', 'minimo', 'categorico'] as const;
 export type TipoMedida = (typeof TIPO_MEDIDA)[number];
+
+/** Uma etapa pode ser dividida por ESCOPO: a mesma demão aplicada a partes diferentes da obra
+ *  (escadas e guarda-corpos, por exemplo) são registros independentes, com medições próprias. */
+export type Escopo = string;
 
 /** O que se mede em cada etapa. Cada uma é uma linha ESPECIFICADO | ENCONTRADO | DATA |
  *  RESPONSÁVEL PROCESSO | RESPONSÁVEL INSPEÇÃO — o átomo do formulário. */

@@ -5,35 +5,71 @@
 import { useMemo, useState } from 'react';
 import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '@/os/regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
-import { ETAPAS_748, ITENS_748, OS_748, TINTAS_748 } from '@/os/os748';
+import { ORDENS, type OrdemServico } from '@/os/exemplos';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
 export function PlanoServico() {
-  const [etapas, setEtapas] = useState<EtapaPreenchida[]>(ETAPAS_748);
+  const [ordens, setOrdens] = useState<OrdemServico[]>(ORDENS);
+  const [ativa, setAtiva] = useState(0);
+  const os = ordens[ativa];
+  const etapas = os.etapas;
   const resumo = useMemo(() => resumirOs(etapas), [etapas]);
 
   function editar(etapaIdx: number, medIdx: number, campo: 'especificado' | 'encontrado', valor: string) {
-    setEtapas((atual) => atual.map((e, i) => i !== etapaIdx ? e : {
-      ...e,
-      medicoes: e.medicoes.map((m, j) => j !== medIdx ? m : { ...m, [campo]: valor }),
+    setOrdens((todas) => todas.map((o, oi) => oi !== ativa ? o : {
+      ...o,
+      etapas: o.etapas.map((e, i) => i !== etapaIdx ? e : {
+        ...e,
+        medicoes: e.medicoes.map((m, j) => j !== medIdx ? m : { ...m, [campo]: valor }),
+      }),
     }));
   }
-
-  const divergeRip = OS_748.ripOsDeclarada !== OS_748.folio;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
-        titulo={`Plano de Serviço · OS ${OS_748.folio}`}
-        sub={`${OS_748.cliente} — ${OS_748.obraProjeto} · ${OS_748.equipamento} · pintura ${OS_748.pintura}`}
+        titulo="Ordens de Serviço"
+        sub="Cada OS tem o esquema do seu cliente. O sistema compara especificado e encontrado."
       />
 
-      {divergeRip && (
-        <div style={S.alertaCrit}>
-          <strong>O RIP {OS_748.ripNumero} declara a OS {OS_748.ripOsDeclarada}, mas esta é a {OS_748.folio}.</strong>{' '}
-          Dígitos trocados na transcrição — o relatório que foi ao cliente aponta para uma OS que
-          não existe. Com o RIP saindo desta tela, isso deixa de ser possível.
+      <div style={S.abas}>
+        {ordens.map((o, i) => {
+          const r = resumirOs(o.etapas);
+          const sel = i === ativa;
+          return (
+            <button key={o.id} onClick={() => setAtiva(i)} style={{
+              ...S.aba,
+              background: sel ? c.superficie : 'transparent',
+              borderColor: sel ? c.acentoMarca : c.linha,
+              borderBottomColor: sel ? c.superficie : c.linha,
+            }}>
+              <span style={{ fontWeight: sel ? 700 : 500, fontSize: 14 }}>{o.folio}</span>
+              <span style={S.abaSub}>{o.cliente} · {o.equipamento}</span>
+              <span style={pastilha(r.liberavel ? 'ok' : r.naoConformes ? 'critico' : 'alerta')}>
+                {r.liberavel ? 'liberável' : r.naoConformes ? `${r.naoConformes} divergência${r.naoConformes > 1 ? 's' : ''}` : `${r.pendentes} pendente${r.pendentes > 1 ? 's' : ''}`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={S.ident}>
+        <Campo rot="Cliente" val={os.cliente} />
+        <Campo rot="Obra" val={os.obra ?? '— não consta'} />
+        <Campo rot="Equipamento" val={os.equipamento} />
+        <Campo rot="Pintura" val={os.pintura} />
+        <Campo rot="Emitido por" val={os.emitidoPor} />
+        <Campo rot="Verificado por" val={os.verificadoPor} />
+        {os.ripNumero && <Campo rot="RIP" val={`${os.ripNumero} · folha ${os.ripFolha}`} mono />}
+      </div>
+
+      {os.observacoes.length > 0 && (
+        <div style={S.obs}>
+          <div style={S.obsTit}>O que o documento de origem não permite afirmar</div>
+          <ul style={S.obsLista}>
+            {os.observacoes.map((o, i) => <li key={i}>{o}</li>)}
+          </ul>
         </div>
       )}
 
@@ -54,21 +90,24 @@ export function PlanoServico() {
 
       <div style={S.esquema}>
         <span style={S.esquemaRot}>Esquema de pintura do cliente</span>
-        <span style={S.esquemaVal}>{OS_748.esquemaPintura}</span>
+        <span style={S.esquemaVal}>{os.esquemaPintura}</span>
       </div>
 
       {etapas.map((e, ei) => {
         if (!e.ativa) {
           return (
-            <div key={e.etapa} style={S.inativa}>
+            <div key={`${e.etapa}-inativa`} style={S.inativa}>
               {ETAPA_ROTULO[e.etapa]} — não faz parte do esquema deste cliente
             </div>
           );
         }
-        const tinta = TINTAS_748[e.etapa];
+        const tinta = os.tintas[e.etapa];
         return (
-          <div key={e.etapa} style={{ ...s.cartao, overflow: 'hidden' }}>
-            <div style={S.faixaEtapa}>{ETAPA_ROTULO[e.etapa]}</div>
+          <div key={`${e.etapa}-${e.escopo ?? ''}`} style={{ ...s.cartao, overflow: 'hidden' }}>
+            <div style={S.faixaEtapa}>
+              {ETAPA_ROTULO[e.etapa]}
+              {e.escopo && <span style={S.escopo}>{e.escopo}</span>}
+            </div>
 
             {tinta && (
               <div style={S.tinta}>
@@ -138,7 +177,7 @@ export function PlanoServico() {
       <div style={{ ...s.cartao, padding: '16px 20px' }}>
         <div style={S.tituloBloco}>Itens</div>
         <div style={S.itens}>
-          {ITENS_748.map((i) => (
+          {os.itens.map((i) => (
             <span key={i.descricao} style={S.item}>
               <strong>{i.quantidade}{i.unidade}</strong> {i.descricao}
             </span>
@@ -147,8 +186,7 @@ export function PlanoServico() {
       </div>
 
       <div style={S.rodape}>
-        Emitido por {OS_748.emitidoPor} · verificado por {OS_748.verificadoPor}.
-        Sem banco ainda — o que mudar aqui vive só nesta aba.
+        Transcrito dos documentos originais. Sem banco ainda — o que mudar aqui vive só nesta aba.
       </div>
     </div>
   );
@@ -164,9 +202,29 @@ function Campo({ rot, val, mono }: { rot: string; val: string; mono?: boolean })
 }
 
 const S: Record<string, React.CSSProperties> = {
-  alertaCrit: {
-    padding: '12px 16px', borderRadius: 3, background: c.criticoFraco,
-    border: `1px solid ${c.critico}`, color: c.critico, fontSize: 13.5, lineHeight: 1.55,
+  obs: {
+    padding: '14px 18px', borderRadius: 3, background: c.superficie2,
+    border: `1px solid ${c.linhaForte}`, borderLeft: `3px solid ${c.alerta}`,
+  },
+  obsTit: {
+    fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+    color: c.alerta, marginBottom: 8,
+  },
+  obsLista: { margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6, color: c.tinta2 },
+  abas: { display: 'flex', gap: 6, borderBottom: `1px solid ${c.linha}`, marginBottom: -1 },
+  aba: {
+    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px',
+    border: '1px solid', borderRadius: '3px 3px 0 0', cursor: 'pointer',
+    fontFamily: fonte.texto, color: c.tinta,
+  },
+  abaSub: { fontSize: 12, color: c.suave },
+  ident: {
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 14,
+    padding: '16px 20px', background: c.superficie, border: `1px solid ${c.linhaForte}`, borderRadius: 3,
+  },
+  escopo: {
+    marginLeft: 10, padding: '2px 8px', borderRadius: 2, background: c.acentoFraco,
+    border: `1px solid ${c.acentoMarca}`, color: c.acento, fontSize: 10.5, letterSpacing: '.05em',
   },
   contadores: {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))',
