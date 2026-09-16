@@ -4,6 +4,7 @@
 // As regras que leem estes dados estão em `plataforma/documentos.ts` e não sabem que a Minasjato
 // existe — trocar de empresa é trocar este arquivo por outro.
 import { registrar, type PerfilDaEmpresa } from '@/plataforma/empresa';
+import { APURACOES, INDICADORES } from './minasjato.indicadores';
 import {
   SEM_CODIGO,
   type Acesso, type DocumentoMestre, type Legenda, type ListaMestraMeta, type Natureza,
@@ -240,6 +241,8 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
   },
+  indicadores: INDICADORES,
+  apuracoes: APURACOES,
   modulos: ['surface-treatment', 'ssma'],
 });
 

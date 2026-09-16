@@ -9,12 +9,11 @@ import { Diagnostico } from '@/telas/Diagnostico';
 import { PlanoServico } from '@/telas/PlanoServico';
 import { Vencimentos } from '@/telas/Vencimentos';
 import { Instrumentos } from '@/telas/Instrumentos';
+import { Indicadores } from '@/telas/Indicadores';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { Registros } from '@/telas/Registros';
-import {
-  MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE,
-} from '@/plataforma/formularios';
+import { MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE } from '@/plataforma/formularios';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
@@ -156,7 +155,7 @@ export function App() {
         {rota === 'propriedade-cliente' && <Registros def={PROPRIEDADE_CLIENTE} />}
         {rota === 'mudanca-producao' && <Registros def={MUDANCA_PRODUCAO} />}
         {rota === 'nao-conformidade' && <Registros def={NAO_CONFORMIDADE} />}
-        {rota === 'indicadores' && <Registros def={MONITORAMENTO_SGQ} />}
+        {rota === 'indicadores' && <Indicadores />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

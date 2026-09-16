@@ -10,6 +10,7 @@
 // aqui. Se o valor é o mesmo para todo mundo que jateia e pinta, mora no módulo setorial
 // (`src/os`). Se é o mesmo para qualquer setor, mora na plataforma (`src/plataforma`).
 import type { Documentacao } from './documentos';
+import type { Apuracao, Indicador } from './indicadores';
 
 /** Quanto o medido pode se afastar do especificado antes de virar não conformidade.
  *  É número combinado com cada empresa — não existe tolerância universal. */
@@ -44,6 +45,10 @@ export interface PerfilDaEmpresa {
   /** Qual código desta empresa cumpre cada papel. O que ela não tem, fica de fora — e a tela
    *  correspondente avisa em vez de quebrar. */
   formularios: Partial<Record<PapelDeFormulario, string>>;
+  /** Os indicadores do SGQ desta empresa, e o que já foi apurado de cada um. Cada cliente
+   *  acompanha os seus: não há lista de indicadores que sirva para todo mundo. */
+  indicadores?: Indicador[];
+  apuracoes?: Apuracao[];
   /** Os módulos setoriais que esta empresa usa. Quem não jateia não recebe surface-treatment. */
   modulos: string[];
   /** Verdadeiro para o perfil em branco que serve de ponto de partida ao próximo cliente. */
