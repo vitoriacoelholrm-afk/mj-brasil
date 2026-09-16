@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { texto as anonimizarTexto, vazamentos } from './src/demo/anonimizar';
 
 // Load gitignored secrets into the dev process so the dev-API middleware can reach the DB/Supabase.
 // (Production: env vars on Vercel; this block is a no-op when .env.local is absent.)
@@ -71,12 +72,50 @@ function trpcDevApi() {
   };
 }
 
+// Modo demonstração (VITE_DEMO=1): reescreve os textos no PACOTE GERADO, não em tempo de execução.
+// A diferença importa: trocar no runtime deixaria os nomes reais como literais dentro do .js, e
+// quem abrisse o código-fonte da página os veria. Aqui eles não chegam a ser escritos.
+function anonimizarDemo() {
+  return {
+    name: 'anonimizar-demo',
+    apply: 'build' as const,
+    enforce: 'post' as const,
+    // O HTML não passa pelo gancho dos chunks — precisa do seu.
+    transformIndexHtml(html: string) {
+      const limpo = anonimizarTexto(html);
+      const sobrou = vazamentos(limpo);
+      if (sobrou.length) throw new Error(`index.html da demonstração ainda contém: ${sobrou.join(', ')}`);
+      return limpo;
+    },
+    generateBundle(_opcoes: unknown, pacote: Record<string, any>) {
+      for (const arquivo of Object.values(pacote)) {
+        if (arquivo.type === 'chunk') arquivo.code = anonimizarTexto(arquivo.code);
+        else if (typeof arquivo.source === 'string') arquivo.source = anonimizarTexto(arquivo.source);
+      }
+      // Trava: se sobrou algum termo real, o build falha em vez de publicar.
+      for (const arquivo of Object.values(pacote)) {
+        const conteudo = arquivo.type === 'chunk' ? arquivo.code : arquivo.source;
+        if (typeof conteudo !== 'string') continue;
+        const sobrou = vazamentos(conteudo);
+        if (sobrou.length) {
+          throw new Error(`Build de demonstração ainda contém: ${sobrou.join(', ')}`);
+        }
+      }
+    },
+  };
+}
+
+const EH_DEMO = process.env.VITE_DEMO === '1';
+
 export default defineConfig({
   // tsconfigPaths resolves the per-app @astralitics/* aliases that `astralitics install` writes into
   // tsconfig.base.json. Without it vite has no idea what '@astralitics/entities' is, so the dev-API
   // middleware fails to load ANY installed module's Functions - typecheck and vitest passed while
   // the running app's request path was broken.
-  plugins: [tsconfigPaths({ projects: ['../../tsconfig.base.json'] }), react(), trpcDevApi()],
+  plugins: [
+    tsconfigPaths({ projects: ['../../tsconfig.base.json'] }), react(), trpcDevApi(),
+    ...(EH_DEMO ? [anonimizarDemo()] : []),
+  ],
   resolve: { alias: { '@': join(__dirname, 'src') } },
   // Transpile the workspace TS packages the dev-API imports (instead of externalizing them as CJS).
   ssr: { noExternal: ['@app/trpc', '@app/db'] },

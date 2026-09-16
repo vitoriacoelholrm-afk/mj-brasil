@@ -6,8 +6,9 @@ import { createTRPCClient, httpBatchLink, TRPCClientError } from '@trpc/client';
 import type { AppRouter } from '@app/trpc';
 import { supabase } from '@/chassis/supabase';
 import { membershipAtual } from '@/lib/session';
+import { apiDemo } from '@/demo/api';
 
-export const trpc = createTRPCClient<AppRouter>({
+const clienteReal = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: '/api/trpc',
@@ -23,5 +24,8 @@ export const trpc = createTRPCClient<AppRouter>({
     }),
   ],
 });
+
+/** No build de demonstração não existe servidor: as telas falam com dados fixos, só leitura. */
+export const trpc = (import.meta.env?.VITE_DEMO === '1' ? apiDemo : clienteReal) as typeof clienteReal;
 
 export { TRPCClientError };

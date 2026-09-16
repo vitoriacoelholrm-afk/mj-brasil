@@ -102,7 +102,11 @@ export function App() {
         </div>
       </header>
 
-      <div style={S.faixaDev}>Ambiente de desenvolvimento — entrada sem senha, dados locais.</div>
+      <div style={S.faixaDev}>
+        {import.meta.env?.VITE_DEMO === '1'
+          ? 'Demonstração — nomes de empresas, obras e pessoas foram substituídos. As telas ligadas ao banco são só de leitura aqui.'
+          : 'Ambiente de desenvolvimento — entrada sem senha, dados locais.'}
+      </div>
 
       {filhas && filhas.length > 1 && (
         <div style={S.subnav}>

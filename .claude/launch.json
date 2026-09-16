@@ -4,8 +4,28 @@
     {
       "name": "mj-brasil-web",
       "runtimeExecutable": "C:/Users/Vitor/.local/bin/pnpm.exe",
-      "runtimeArgs": ["--filter", "web", "dev"],
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "dev"
+      ],
       "port": 5273
+    },
+    {
+      "name": "mj-brasil-demo",
+      "runtimeExecutable": "C:/Users/Vitor/.local/bin/pnpm.exe",
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "exec",
+        "vite",
+        "preview",
+        "--outDir",
+        "dist-demo",
+        "--port",
+        "5274"
+      ],
+      "port": 5274
     }
   ]
 }
