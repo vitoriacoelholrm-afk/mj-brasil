@@ -13,18 +13,18 @@ describe('cada duplicidade vira uma decisão com código concreto', () => {
     const p = de('FM-011')!;
     expect(p.tipo).toBe('renumerar');
     expect(p.titulo).toContain('SWOT');
-    expect(p.para).toBe('FM-022');   // segue do maior, não preenche buraco
+    expect(p.para).toBe('FM-023');   // segue do maior, não preenche buraco
   });
 
   it('o que usa prefixo de fora entra na numeração da casa', () => {
-    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-023' });
-    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-024' });
+    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-024' });
+    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-025' });
   });
 
   it('os cinco registros sem código recebem código, um cada', () => {
     const cadastros = plano.propostas.filter((p) => p.tipo === 'cadastrar');
     expect(cadastros).toHaveLength(5);
-    expect(cadastros.map((p) => p.para)).toEqual(['FM-025', 'FM-026', 'FM-027', 'FM-028', 'FM-029']);
+    expect(cadastros.map((p) => p.para)).toEqual(['FM-026', 'FM-027', 'FM-028', 'FM-029', 'FM-030']);
   });
 
   it('nenhum código proposto colide com um que já existe', () => {
@@ -88,14 +88,14 @@ describe('depois do alinhamento', () => {
   it('nenhum documento da Minasjato ficou fora do catálogo padrão', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
     expect(c.extras).toEqual([]);
-    expect(c.atendidos.length).toBe(45);
+    expect(c.atendidos.length).toBe(47);
   });
 
-  it('o que falta continua sendo só o que a norma exige', () => {
+  it('não falta mais nada contra o catálogo padrão', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
-    // Eram 4; os dois formulários novos fecharam a 8.5.3 e a 8.5.6.
-    expect(c.faltando.map((f) => f.chave)).toEqual(['saida_nao_conforme', 'monitoramento_medicao']);
-    expect(c.faltando.every((f) => f.exigencia === 'norma')).toBe(true);
+    // Eram 6 em 16/09 de manhã. Fecharam em três rodadas: o manual, os dois formulários da
+    // 8.5.3/8.5.6, e por último a 8.7.2 (no RNC que já existia) e a 9.1.1 (documento novo).
+    expect(c.faltando).toEqual([]);
   });
 
   it('a Minasjato usa dois módulos: o do setor e o de segurança', () => {

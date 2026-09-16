@@ -1,0 +1,152 @@
+// As definições de formulário.
+//
+// O que estes testes guardam é a NORMA, não a tela. Um campo obrigatório aqui não é preferência
+// de quem desenhou: é a frase da cláusula virada em regra. Se alguém tirar um deles, o registro
+// passa a fechar sem provar o que a norma manda provar — e ninguém percebe até a auditoria.
+import { describe, it, expect } from 'vitest';
+import {
+  FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE,
+  campoVisivel, formularioDoPapel, pendencias, resumoDoRegistro,
+  type FormularioDef, type Valores,
+} from './formularios';
+import { MINASJATO } from '@/empresas/minasjato';
+
+const obrigatorios = (def: FormularioDef) =>
+  def.campos.filter((c) => c.obrigatorio).map((c) => c.chave);
+
+const faltando = (def: FormularioDef, valores: Valores) =>
+  pendencias(def, valores).map((c) => c.chave);
+
+/* ══ 1. Coerência — vale para qualquer definição, inclusive as que ainda não existem ═════════ */
+
+describe('toda definição se sustenta sozinha', () => {
+  it.each(FORMULARIOS.map((d) => [d.titulo, d] as const))('%s', (_titulo, def) => {
+    const chaves = def.campos.map((c) => c.chave);
+    expect(new Set(chaves).size, 'chave repetida').toBe(chaves.length);
+
+    for (const campo of def.campos) {
+      // Escolha sem opção é uma caixa vazia; opção em campo que não é escolha ninguém lê.
+      if (campo.tipo === 'escolha') expect(campo.opcoes?.length, campo.chave).toBeGreaterThan(1);
+      else expect(campo.opcoes, campo.chave).toBeUndefined();
+
+      // Dependência para campo que não existe esconde o campo para sempre — e, se ele for
+      // obrigatório, o registro nunca fecha e ninguém entende por quê.
+      if (campo.dependeDe) {
+        expect(chaves, campo.chave).toContain(campo.dependeDe.campo);
+        const pai = def.campos.find((c) => c.chave === campo.dependeDe!.campo)!;
+        const valores = pai.tipo === 'sim_nao' ? ['Sim', 'Não'] : pai.opcoes!;
+        expect(valores, campo.chave).toContain(campo.dependeDe.valor);
+      }
+    }
+  });
+
+  it('todo formulário tem cláusula e explicação — é o que a tela mostra no topo', () => {
+    for (const def of FORMULARIOS) {
+      expect(def.clausula, def.papel).toMatch(/\d/);
+      expect(def.explicacao.length, def.papel).toBeGreaterThan(40);
+    }
+  });
+
+  it('todo papel definido tem código na empresa, senão a tela não sabe que documento é', () => {
+    for (const def of FORMULARIOS) {
+      expect(MINASJATO.formularios[def.papel], def.papel).toMatch(/^FM-\d{3}$/);
+      expect(formularioDoPapel(def.papel)).toBe(def);
+    }
+  });
+});
+
+/* ══ 2. A 8.7.2 — o que se fez com a PEÇA ════════════════════════════════════════════════════ */
+
+const RNC_MINIMO: Valores = {
+  detectadaEm: '2026-09-16', detectadaPor: 'Marcos Teixeira', origem: 'Inspeção final',
+  peca: 'Câmara MOD-250 nº 14',
+  descricao: 'Espessura de 62 µm no ponto 4; especificado 100 µm.',
+  disposicao: 'Sucateamento', acoesTomadas: 'Peça segregada e descartada.',
+  concessao: 'Não', autoridade: 'Sofia Lima',
+};
+
+describe('8.7.2 — a saída não conforme', () => {
+  it('os quatro campos da cláusula são obrigatórios', () => {
+    // a) descreva a NC · b) descreva as ações tomadas · c) as concessões · d) quem decidiu.
+    expect(obrigatorios(NAO_CONFORMIDADE)).toEqual(expect.arrayContaining([
+      'descricao', 'disposicao', 'concessao', 'autoridade',
+    ]));
+  });
+
+  it('com os quatro preenchidos, o registro fecha', () => {
+    expect(faltando(NAO_CONFORMIDADE, RNC_MINIMO)).toEqual([]);
+  });
+
+  it('sem dizer quem decidiu, não fecha — é o campo que quase todo RNC esquece', () => {
+    expect(faltando(NAO_CONFORMIDADE, { ...RNC_MINIMO, autoridade: '' })).toEqual(['autoridade']);
+  });
+
+  it('dizer que houve concessão obriga a dizer de quem e quando', () => {
+    // Concessão é o cliente aceitar por escrito. "Houve" sem nome e sem data não prova nada.
+    expect(faltando(NAO_CONFORMIDADE, { ...RNC_MINIMO, concessao: 'Sim' }))
+      .toEqual(['concedidaPor', 'concessaoEm']);
+  });
+
+  it('peça retrabalhada tem de ser reverificada; peça sucateada, não', () => {
+    const rever = NAO_CONFORMIDADE.campos.find((c) => c.chave === 'reverificado')!;
+    expect(campoVisivel(rever, { disposicao: 'Sucateamento' })).toBe(false);
+    expect(campoVisivel(rever, { disposicao: 'Correção / retrabalho' })).toBe(true);
+    expect(faltando(NAO_CONFORMIDADE, { ...RNC_MINIMO, disposicao: 'Correção / retrabalho' }))
+      .toEqual(['reverificado']);
+  });
+
+  it('a causa e a ação corretiva não travam o registro — são 10.2.2, e vêm depois', () => {
+    // Exigir a causa na hora de abrir o RNC faz a pessoa inventar uma para conseguir salvar.
+    for (const chave of ['causa', 'acaoCorretiva', 'eficaciaVerificadaPor']) {
+      expect(obrigatorios(NAO_CONFORMIDADE), chave).not.toContain(chave);
+    }
+  });
+});
+
+/* ══ 3. A 9.1.1 — o indicador do sistema ═════════════════════════════════════════════════════ */
+
+const INDICADOR: Valores = {
+  periodo: 'Agosto/2026', indicador: 'Retrabalho por OS', meta: 'até 5%', resultado: '3,2%',
+  atingiu: 'Sim', analise: 'Terceiro mês dentro da meta.',
+  apuradoPor: 'Ana Ribeiro', data: '2026-09-01',
+};
+
+describe('9.1.1 — os indicadores', () => {
+  it('meta atingida fecha o registro', () => {
+    expect(faltando(MONITORAMENTO_SGQ, INDICADOR)).toEqual([]);
+  });
+
+  it('meta NÃO atingida exige a ação — indicador estourado sem ação é achado', () => {
+    expect(faltando(MONITORAMENTO_SGQ, { ...INDICADOR, atingiu: 'Não' })).toEqual(['acao']);
+  });
+
+  it('a análise é obrigatória: a 9.1.3 pede dado analisado, não dado coletado', () => {
+    expect(faltando(MONITORAMENTO_SGQ, { ...INDICADOR, analise: '' })).toEqual(['analise']);
+  });
+
+  it('a linha da lista mostra período e indicador, que é como se procura', () => {
+    expect(resumoDoRegistro(MONITORAMENTO_SGQ, INDICADOR))
+      .toBe('Agosto/2026 · Retrabalho por OS · até 5%');
+  });
+});
+
+/* ══ 4. As duas de 16/09, que continuam valendo ══════════════════════════════════════════════ */
+
+describe('8.5.3 e 8.5.6 seguem em pé', () => {
+  it('a 8.5.3 pede comunicar E registrar: marcar que comunicou abre os campos da prova', () => {
+    const base: Valores = {
+      cliente: 'Cliente A Indústria Ltda', peca: 'Câmara MOD-250 nº 14',
+      ocorrencia: 'Danificada', descricao: 'Flange amassado no transporte.',
+      data: '2026-09-16', constatadoPor: 'Marcos Teixeira', comunicado: 'Não',
+    };
+    expect(faltando(PROPRIEDADE_CLIENTE, base)).toEqual([]);
+    expect(faltando(PROPRIEDADE_CLIENTE, { ...base, comunicado: 'Sim' }))
+      .toEqual(['comunicadoA', 'comunicadoEm']);
+  });
+
+  it('a 8.5.6 retém as três coisas: resultado, quem autorizou e as ações', () => {
+    expect(obrigatorios(MUDANCA_PRODUCAO)).toEqual(expect.arrayContaining([
+      'resultado', 'autorizadoPor',
+    ]));
+  });
+});

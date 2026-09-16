@@ -114,7 +114,7 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
   d('saida_nao_conforme', 'Controle de Saída Não Conforme', 'formulario', 'Qualidade', ['8.7.2'], 'norma', 'FR-009',
     { comoAtender: 'Talvez já exista: confira se o formulário de RNC tem os quatro campos que a 8.7.2 pede — descrição da não conformidade, ações tomadas, concessão obtida e quem decidiu. Se tiver, é só apontar a chave para ele. Se faltar campo, acrescente.' }),
   d('monitoramento_medicao', 'Resultados de Monitoramento e Medição', 'formulario', 'Qualidade', ['9.1.1'], 'norma', 'FR-010',
-    { comoAtender: 'Parte já existe no relatório de inspeção, que mede o produto. O que falta é o registro dos indicadores do SGQ — o número que a análise crítica pela direção consome. Uma planilha por período resolve.' }),
+    { papel: 'monitoramento_sgq', comoAtender: 'Parte já existe no relatório de inspeção, que mede o produto. O que falta é o registro dos indicadores do SGQ — o número que a análise crítica pela direção consome. Uma planilha por período resolve.' }),
   d('auditoria_interna', 'Programa e Resultados de Auditoria Interna', 'formulario', 'Gestão da Qualidade', ['9.2.2'], 'norma', 'FR-011',
     { papel: 'plano_auditoria' }),
   d('analise_critica_direcao', 'Resultados da Análise Crítica pela Direção', 'formulario', 'Gestão da Qualidade', ['9.3.3'], 'norma', 'FR-012'),

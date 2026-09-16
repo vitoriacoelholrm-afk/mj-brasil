@@ -134,9 +134,10 @@ export const CATALOGADOS: DocumentoMestre[] = [
     tela: 'plano',
     nota: 'O documento que vai ao cliente como prova de conformidade. O app o gera a partir da FM-001, sem redigitar.',
   }),
-  catalogado('FM-003', 'Formulário — Relatório de Não Conformidade (RNC)', 'formulario', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padroes: ['nao_conformidade'],
+  catalogado('FM-003', 'Formulário — Relatório de Não Conformidade (RNC)', 'formulario', 'Gestão da Qualidade', 'RQ', ['8.7.2', '10.2'], 'irrestrito', {
+    padroes: ['nao_conformidade', 'saida_nao_conforme'], tela: 'nao-conformidade',
     codigosParalelos: ['MJ-FORM-NC-01', 'MJ-FORM-RNC'],
-    nota: 'Dois arquivos diferentes se declaram este mesmo formulário.',
+    nota: 'Dois arquivos diferentes se declaram este mesmo formulário. Atende duas cláusulas: a 8.7.2 quer saber o que se fez com a PEÇA, a 10.2.2 o que se fez com a CAUSA.',
   }),
   catalogado('FM-004', 'Formulário — Pesquisa de Satisfação do Cliente', 'formulario', 'Comercial', 'Ger. Comercial', ['9.1.2'], 'irrestrito', { padroes: ['satisfacao_cliente'] }),
   catalogado('FM-005', 'Formulário — Plano de Ação (5W2H)', 'formulario', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padroes: ['plano_acao'] }),
@@ -156,6 +157,14 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('FM-021', 'Formulário — Análise Crítica de Mudança na Produção', 'formulario', 'Operações', 'Ger. Operações', ['8.5.6'], 'irrestrito', {
     padroes: ['mudanca_producao'], tela: 'mudanca-producao',
     nota: 'Criado em 16/09/2026 para fechar a falta da 8.5.6. Retém o resultado da análise, quem autorizou e as ações necessárias.',
+  }),
+
+  // A 9.1.1 pede o resultado do que se monitora. O relatório de inspeção já mede o PRODUTO;
+  // o que faltava era o indicador do SISTEMA — o número que a direção consome na análise
+  // crítica. Entra em FM-022 porque a numeração segue do maior.
+  catalogado('FM-022', 'Formulário — Indicadores do SGQ', 'formulario', 'Gestão da Qualidade', 'RQ', ['9.1.1'], 'irrestrito', {
+    padroes: ['monitoramento_medicao'], tela: 'indicadores',
+    nota: 'Criado em 16/09/2026 para fechar a falta da 9.1.1. Um registro por indicador e por período — é assim que se compara com o período anterior.',
   }),
 
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
@@ -227,6 +236,7 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     registro_treinamento: 'FM-009',
     propriedade_cliente: 'FM-020',
     mudanca_producao: 'FM-021',
+    monitoramento_sgq: 'FM-022',
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
   },

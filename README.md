@@ -17,7 +17,7 @@ Abre em `http://localhost:5273`. Não precisa de banco: as telas de OS e Lista M
 memória. A entrada é sem senha — é ambiente de desenvolvimento, e a faixa amarela no topo diz isso.
 
 ```bash
-cd apps/web && npx vitest run   # 150 testes
+cd apps/web && npx vitest run   # 170 testes
 ```
 
 ## As três camadas
@@ -47,7 +47,7 @@ linha de regra muda.
 | `src/plataforma/documentos.ts` | o motor de controle de documentos. Não cita empresa nenhuma |
 | `src/os/regras.ts` | `avaliarMedicao` — a comparação entre especificado e encontrado |
 | `src/os/documentos.ts` | `gerarRelatorio` e `compararComRelatorio` |
-| `src/empresas/minasjato.ts` | os 49 documentos da lista mestra dela, e a tolerância combinada |
+| `src/empresas/minasjato.ts` | os 50 documentos da lista mestra dela, e a tolerância combinada |
 | `src/empresas/modelo.ts` | o ponto de partida do próximo cliente |
 
 ## O que os testes provam
@@ -75,7 +75,8 @@ fecha em zero, e o que o papel dizia de diferente fica guardado em `noPapel`.
 
 - As telas de OS e Lista Mestra rodam em memória; falta migrar para o banco.
 - A autenticação do portal do cliente não existe ainda — a entrada atual é só de desenvolvimento.
-- Os módulos de não conformidade e ação corretiva ainda não foram construídos.
+- A não conformidade tem registro (FM-003, §8.7.2 e 10.2.2), mas não tem fluxo: falta prazo,
+  responsável e acompanhamento até o fechamento.
 - `apps/web/src/modules/*` são células gerenciadas, instaladas pelo CLI `astralitics`. Não editar
   à mão.
 

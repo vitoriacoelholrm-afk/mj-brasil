@@ -103,8 +103,8 @@ describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
   it('depois do alinhamento, todo documento dela aponta para um padrão', () => {
-    expect(c.atendidos.length).toBe(45);
-    expect(percentualCoberto(c)!).toBeGreaterThan(0.95);
+    expect(c.atendidos.length).toBe(47);
+    expect(percentualCoberto(c)).toBe(1);
   });
 
   it('o manual sozinho atende três padrões: ele mesmo, o escopo e a política', () => {
@@ -116,14 +116,26 @@ describe('a Minasjato medida contra o padrão', () => {
     expect(manual.exclusoes?.[0].requisito).toContain('8.3');
   });
 
-  it('o que falta é tudo coisa que a norma exige — nenhuma falta é de prática', () => {
-    expect(faltasDeNorma(c).map((x) => x.chave)).toEqual([
-      'saida_nao_conforme', 'monitoramento_medicao',
-    ]);
-    // E todas as quatro são RETER — registro que nasce do fato, não texto que se escreve.
-    expect(faltasDeNorma(c).every((x) => x.retencao === 'reter')).toBe(true);
-    expect(faltasDeNorma(c).every((x) => Boolean(x.comoAtender))).toBe(true);
-    expect(c.faltando.filter((x) => x.exigencia === 'pratica')).toEqual([]);
+  it('não falta mais nada — nem do que a norma exige, nem de prática', () => {
+    // Eram 6 em 16/09. As duas últimas fecharam de maneiras diferentes, e a diferença importa:
+    // a 9.1.1 precisou de documento novo, a 8.7.2 não. Ver o teste abaixo.
+    expect(faltasDeNorma(c)).toEqual([]);
+    expect(c.faltando).toEqual([]);
+  });
+
+  it('a 8.7.2 fechou SEM documento novo: o RNC já era o lugar dela', () => {
+    // O catálogo dizia "talvez já exista, confira os quatro campos". Existia. Criar um FM novo
+    // teria dado à Minasjato dois formulários para o mesmo fato — e é assim que nasce o
+    // desencontro que a lista mestra existe para evitar.
+    const saida = c.atendidos.find((a) => a.padrao.chave === 'saida_nao_conforme')!;
+    expect(saida.locais.map((d) => d.codigo)).toEqual(['FM-003']);
+    expect(saida.locais[0].padroes).toContain('nao_conformidade');
+  });
+
+  it('a 9.1.1 precisou de documento novo: o indicador do sistema não existia', () => {
+    const medicao = c.atendidos.find((a) => a.padrao.chave === 'monitoramento_medicao')!;
+    expect(medicao.locais.map((d) => d.codigo)).toEqual(['FM-022']);
+    expect(medicao.padrao.retencao).toBe('reter');   // nasce do fato, não se escreve antes
   });
 
   it('não sobra nada: até o que é de outra norma achou lugar', () => {

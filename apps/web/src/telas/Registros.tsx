@@ -182,7 +182,7 @@ function Formulario({
         {faltando.length > 0 && (
           <span style={S.faltando}>
             Falta preencher: {faltando.map((f) => f.rotulo).join(', ')}.
-            {' '}São os campos que a §{def.clausula} exige.
+            {' '}São os campos exigidos pela ISO 9001:2015 §{def.clausula}.
           </span>
         )}
       </div>

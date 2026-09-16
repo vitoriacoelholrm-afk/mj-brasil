@@ -12,13 +12,16 @@ import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { Registros } from '@/telas/Registros';
-import { MUDANCA_PRODUCAO, PROPRIEDADE_CLIENTE } from '@/plataforma/formularios';
+import {
+  MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE,
+} from '@/plataforma/formularios';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/documentos/listaMestra';   // registra as empresas
 
-export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra' | 'propriedade-cliente' | 'mudanca-producao';
+export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra' | 'propriedade-cliente' | 'mudanca-producao'
+  | 'nao-conformidade' | 'indicadores';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
@@ -28,6 +31,8 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
   { rotulo: 'Qualidade', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Lista Mestra', rota: 'lista-mestra' },
+    { rotulo: 'Não Conformidades', rota: 'nao-conformidade' },
+    { rotulo: 'Indicadores', rota: 'indicadores' },
     { rotulo: 'Propriedade do Cliente', rota: 'propriedade-cliente' },
     { rotulo: 'Mudanças na Produção', rota: 'mudanca-producao' },
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
@@ -43,6 +48,8 @@ const DOMINIO: Record<Rota, string> = {
   plano: 'Ordens de Serviço',
   diagnostico: 'Qualidade',
   'lista-mestra': 'Qualidade',
+  'nao-conformidade': 'Qualidade',
+  indicadores: 'Qualidade',
   'propriedade-cliente': 'Qualidade',
   'mudanca-producao': 'Qualidade',
   vencimentos: 'Qualidade',
@@ -148,6 +155,8 @@ export function App() {
         {rota === 'lista-mestra' && <ListaMestra />}
         {rota === 'propriedade-cliente' && <Registros def={PROPRIEDADE_CLIENTE} />}
         {rota === 'mudanca-producao' && <Registros def={MUDANCA_PRODUCAO} />}
+        {rota === 'nao-conformidade' && <Registros def={NAO_CONFORMIDADE} />}
+        {rota === 'indicadores' && <Registros def={MONITORAMENTO_SGQ} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

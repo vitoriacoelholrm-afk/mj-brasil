@@ -97,7 +97,90 @@ export const MUDANCA_PRODUCAO: FormularioDef = {
   ],
 };
 
-export const FORMULARIOS: FormularioDef[] = [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO];
+/* ══ 8.7.2 — Controle de saídas não conformes ═════════════════════════════════════════════════
+   "A organização deve reter informação documentada que: a) descreva a não conformidade;
+   b) descreva as ações tomadas; c) descreva as concessões obtidas; d) identifique a autoridade
+   que decide a ação com relação à não conformidade."
+
+   Quatro coisas, e as quatro são obrigatórias aqui. A "d" é a que mais falta na prática: o
+   formulário diz o que foi feito com a peça e não diz QUEM decidiu — e é exatamente isso que o
+   auditor pergunta.
+
+   O mesmo registro atende também a 10.2.2 (ação corretiva), que é o bloco de baixo. São duas
+   cláusulas num formulário só porque é um fato só: a peça saiu errada. O que a 8.7.2 quer saber
+   é o que se fez com a PEÇA; o que a 10.2.2 quer saber é o que se fez com a CAUSA.              */
+
+export const NAO_CONFORMIDADE: FormularioDef = {
+  papel: 'nao_conformidade',
+  titulo: 'Relatório de Não Conformidade (RNC)',
+  clausula: '8.7.2 e 10.2.2',
+  explicacao:
+    'Produto ou serviço que saiu fora do especificado. O que a norma pede é o que se fez com a peça, a concessão se houve, e o nome de quem decidiu — sem isso o registro não prova nada.',
+  campos: [
+    { chave: 'detectadaEm', rotulo: 'Detectada em', tipo: 'data', obrigatorio: true },
+    { chave: 'detectadaPor', rotulo: 'Detectada por', tipo: 'pessoa', obrigatorio: true },
+    {
+      chave: 'origem', rotulo: 'Onde apareceu', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Recebimento', 'Durante o processo', 'Inspeção final', 'Reclamação do cliente', 'Auditoria'],
+    },
+    { chave: 'os', rotulo: 'Ordem de serviço', tipo: 'texto', ajuda: 'A OS em que a peça estava.' },
+    { chave: 'peca', rotulo: 'Peça ou lote', tipo: 'texto', obrigatorio: true },
+    { chave: 'descricao', rotulo: 'Descrição da não conformidade', tipo: 'texto_longo', obrigatorio: true, ajuda: 'O que estava especificado e o que se encontrou. Número contra número, não "fora do padrão".' },
+
+    {
+      chave: 'disposicao', rotulo: 'O que foi feito com a peça', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Correção / retrabalho', 'Segregação', 'Reclassificação', 'Devolução ao fornecedor', 'Sucateamento', 'Liberação sob concessão'],
+      ajuda: 'A norma chama isto de ação tomada. É o destino da peça, não a ação sobre a causa.',
+    },
+    { chave: 'acoesTomadas', rotulo: 'Como foi feito', tipo: 'texto_longo', obrigatorio: true },
+    { chave: 'reverificado', rotulo: 'Reverificado depois da correção', tipo: 'sim_nao', obrigatorio: true, dependeDe: { campo: 'disposicao', valor: 'Correção / retrabalho' }, ajuda: 'Peça corrigida tem de ser conferida de novo contra o especificado. A 8.7.1 é explícita nisso.' },
+
+    { chave: 'concessao', rotulo: 'Houve concessão do cliente', tipo: 'sim_nao', obrigatorio: true, ajuda: 'Concessão é o cliente aceitar por escrito uma peça fora do especificado. Se houve, tem de estar registrada.' },
+    { chave: 'concedidaPor', rotulo: 'Concedida por quem', tipo: 'texto', obrigatorio: true, dependeDe: { campo: 'concessao', valor: 'Sim' }, ajuda: 'Nome e cargo de quem, do lado do cliente, autorizou.' },
+    { chave: 'concessaoEm', rotulo: 'Concedida em', tipo: 'data', obrigatorio: true, dependeDe: { campo: 'concessao', valor: 'Sim' } },
+
+    { chave: 'autoridade', rotulo: 'Quem decidiu a disposição', tipo: 'pessoa', obrigatorio: true, ajuda: 'A autoridade que decidiu o destino da peça. É o campo que a 8.7.2 exige e que quase todo RNC esquece.' },
+
+    { chave: 'causa', rotulo: 'Causa', tipo: 'texto_longo', ajuda: 'Daqui para baixo é a 10.2.2: o que se faz para não acontecer de novo.' },
+    { chave: 'acaoCorretiva', rotulo: 'Ação corretiva', tipo: 'texto_longo' },
+    { chave: 'eficaciaVerificadaPor', rotulo: 'Eficácia verificada por', tipo: 'pessoa' },
+    { chave: 'eficaciaEm', rotulo: 'Eficácia verificada em', tipo: 'data' },
+  ],
+};
+
+/* ══ 9.1.1 — Monitoramento, medição, análise e avaliação ══════════════════════════════════════
+   "A organização deve reter informação documentada apropriada como evidência dos resultados."
+
+   Parte disto já existe: o relatório de inspeção mede o PRODUTO. O que faltava é o indicador do
+   SISTEMA — o número que a direção olha na análise crítica. Um registro por indicador e por
+   período, porque é assim que ele é apurado e é assim que se compara com o período anterior.
+
+   O campo de ação é obrigatório só quando a meta NÃO foi atingida: indicador que estourou e
+   ninguém fez nada é achado de auditoria, não é registro.                                       */
+
+export const MONITORAMENTO_SGQ: FormularioDef = {
+  papel: 'monitoramento_sgq',
+  titulo: 'Indicadores do SGQ',
+  clausula: '9.1.1',
+  explicacao:
+    'O resultado apurado de cada indicador do sistema, período a período. É a matéria-prima da análise crítica pela direção — sem estes números, a reunião não tem o que analisar.',
+  campos: [
+    { chave: 'periodo', rotulo: 'Período', tipo: 'texto', obrigatorio: true, ajuda: 'Setembro/2026, 3º trimestre/2026 — o mesmo recorte todo período, senão não dá para comparar.' },
+    { chave: 'indicador', rotulo: 'Indicador', tipo: 'texto', obrigatorio: true, ajuda: 'Por exemplo: retrabalho por OS, reclamações de cliente, prazo cumprido, RNC abertas, satisfação do cliente.' },
+    { chave: 'oQueMede', rotulo: 'Como é apurado', tipo: 'texto_longo', ajuda: 'De onde sai o número. A norma pede o método, e é o que permite outra pessoa apurar igual no mês seguinte.' },
+    { chave: 'meta', rotulo: 'Meta', tipo: 'texto', obrigatorio: true },
+    { chave: 'resultado', rotulo: 'Resultado', tipo: 'texto', obrigatorio: true },
+    { chave: 'atingiu', rotulo: 'Atingiu a meta', tipo: 'sim_nao', obrigatorio: true },
+    { chave: 'analise', rotulo: 'Análise', tipo: 'texto_longo', obrigatorio: true, ajuda: 'O que o número diz. A 9.1.3 pede que os dados sejam analisados, não só coletados.' },
+    { chave: 'acao', rotulo: 'Ação', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'atingiu', valor: 'Não' }, ajuda: 'Meta não atingida sem ação registrada é achado de auditoria.' },
+    { chave: 'apuradoPor', rotulo: 'Apurado por', tipo: 'pessoa', obrigatorio: true },
+    { chave: 'data', rotulo: 'Data da apuração', tipo: 'data', obrigatorio: true },
+  ],
+};
+
+
+export const FORMULARIOS: FormularioDef[] =
+  [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, MONITORAMENTO_SGQ];
 
 export function formularioDoPapel(papel: PapelDeFormulario): FormularioDef | null {
   return FORMULARIOS.find((f) => f.papel === papel) ?? null;
