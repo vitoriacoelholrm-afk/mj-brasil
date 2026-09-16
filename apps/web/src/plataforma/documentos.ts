@@ -44,6 +44,9 @@ export interface DocumentoMestre {
   revisaoNoArquivo?: { revisao: string; data: string };
   /** A tela do app que emite ou consome este documento. */
   tela?: string;
+  /** A chave do documento padrão que este aqui cumpre. É a IDENTIDADE — o código é só o apelido
+   *  local. Sem isto não dá para comparar duas empresas nem saber o que falta. */
+  padrao?: string;
   /** Verdadeiro quando o documento circula sem entrada própria na lista mestra. */
   foraDaLista?: boolean;
   nota?: string;

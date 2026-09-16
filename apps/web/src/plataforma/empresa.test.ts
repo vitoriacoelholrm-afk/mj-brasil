@@ -63,17 +63,17 @@ describe('a codificação é da empresa, não da plataforma', () => {
 
     definirEmpresaAtiva('modelo');
     expect(() => doc('FM-001')).toThrowError(/não está na lista mestra desta empresa/);
-    expect(doc('FOR-001').titulo).toContain('Ordem de Serviço');
-    expect(carimbo('FOR-001')).toBe('FOR-001 rev. 00');
+    expect(doc('FR-101').titulo).toContain('Ordem de Serviço');
+    expect(carimbo('FR-101')).toBe('FR-101 rev. 00');
   });
 
   it('a legenda de prefixos é outra, e o motor lê a de quem está ativa', () => {
     definirEmpresaAtiva('minasjato');
     expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'PSSMA-001')).toBe('Procedimento de SSMA');
-    expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'POP-001')).toBeNull();
+    expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'FR-001')).toBeNull();
 
     definirEmpresaAtiva('modelo');
-    expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'POP-001')).toBe('Procedimento Operacional Padrão');
+    expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'PR-001')).toBe('Procedimento');
     expect(significadoDoPrefixo(empresaAtiva().documentacao.legenda, 'PSSMA-001')).toBeNull();
   });
 
@@ -81,7 +81,7 @@ describe('a codificação é da empresa, não da plataforma', () => {
     const docsMJ = empresas().find((e) => e.id === 'minasjato')!.documentacao.documentos;
     const docsModelo = empresas().find((e) => e.id === 'modelo')!.documentacao.documentos;
     expect(proximoCodigoLivre(docsMJ, 'FM')).toBe('FM-012');
-    expect(proximoCodigoLivre(docsModelo, 'FOR')).toBe('FOR-002');
+    expect(proximoCodigoLivre(docsModelo, 'MQ')).toBe('MQ-005');
   });
 
   it('a tela pede o PAPEL do formulário, não o código — por isso serve as duas', () => {
@@ -91,14 +91,18 @@ describe('a codificação é da empresa, não da plataforma', () => {
     expect(carimboDoPapel('relatorio_inspecao')).toBe('FM-002 rev. 00');
 
     definirEmpresaAtiva('modelo');
-    expect(codigoDoPapel('ordem_servico')).toBe('FOR-001');
-    expect(carimboDoPapel('ordem_servico')).toBe('FOR-001 rev. 00');
+    expect(codigoDoPapel('ordem_servico')).toBe('FR-101');
+    expect(carimboDoPapel('ordem_servico')).toBe('FR-101 rev. 00');
   });
 
-  it('o papel que a empresa não tem devolve null, e a tela avisa em vez de quebrar', () => {
+  it('papel que a empresa não tem devolve null, e a tela avisa em vez de quebrar', () => {
+    // A empresa modelo não usa romaneio nem pedido de compra em papel próprio.
+    definirEmpresaAtiva('minasjato');
+    expect(codigoDoPapel('romaneio')).toBe('FM-007');
+    // Um papel que nenhuma das duas cadastrou.
+    expect(codigoDoPapel('plano_auditoria' as never)).toBeTruthy();
     definirEmpresaAtiva('modelo');
-    expect(codigoDoPapel('relatorio_inspecao')).toBeNull();
-    expect(carimboDoPapel('relatorio_inspecao')).toBeNull();
+    expect(codigoDoPapel('romaneio')).toBe('FR-019');
   });
 
   it('a lista mestra de cada uma tem código e norma próprios', () => {
@@ -140,7 +144,7 @@ describe('as mesmas sete verificações, resultados diferentes', () => {
 
   it('acharDoc é puro: recebe os documentos, não vai buscar empresa nenhuma', () => {
     const docs = empresas().find((e) => e.id === 'modelo')!.documentacao.documentos;
-    expect(acharDoc(docs, 'MAN-001').titulo).toBe('Manual da Qualidade');
+    expect(acharDoc(docs, 'MQ-004').titulo).toBe('Manual da Qualidade');
   });
 });
 

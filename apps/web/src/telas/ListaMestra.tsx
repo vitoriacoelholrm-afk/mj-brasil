@@ -10,6 +10,9 @@ import {
   type Conflito, type DocumentoMestre, type TipoConflito,
 } from '@/documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
+import {
+  cobertura, faltasDeNorma, percentualCoberto, type DocumentoPadrao,
+} from '@/plataforma/catalogoPadrao';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
@@ -24,6 +27,7 @@ export function ListaMestra() {
   const LISTA_MESTRA = listaMestra();
   const LISTA_MESTRA_META = listaMestraMeta();
   const cs = useMemo(() => conflitos(), [empresa.id]);
+  const cob = useMemo(() => cobertura(LISTA_MESTRA, empresa.modulos), [empresa.id]);
   const atraso = diasAte(LISTA_MESTRA_META.proximaRevisao);
 
   const comProblema = useMemo(() => new Set(cs.map((x) => x.codigo).filter(Boolean)), [cs]);
@@ -78,6 +82,8 @@ export function ListaMestra() {
           </span>
         ))}
       </div>
+
+      <Cobertura cob={cob} />
 
       {porTipo.map(([tipo, lista]) => (
         <div key={tipo} style={{ ...s.cartao, overflow: 'hidden' }}>
@@ -134,6 +140,78 @@ export function ListaMestra() {
         cláusula da ISO 9001:2015, local de armazenamento e nível de acesso. Mais o que circula sem
         entrada própria.
       </div>
+    </div>
+  );
+}
+
+/** A empresa medida contra o catálogo padrão. É o diagnóstico que a consultoria entrega, e o
+ *  cálculo é o mesmo para qualquer cliente — só o dado muda. */
+function Cobertura({ cob }: { cob: ReturnType<typeof cobertura> }) {
+  const pct = percentualCoberto(cob);
+  const exigidas = faltasDeNorma(cob);
+  const praticas = cob.faltando.filter((f) => f.exigencia === 'pratica');
+
+  return (
+    <div style={{ ...s.cartao, overflow: 'hidden' }}>
+      <div style={S.faixa}>
+        <span>Cobertura do catálogo padrão</span>
+        <span style={pastilha(exigidas.length ? 'critico' : 'ok')}>
+          {pct === null ? '—' : `${Math.round(pct * 100)}% coberto`}
+        </span>
+      </div>
+
+      <div style={S.contadores}>
+        <Contador n={cob.atendidos.length} rot="atendidos" cor={c.ok} />
+        <Contador n={exigidas.length} rot="faltam · a norma exige" cor={c.critico} />
+        <Contador n={praticas.length} rot="faltam · prática" cor={c.alerta} />
+        <Contador n={cob.extras.length} rot="fora do padrão" cor={c.suave} fim />
+      </div>
+
+      {exigidas.length > 0 && (
+        <div>
+          <div style={S.subFaixa}>Falta, e a norma exige — vira não conformidade em auditoria</div>
+          {exigidas.map((f) => <LinhaPadrao key={f.chave} p={f} grave />)}
+        </div>
+      )}
+
+      {praticas.length > 0 && (
+        <div>
+          <div style={S.subFaixa}>Falta, mas é prática — a norma não exige, e é escolha da empresa</div>
+          {praticas.map((f) => <LinhaPadrao key={f.chave} p={f} />)}
+        </div>
+      )}
+
+      {cob.extras.length > 0 && (
+        <div style={S.extras}>
+          <div style={S.tituloBloco}>Fora do padrão — {cob.extras.length} documentos</div>
+          <div style={S.nota}>
+            Não é defeito por si: pode ser requisito legal, do cliente ou de outra norma. Mas cada um
+            precisa ser olhado, porque é assim que também nasce documento que ninguém usa.
+          </div>
+          <div style={S.itens}>
+            {cob.extras.map((d) => (
+              <span key={d.codigo} style={S.item} title={d.titulo}>{d.codigo}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinhaPadrao({ p, grave }: { p: DocumentoPadrao; grave?: boolean }) {
+  return (
+    <div style={{ ...S.conflito, borderLeftColor: grave ? c.critico : c.alerta }}>
+      <div style={S.conflitoTopo}>
+        <span style={{ fontFamily: fonte.mono, fontSize: 12.5, color: c.suave }}>
+          {p.clausulas.join(', ')}
+        </span>
+        <span style={{ fontSize: 13.5, color: c.tinta, fontWeight: 600 }}>{p.titulo}</span>
+        <span style={{ fontFamily: fonte.mono, fontSize: 11.5, color: c.acento }}>
+          sugerido: {p.codigoSugerido}
+        </span>
+      </div>
+      {p.nota && <div style={{ ...S.conflitoDetalhe, ...s.prosa }}>{p.nota}</div>}
     </div>
   );
 }
@@ -232,6 +310,21 @@ const S: Record<string, React.CSSProperties> = {
   conflitoTopo: { display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' },
   conflitoDetalhe: { fontSize: 13, color: c.tinta2, marginTop: 5, lineHeight: 1.55 },
   nota: { fontSize: 11.5, color: c.suave, marginTop: 5, lineHeight: 1.5 },
+  subFaixa: {
+    padding: '8px 18px', background: c.superficie2, borderTop: `1px solid ${c.linha}`,
+    borderBottom: `1px solid ${c.linha}`,
+    fontSize: 11.5, fontWeight: 600, color: c.tinta2,
+  },
+  extras: { padding: '14px 18px', borderTop: `1px solid ${c.linhaForte}`, background: c.superficie2 },
+  tituloBloco: {
+    fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+    color: c.suave, marginBottom: 8,
+  },
+  itens: { display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  item: {
+    fontFamily: fonte.mono, fontSize: 12, padding: '3px 8px', borderRadius: 3,
+    border: `1px solid ${c.linhaForte}`, background: c.superficie, color: c.tinta2,
+  },
   subLinha: { fontSize: 11.5, color: c.suave, marginTop: 3 },
   categorias: { display: 'flex', flexWrap: 'wrap', gap: 8 },
   categoria: {
