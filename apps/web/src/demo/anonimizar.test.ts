@@ -64,6 +64,21 @@ describe('nada real sobra depois da troca', () => {
     expect(vazamentos('relatório da WEIR do Brasil Ltda')).toContain('WEIR do Brasil Ltda');
     expect(TROCAS.length).toBeGreaterThan(30);
   });
+
+  it('acha o termo em qualquer caixa — foi assim que dois escaparam para o ar', () => {
+    // O pacote publicado trazia `id:"minasjato"` e a frase 'Rip Weir 01'. Os dois estavam
+    // cadastrados, mas em OUTRA caixa ('Minasjato', 'WEIR'), e a busca comparava caixa.
+    expect(vazamentos('id: minasjato')).toContain('Minasjato');
+    expect(vazamentos('Rip Weir 01 OK')).toContain('WEIR');
+  });
+
+  it('e devolve na caixa que couber no lugar', () => {
+    // Identificador continua identificador: sem espaco e sem acento, senao o perfil some.
+    expect(texto('minasjato')).toBe('industria-alfa');
+    expect(texto('Rip Weir 01')).toBe('Rip CLI-A 01');
+    expect(texto('RIP WEIR-04')).toBe('RIP CLI-A-04');
+    expect(texto('Minasjato')).toBe('Indústria Alfa');   // na tela, com acento
+  });
 });
 
 describe('a API da demonstração', () => {

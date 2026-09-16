@@ -17,7 +17,7 @@ Abre em `http://localhost:5273`. Não precisa de banco: as telas de OS e Lista M
 memória. A entrada é sem senha — é ambiente de desenvolvimento, e a faixa amarela no topo diz isso.
 
 ```bash
-pnpm --filter web test      # 94 testes
+cd apps/web && npx vitest run   # 150 testes
 ```
 
 ## As três camadas
@@ -47,7 +47,7 @@ linha de regra muda.
 | `src/plataforma/documentos.ts` | o motor de controle de documentos. Não cita empresa nenhuma |
 | `src/os/regras.ts` | `avaliarMedicao` — a comparação entre especificado e encontrado |
 | `src/os/documentos.ts` | `gerarRelatorio` e `compararComRelatorio` |
-| `src/empresas/minasjato.ts` | os 47 documentos da lista mestra dela, e a tolerância combinada |
+| `src/empresas/minasjato.ts` | os 49 documentos da lista mestra dela, e a tolerância combinada |
 | `src/empresas/modelo.ts` | o ponto de partida do próximo cliente |
 
 ## O que os testes provam
@@ -78,6 +78,21 @@ fecha em zero, e o que o papel dizia de diferente fica guardado em `noPapel`.
 - Os módulos de não conformidade e ação corretiva ainda não foram construídos.
 - `apps/web/src/modules/*` são células gerenciadas, instaladas pelo CLI `astralitics`. Não editar
   à mão.
+
+## A demonstração
+
+A demo que vai ao cliente **não sai deste repositório**. Ela é um build à parte
+(`VITE_DEMO=1`), publicado num repositório público separado que contém só o pacote gerado —
+nenhum código-fonte, nenhum dado real.
+
+```bash
+cd apps/web && VITE_DEMO=1 npx vite build --base=./ --outDir dist-demo
+```
+
+A troca de nomes acontece no **pacote gerado**, não em tempo de execução: os nomes reais não
+chegam a ser escritos no arquivo publicado. Se algum sobrar, o build falha em vez de publicar.
+A busca ignora a caixa — foi exatamente por comparar caixa que `minasjato` (no id do perfil) e
+`Weir` (no meio de uma frase copiada de um documento) passaram para o ar uma vez.
 
 ## Aviso
 

@@ -35,6 +35,7 @@ const TROCAS: [string, string][] = [
 
   // Pessoas
   ['Vitória Coelho Mendes', 'Ana Ribeiro'],
+  ['Vitória Coelho', 'Ana Ribeiro'],
   ['Leandro Santos', 'Carlos Dias'],
   ['Gustavo Moreira', 'Paulo Nunes'],
   ['Emerson William de Faria', 'Marcos Teixeira'],
@@ -67,12 +68,29 @@ const TROCAS: [string, string][] = [
 ];
 
 const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const REGRAS: [RegExp, string][] = TROCAS.map(([de, para]) => [new RegExp(escapar(de), 'g'), para]);
+const REGRAS: [RegExp, string][] = TROCAS.map(([de, para]) => [new RegExp(escapar(de), 'gi'), para]);
+
+/** Identificador não aceita espaço nem acento: `id: 'minasjato'` tem de virar outro
+ *  identificador, não "Indústria Alfa" — senão o app troca de nome e para de se achar. */
+const identificador = (s: string) =>
+  s.normalize('NFD').replace(/[^ -~]/g, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+
+/** O mesmo termo real aparece em caixas diferentes conforme onde mora: na tela, no id do
+ *  perfil, no meio de uma frase copiada do documento. Procurar só pela caixa cadastrada
+ *  deixava as outras passarem — e passou: duas foram parar no pacote publicado. Agora acha
+ *  sem olhar a caixa, e devolve na caixa que couber no lugar. */
+function naCaixaDe(achado: string, para: string): string {
+  const temLetra = achado.toLowerCase() !== achado.toUpperCase();
+  if (!temLetra) return para;
+  if (achado === achado.toLowerCase()) return identificador(para);
+  if (achado === achado.toUpperCase()) return para.toUpperCase();
+  return para;
+}
 
 /** Troca os termos num texto. Pura — dá para testar sem ligar o modo demo. */
 export function texto(s: string): string {
   let saida = s;
-  for (const [de, para] of REGRAS) saida = saida.replace(de, para);
+  for (const [de, para] of REGRAS) saida = saida.replace(de, (achado) => naCaixaDe(achado, para));
   return saida;
 }
 
@@ -97,7 +115,8 @@ export function seDemo<T>(valor: T): T {
 
 /** Sobrou algum termo real? Serve de trava no teste e de conferência antes de publicar. */
 export function vazamentos(texto: string): string[] {
-  return TROCAS.map(([de]) => de).filter((de) => texto.includes(de));
+  const alvo = texto.toLowerCase();
+  return TROCAS.map(([de]) => de).filter((de) => alvo.includes(de.toLowerCase()));
 }
 
 export { TROCAS };
