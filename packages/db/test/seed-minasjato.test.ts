@@ -81,14 +81,18 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
   });
 
   it('cadastra os instrumentos de medição e suas calibrações', async () => {
-    // Instrumentos do INT-02 da SWOT, com os certificados de março/2026.
-    // Vencimento conforme F-02 ("recalibração Mar/2027") — note que o MJ-CAL-01 §8.1
-    // define DOIS ANOS para estes mesmos instrumentos: a divergência está sinalizada.
+    // Fonte agora é o RIP CAR-01-2026 (documento que vai ao cliente), não a SWOT.
+    // O MJ-CAL-01 §8.1 define DOIS ANOS para estes instrumentos, mas as validades reais são de
+    // pouco mais de um ano — a divergência de periodicidade continua sinalizada no diagnóstico.
+    // Corrigido em 16/09/2026 a partir do RIP CAR-01-2026, que traz a tabela "Equipamentos
+    // Utilizados" com aparelho, número, modelo, certificado, marca e validade. A primeira versão
+    // deste seed associou os certificados na ordem em que aparecem na SWOT — e os quatro ficaram
+    // trocados. Os códigos MJ-INS-00x também eram invenção: os reais são os da coluna "Número".
     const instrumentos = [
-      { code: 'MJ-INS-001', name: 'Medidor de espessura de filme seco', cert: 'M008200/2026' },
-      { code: 'MJ-INS-002', name: 'Rugosímetro', cert: 'M007787/2026' },
-      { code: 'MJ-INS-003', name: 'Termo-higrômetro', cert: 'M007811/2026' },
-      { code: 'MJ-INS-004', name: 'Termômetro infravermelho', cert: '171032' },
+      { code: '232212', name: 'Medidor de camada seca', modelo: 'MCT-401', marca: 'Minipa', cert: '171032', vence: '2027-03-24' },
+      { code: 'RL-01', name: 'Rugosímetro', modelo: 'S/M', marca: 'Medtec', cert: 'M008200/2026', vence: '2027-03-23' },
+      { code: 'TH-003', name: 'Termo-higrômetro', modelo: 'MT-241A', marca: 'Minipa', cert: 'M007787/2026', vence: '2027-03-18' },
+      { code: 'TEV-04', name: 'Termômetro laser', modelo: 'TEV-04', marca: 'Hikari', cert: 'M007811/2026', vence: '2027-03-28' },
     ];
 
     // `area` usa a área real da Minasjato: o Laboratório da Qualidade, onde o MJ-CAL-01 guarda os
@@ -112,12 +116,12 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
           holderId: assetId,
           holderLabel: `${i.code} — ${i.name}`,
           kind: 'calibracao',
-          title: 'Certificado de calibração RBC/INMETRO',
+          title: `Certificado de calibração RBC/INMETRO — ${i.marca} ${i.modelo}`,
           number: i.cert,
           issuingAuthority: 'Laboratório acreditado RBC/INMETRO',
           issuedAt: '2026-03-15',
-          expiresAt: '2027-03-15',
-          notes: 'ABNT NBR ISO/IEC 17025:2017',
+          expiresAt: i.vence,
+          notes: 'ABNT NBR ISO/IEC 17025:2017 · conferido contra o RIP CAR-01-2026',
         } as any);
       }
 
