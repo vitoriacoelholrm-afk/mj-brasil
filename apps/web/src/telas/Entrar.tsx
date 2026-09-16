@@ -28,8 +28,9 @@ export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
         </div>
 
         <p style={S.aviso}>
-          Entrada de desenvolvimento, sem senha. Vale apenas nesta máquina, com o servidor de
-          desenvolvimento. Autenticação de verdade entra antes de publicar.
+          {import.meta.env?.VITE_DEMO === '1'
+            ? 'Demonstração: escolha qualquer pessoa para entrar, sem senha. Os nomes de empresas e de pessoas foram substituídos. Autenticação de verdade entra antes de publicar.'
+            : 'Entrada de desenvolvimento, sem senha. Vale apenas nesta máquina, com o servidor de desenvolvimento. Autenticação de verdade entra antes de publicar.'}
         </p>
       </div>
     </div>
