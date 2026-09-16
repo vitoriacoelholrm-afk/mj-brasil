@@ -11,8 +11,11 @@ import {
 } from '@/documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
 import {
-  cobertura, faltasDeNorma, percentualCoberto, type DocumentoPadrao,
+  EXIGENCIA_ROTULO, cobertura, faltasDeNorma, percentualCoberto, type DocumentoPadrao,
 } from '@/plataforma/catalogoPadrao';
+import {
+  PROPOSTA_ROTULO, planoDeUnificacao, resumoDoPlano, type PlanoDeUnificacao, type Proposta,
+} from '@/plataforma/unificacao';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
@@ -28,6 +31,7 @@ export function ListaMestra() {
   const LISTA_MESTRA_META = listaMestraMeta();
   const cs = useMemo(() => conflitos(), [empresa.id]);
   const cob = useMemo(() => cobertura(LISTA_MESTRA, empresa.modulos), [empresa.id]);
+  const plano = useMemo(() => planoDeUnificacao(empresa.documentacao, empresa.modulos), [empresa.id]);
   const atraso = diasAte(LISTA_MESTRA_META.proximaRevisao);
 
   const comProblema = useMemo(() => new Set(cs.map((x) => x.codigo).filter(Boolean)), [cs]);
@@ -85,6 +89,8 @@ export function ListaMestra() {
 
       <Cobertura cob={cob} />
 
+      <Unificacao plano={plano} />
+
       {porTipo.map(([tipo, lista]) => (
         <div key={tipo} style={{ ...s.cartao, overflow: 'hidden' }}>
           <div style={S.faixa}>
@@ -140,6 +146,73 @@ export function ListaMestra() {
         cláusula da ISO 9001:2015, local de armazenamento e nível de acesso. Mais o que circula sem
         entrada própria.
       </div>
+    </div>
+  );
+}
+
+/** De duplicidade para decisão. Cada linha diz o que sai, o que fica e por quê — com código
+ *  concreto, para a conversa com o cliente não ficar em "isso está duplicado". */
+function Unificacao({ plano }: { plano: PlanoDeUnificacao }) {
+  const r = resumoDoPlano(plano);
+  if (r.total === 0 && r.agrupados === 0) return null;
+
+  const porTipo = (['renumerar', 'cadastrar', 'fundir', 'aposentar_codigo', 'conciliar_revisao'] as const)
+    .map((tipo) => [tipo, plano.propostas.filter((p) => p.tipo === tipo)] as const)
+    .filter(([, lista]) => lista.length > 0);
+
+  return (
+    <div style={{ ...s.cartao, overflow: 'hidden' }}>
+      <div style={S.faixa}>
+        <span>Plano de unificação</span>
+        <span style={pastilha(r.graves ? 'critico' : r.total ? 'alerta' : 'ok')}>
+          {r.total === 0 ? 'nada a unificar' : `${r.total} decisõe${r.total > 1 ? 's' : ''}`}
+        </span>
+      </div>
+
+      {porTipo.map(([tipo, lista]) => (
+        <div key={tipo}>
+          <div style={S.subFaixa}>{PROPOSTA_ROTULO[tipo]} — {lista.length}</div>
+          {lista.map((p, i) => <LinhaProposta key={`${tipo}-${i}`} p={p} />)}
+        </div>
+      ))}
+
+      {plano.agrupados.length > 0 && (
+        <div style={S.extras}>
+          <div style={S.tituloBloco}>Mais de um documento no mesmo padrão — {plano.agrupados.length}</div>
+          <div style={{ ...S.nota, ...s.prosa }}>
+            Isto <strong>não</strong> é duplicidade e não entrou no plano. O procedimento diz como se
+            faz, o formulário é o registro, a instrução é o passo a passo na máquina — e duas demãos
+            diferentes são dois procedimentos legítimos. Fundir às cegas perderia informação.
+          </div>
+          {plano.agrupados.map((g) => (
+            <div key={g.padrao.chave} style={S.grupo}>
+              <span style={S.grupoTitulo}>{g.padrao.titulo}</span>
+              <span style={S.grupoDocs}>
+                {g.documentos.map((d) => (
+                  <span key={d.codigo} style={S.item} title={d.titulo}>
+                    {d.codigo.startsWith(SEM_CODIGO) ? 'sem código' : d.codigo}
+                    <span style={{ color: c.suave }}> · {NATUREZA_ROTULO[d.natureza].toLowerCase()}</span>
+                  </span>
+                ))}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinhaProposta({ p }: { p: Proposta }) {
+  return (
+    <div style={{ ...S.conflito, borderLeftColor: p.gravidade === 'alta' ? c.critico : c.alerta }}>
+      <div style={S.conflitoTopo}>
+        <span style={S.de}>{p.de}</span>
+        <span style={{ color: c.suave }}>→</span>
+        <span style={S.para}>{p.para}</span>
+        <span style={{ fontSize: 13, color: c.tinta2 }}>{p.titulo}</span>
+      </div>
+      <div style={{ ...S.conflitoDetalhe, ...s.prosa }}>{p.porque}</div>
     </div>
   );
 }
@@ -210,6 +283,7 @@ function LinhaPadrao({ p, grave }: { p: DocumentoPadrao; grave?: boolean }) {
         <span style={{ fontFamily: fonte.mono, fontSize: 11.5, color: c.acento }}>
           sugerido: {p.codigoSugerido}
         </span>
+        <span style={{ fontSize: 11, color: c.suave }}>{EXIGENCIA_ROTULO[p.exigencia]}</span>
       </div>
       {p.nota && <div style={{ ...S.conflitoDetalhe, ...s.prosa }}>{p.nota}</div>}
     </div>
@@ -316,6 +390,11 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 11.5, fontWeight: 600, color: c.tinta2,
   },
   extras: { padding: '14px 18px', borderTop: `1px solid ${c.linhaForte}`, background: c.superficie2 },
+  de: { fontFamily: fonte.mono, fontSize: 12.5, color: c.critico, textDecoration: 'line-through' },
+  para: { fontFamily: fonte.mono, fontSize: 13, color: c.ok, fontWeight: 700 },
+  grupo: { display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 10 },
+  grupoTitulo: { fontSize: 13, color: c.tinta, fontWeight: 600, minWidth: 200 },
+  grupoDocs: { display: 'flex', gap: 6, flexWrap: 'wrap' },
   tituloBloco: {
     fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
     color: c.suave, marginBottom: 8,

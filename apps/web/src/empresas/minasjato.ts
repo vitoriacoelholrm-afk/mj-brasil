@@ -72,30 +72,30 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('PG-001', 'Controle de Documentos e Registros', 'procedimento', 'Gestão da Qualidade', 'RQ', ['7.5'], 'irrestrito', { padrao: 'controle_documentos', codigosParalelos: ['MJ-CDT-01'], tela: 'lista-mestra' }),
   catalogado('PG-002', 'Análise Crítica pela Direção', 'procedimento', 'Gestão da Qualidade', 'Dir. Geral', ['9.3'], 'irrestrito', { padrao: 'analise_critica_direcao' }),
   catalogado('PG-003', 'Gestão de Riscos e Oportunidades', 'procedimento', 'Gestão da Qualidade', 'RQ', ['6.1'], 'irrestrito', { padrao: 'riscos_oportunidades' }),
-  catalogado('PG-004', 'Auditoria Interna', 'procedimento', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito'),
-  catalogado('PG-005', 'Não Conformidade e Ação Corretiva', 'procedimento', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { codigosParalelos: ['MJ-NC-01'] }),
+  catalogado('PG-004', 'Auditoria Interna', 'procedimento', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito', { padrao: 'auditoria_interna' }),
+  catalogado('PG-005', 'Não Conformidade e Ação Corretiva', 'procedimento', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padrao: 'nao_conformidade', codigosParalelos: ['MJ-NC-01'] }),
   catalogado('PG-006', 'Objetivos e Indicadores da Qualidade', 'procedimento', 'Gestão da Qualidade', 'RQ', ['6.2', '9.1'], 'irrestrito', { padrao: 'objetivos_qualidade' }),
 
   catalogado('PC-001', 'Análise Crítica de Pedidos e Contratos', 'procedimento', 'Comercial', 'Ger. Comercial', ['8.2'], 'restrito', { padrao: 'analise_critica_requisitos' }),
-  catalogado('PC-002', 'Elaboração de Orçamentos', 'procedimento', 'Comercial', 'Ger. Orçamentos', ['8.2'], 'restrito', {
+  catalogado('PC-002', 'Elaboração de Orçamentos', 'procedimento', 'Comercial', 'Ger. Orçamentos', ['8.2'], 'restrito', { padrao: 'determinacao_requisitos',
     nota: 'É daqui que sai a especificação que a OS carrega — o que o cliente pediu na hora do orçamento.',
   }),
-  catalogado('PC-003', 'Comunicação com o Cliente', 'procedimento', 'Comercial', 'Ger. Comercial', ['8.2.1'], 'irrestrito'),
+  catalogado('PC-003', 'Comunicação com o Cliente', 'procedimento', 'Comercial', 'Ger. Comercial', ['8.2.1'], 'irrestrito', { padrao: 'comunicacao_cliente' }),
 
-  catalogado('PO-001', 'Recebimento e Inspeção de Entrada de Peças', 'procedimento', 'Operações', 'Ger. Operações', ['8.4', '8.6'], 'irrestrito'),
+  catalogado('PO-001', 'Recebimento e Inspeção de Entrada de Peças', 'procedimento', 'Operações', 'Ger. Operações', ['8.4', '8.6'], 'irrestrito', { padrao: 'recebimento' }),
   catalogado('PO-002', 'Identificação e Rastreabilidade de Peças', 'procedimento', 'Operações', 'Ger. Operações', ['8.5.2'], 'irrestrito', { padrao: 'rastreabilidade',
     codigosParalelos: ['MJ-RAI-01'],
     nota: 'O §8 manda registrar o lote da tinta na ordem de produção. É a cláusula que os Planos de Serviço da WEIR deixavam em branco.',
   }),
   catalogado('PO-003', 'Jateamento Abrasivo Industrial', 'procedimento', 'Operações', 'Ger. Jateamento', ['8.5.1'], 'irrestrito', { padrao: 'st_jateamento', nota: 'Ref. SSPC-SP10 / Sa 2½.' }),
   catalogado('PO-004', 'Aplicação de Primer e Tinta de Fundo', 'procedimento', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito', { padrao: 'st_aplicacao_tinta' }),
-  catalogado('PO-005', 'Aplicação de Tinta de Acabamento', 'procedimento', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito'),
-  catalogado('PO-006', 'Cura e Secagem em Estufa', 'procedimento', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito'),
+  catalogado('PO-005', 'Aplicação de Tinta de Acabamento', 'procedimento', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito', { padrao: 'st_aplicacao_tinta' }),
+  catalogado('PO-006', 'Cura e Secagem em Estufa', 'procedimento', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito', { padrao: 'st_cura' }),
   catalogado('PO-007', 'Planejamento e Controle da Produção (PCP)', 'procedimento', 'Operações', 'Ger. Operações', ['8.1'], 'irrestrito', { padrao: 'caracteristicas_produto' }),
-  catalogado('PO-008', 'Embalagem, Proteção e Expedição de Peças', 'procedimento', 'Operações', 'Logística', ['8.5.4'], 'irrestrito'),
+  catalogado('PO-008', 'Embalagem, Proteção e Expedição de Peças', 'procedimento', 'Operações', 'Logística', ['8.5.4'], 'irrestrito', { padrao: 'expedicao' }),
 
-  catalogado('PQ-001', 'Inspeção de Qualidade — Jateamento', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { nota: 'Ref. ABNT NBR 7348.' }),
-  catalogado('PQ-002', 'Inspeção de Qualidade — Pintura', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { nota: 'Ref. ABNT NBR 12321.' }),
+  catalogado('PQ-001', 'Inspeção de Qualidade — Jateamento', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { padrao: 'st_inspecao_jateamento', nota: 'Ref. ABNT NBR 7348.' }),
+  catalogado('PQ-002', 'Inspeção de Qualidade — Pintura', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { padrao: 'st_inspecao_pintura', nota: 'Ref. ABNT NBR 12321.' }),
   catalogado('PQ-003', 'Medição de Espessura de Película Seca', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { padrao: 'st_medicao_espessura',
     nota: 'Ref. ABNT NBR 10443. É o procedimento onde a tolerância de −10% / +40% precisa estar escrita.',
   }),
@@ -103,20 +103,20 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('PQ-005', 'Controle de Equipamentos de Medição (EMC)', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['7.1.5'], 'irrestrito', { padrao: 'calibracao', codigosParalelos: ['MJ-CAL-01'], tela: 'instrumentos' }),
   catalogado('PQ-006', 'Inspeção de Saída e Liberação de Peças', 'procedimento', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { padrao: 'liberacao_produto' }),
 
-  catalogado('PF-001', 'Qualificação e Avaliação de Fornecedores', 'procedimento', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito'),
-  catalogado('PF-002', 'Controle de Materiais e Insumos', 'procedimento', 'Compras', 'Almoxarifado', ['8.4.3'], 'irrestrito'),
+  catalogado('PF-001', 'Qualificação e Avaliação de Fornecedores', 'procedimento', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padrao: 'avaliacao_fornecedor' }),
+  catalogado('PF-002', 'Controle de Materiais e Insumos', 'procedimento', 'Compras', 'Almoxarifado', ['8.4.3'], 'irrestrito', { padrao: 'controle_insumos' }),
 
   catalogado('PRH-001', 'Competência, Treinamento e Conscientização', 'procedimento', 'RH', 'Ger. RH', ['7.2', '7.3'], 'irrestrito', { padrao: 'competencia_treinamento' }),
-  catalogado('PRH-002', 'Integração de Novos Colaboradores', 'procedimento', 'RH', 'Ger. RH', ['7.2'], 'irrestrito'),
+  catalogado('PRH-002', 'Integração de Novos Colaboradores', 'procedimento', 'RH', 'Ger. RH', ['7.2'], 'irrestrito', { padrao: 'conscientizacao' }),
 
-  catalogado('PSSMA-001', 'Controle de EPI e EPC', 'procedimento', 'SSMA', 'SSMA', ['7.1.4'], 'irrestrito', { local: 'Servidor / Pasta SSMA', nota: 'Ref. NR-6.' }),
-  catalogado('PSSMA-002', 'Gestão de Resíduos Industriais', 'procedimento', 'SSMA', 'SSMA', ['8.5.1'], 'irrestrito', { local: 'Servidor / Pasta SSMA', nota: 'Ref. CONAMA 313.' }),
-  catalogado('PSSMA-003', 'Controle de Produtos Químicos (FISPQ)', 'procedimento', 'SSMA', 'SSMA', ['7.1.4'], 'irrestrito', { local: 'Servidor / Pasta SSMA', nota: 'Ref. NR-26 / ABNT 14725.' }),
+  catalogado('PSSMA-001', 'Controle de EPI e EPC', 'procedimento', 'SSMA', 'SSMA', ['7.1.4'], 'irrestrito', { padrao: 'ssma_epi', local: 'Servidor / Pasta SSMA', nota: 'Ref. NR-6.' }),
+  catalogado('PSSMA-002', 'Gestão de Resíduos Industriais', 'procedimento', 'SSMA', 'SSMA', ['8.5.1'], 'irrestrito', { padrao: 'ssma_residuos', local: 'Servidor / Pasta SSMA', nota: 'Ref. CONAMA 313.' }),
+  catalogado('PSSMA-003', 'Controle de Produtos Químicos (FISPQ)', 'procedimento', 'SSMA', 'SSMA', ['7.1.4'], 'irrestrito', { padrao: 'ssma_quimicos', local: 'Servidor / Pasta SSMA', nota: 'Ref. NR-26 / ABNT 14725.' }),
 
-  catalogado('IT-001', 'IT — Operação do Vaso de Jateamento', 'instrucao', 'Operações', 'Ger. Jateamento', ['8.5.1'], 'irrestrito'),
-  catalogado('IT-002', 'IT — Operação da Pistola Airless', 'instrucao', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito'),
-  catalogado('IT-003', 'IT — Preparação e Mistura de Tintas', 'instrucao', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito'),
-  catalogado('IT-004', 'IT — Uso do Medidor de Espessura', 'instrucao', 'Qualidade', 'Ger. Qualidade', ['7.1.5'], 'irrestrito', { local: 'Lab. Qualidade (físico)' }),
+  catalogado('IT-001', 'IT — Operação do Vaso de Jateamento', 'instrucao', 'Operações', 'Ger. Jateamento', ['8.5.1'], 'irrestrito', { padrao: 'st_it_jateamento' }),
+  catalogado('IT-002', 'IT — Operação da Pistola Airless', 'instrucao', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito', { padrao: 'st_it_aplicacao' }),
+  catalogado('IT-003', 'IT — Preparação e Mistura de Tintas', 'instrucao', 'Operações', 'Ger. Pintura', ['8.5.1'], 'irrestrito', { padrao: 'st_it_aplicacao' }),
+  catalogado('IT-004', 'IT — Uso do Medidor de Espessura', 'instrucao', 'Qualidade', 'Ger. Qualidade', ['7.1.5'], 'irrestrito', { padrao: 'st_it_medicao', local: 'Lab. Qualidade (físico)' }),
   catalogado('IT-005', 'IT — Leitura de Perfil de Rugosidade', 'instrucao', 'Qualidade', 'Ger. Qualidade', ['8.6'], 'irrestrito', { padrao: 'st_rugosidade', local: 'Lab. Qualidade (físico)' }),
 
   catalogado('FM-001', 'Formulário — Ordem de Serviço (OS)', 'formulario', 'Operações', 'Ger. Operações', ['8.5.1'], 'irrestrito', { padrao: 'st_ordem_servico', codigosParalelos: ['MJ-OP-01'], tela: 'plano' }),
@@ -161,20 +161,21 @@ const FORA: DocumentoMestre[] = [
 
   foraDaLista('TR-001', 'Lista de Presença — Treinamento de Maquinário', 'formulario', 'RH',
     'Usa um prefixo (TR) que a Legenda da Lista Mestra não conhece — ela só reconhece MQ, PG, PC, PO, PQ, PF, PRH, PSSMA, IT e FM. É vizinho do FM-009, mas não é o mesmo documento: o LNT levanta a necessidade de treinamento, a Lista de Presença registra quem esteve na sala.',
-    { revisao: '01', clausulas: ['7.2'] }),
+    { revisao: '01', clausulas: ['7.2'], padrao: 'evidencia_competencia' }),
 
   foraDaLista('MJ-FORM-CAL-02', 'Avaliação de Impacto de Calibração', 'formulario', 'Qualidade',
-    'Citado pelo MJ-CAL-01 (o PQ-005), mas o arquivo nunca apareceu.', { clausulas: ['7.1.5'] }),
+    'Citado pelo MJ-CAL-01 (o PQ-005), mas o arquivo nunca apareceu. A 7.1.5.2 exige avaliar o impacto quando um instrumento aparece fora de calibração — é este documento.',
+    { clausulas: ['7.1.5.2'], padrao: 'calibracao' }),
 
-  ...[
-    ['Plano de Calibração', 'Qualidade', '7.1.5'],
-    ['Verificação Interna de Instrumento', 'Qualidade', '7.1.5'],
-    ['Calibração Externa', 'Qualidade', '7.1.5'],
-    ['Solicitação de Alteração de Documento', 'Gestão da Qualidade', '7.5.2'],
-    ['Controle de Distribuição de Documentos', 'Gestão da Qualidade', '7.5.3'],
-  ].map(([titulo, categoria, clausula], i) =>
+  ...([
+    ['Plano de Calibração', 'Qualidade', '7.1.5', 'calibracao'],
+    ['Verificação Interna de Instrumento', 'Qualidade', '7.1.5', 'calibracao'],
+    ['Calibração Externa', 'Qualidade', '7.1.5', 'calibracao'],
+    ['Solicitação de Alteração de Documento', 'Gestão da Qualidade', '7.5.2', 'controle_documentos'],
+    ['Controle de Distribuição de Documentos', 'Gestão da Qualidade', '7.5.3', 'controle_documentos'],
+  ] as const).map(([titulo, categoria, clausula, padrao], i) =>
     foraDaLista(`${SEM_CODIGO}-${String(i + 1).padStart(2, '0')}`, titulo, 'registro', categoria,
-      'Registro em uso, sem código e sem entrada na Lista Mestra.', { clausulas: [clausula] })),
+      'Registro em uso, sem código e sem entrada na Lista Mestra.', { clausulas: [clausula], padrao })),
 ];
 export const LISTA_MESTRA: DocumentoMestre[] = [...CATALOGADOS, ...FORA];
 
@@ -204,7 +205,7 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
   },
-  modulos: ['surface-treatment'],
+  modulos: ['surface-treatment', 'ssma'],
 });
 
 export { META, LEGENDA };

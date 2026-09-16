@@ -12,7 +12,9 @@
 //
 //   exigencia: 'norma'    a ISO 9001:2015 manda manter ou reter esta informação documentada.
 //                         Falta dela é não conformidade em auditoria.
-//   exigencia: 'pratica'  a norma NÃO exige. É costume, e costume bom — mas é escolha da empresa,
+//   exigencia: 'legal'    exigido por norma ou regulamento FORA da ISO 9001 (NR, CONAMA, ABNT
+//                         setorial). Falta disso é problema, mas com outro auditor.
+//   exigencia: 'pratica'  ninguém exige. É costume, e costume bom — mas é escolha da empresa,
 //                         e ninguém deveria ser reprovado por não ter.
 //
 // A 2015 deixou de exigir manual da qualidade e procedimento documentado obrigatório; muita
@@ -37,6 +39,16 @@ export const LEGENDA_PADRAO: Record<string, string> = {
 /** Onde o documento nasce: no núcleo que toda empresa certificada precisa, ou num módulo. */
 export const NUCLEO = 'nucleo';
 
+/** De onde vem a obrigação. Confundir os três é o que faz empresa escrever documento demais e
+ *  deixar de escrever o que importa. */
+export type Exigencia = 'norma' | 'legal' | 'pratica';
+
+export const EXIGENCIA_ROTULO: Record<Exigencia, string> = {
+  norma: 'A ISO 9001:2015 exige',
+  legal: 'Exigência legal ou de outra norma',
+  pratica: 'Prática — ninguém exige',
+};
+
 export interface DocumentoPadrao {
   /** A identidade. Não muda, não depende de empresa, e é por ela que tudo se compara. */
   chave: string;
@@ -44,7 +56,7 @@ export interface DocumentoPadrao {
   natureza: Natureza;
   categoria: string;
   clausulas: string[];
-  exigencia: 'norma' | 'pratica';
+  exigencia: Exigencia;
   origem: string;
   /** O código que a empresa recebe se adotar a codificação padrão. */
   codigoSugerido: string;
@@ -55,7 +67,7 @@ export interface DocumentoPadrao {
 
 const d = (
   chave: string, titulo: string, natureza: Natureza, categoria: string,
-  clausulas: string[], exigencia: 'norma' | 'pratica', codigoSugerido: string,
+  clausulas: string[], exigencia: Exigencia, codigoSugerido: string,
   extra: Partial<DocumentoPadrao> = {},
 ): DocumentoPadrao => ({ chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido, origem: NUCLEO, ...extra });
 
@@ -106,6 +118,11 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
   d('plano_acao', 'Plano de Ação', 'formulario', 'Gestão da Qualidade', ['10.2'], 'pratica', 'FR-016',
     { papel: 'plano_acao' }),
   d('competencia_treinamento', 'Competência, Treinamento e Conscientização', 'procedimento', 'Pessoas', ['7.2', '7.3'], 'pratica', 'PR-004'),
+  d('conscientizacao', 'Integração e Conscientização', 'procedimento', 'Pessoas', ['7.3'], 'pratica', 'PR-005'),
+  d('determinacao_requisitos', 'Determinação de Requisitos e Orçamento', 'procedimento', 'Comercial', ['8.2.2'], 'pratica', 'PR-006',
+    { nota: 'É no orçamento que a especificação do cliente entra. Tudo que a ordem de serviço carrega depois nasce aqui.' }),
+  d('comunicacao_cliente', 'Comunicação com o Cliente', 'procedimento', 'Comercial', ['8.2.1'], 'pratica', 'PR-007'),
+  d('controle_insumos', 'Controle de Materiais e Insumos', 'procedimento', 'Compras', ['8.4.3'], 'pratica', 'PR-008'),
   d('compras', 'Compras e Requisição de Materiais', 'formulario', 'Compras', ['8.4'], 'pratica', 'FR-017',
     { papel: 'pedido_compra' }),
   d('recebimento', 'Recebimento e Inspeção de Entrada', 'formulario', 'Logística', ['8.4.3'], 'pratica', 'FR-018',
@@ -119,7 +136,7 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
 const ST = 'surface-treatment';
 const st = (
   chave: string, titulo: string, natureza: Natureza, categoria: string,
-  clausulas: string[], exigencia: 'norma' | 'pratica', codigoSugerido: string,
+  clausulas: string[], exigencia: Exigencia, codigoSugerido: string,
   extra: Partial<DocumentoPadrao> = {},
 ): DocumentoPadrao => ({ chave, titulo, natureza, categoria, clausulas, exigencia, codigoSugerido, origem: ST, ...extra });
 
@@ -136,9 +153,34 @@ const SURFACE_TREATMENT: DocumentoPadrao[] = [
   st('st_aderencia', 'Ensaio de Aderência', 'procedimento', 'Qualidade', ['8.6'], 'pratica', 'PR-104',
     { nota: 'Ref. ABNT NBR 11003.' }),
   st('st_rugosidade', 'Leitura de Perfil de Rugosidade', 'instrucao', 'Qualidade', ['8.6'], 'pratica', 'IT-101'),
+  st('st_cura', 'Cura e Secagem', 'procedimento', 'Operações', ['8.5.1'], 'pratica', 'PR-105'),
+  st('st_inspecao_jateamento', 'Inspeção de Jateamento', 'procedimento', 'Qualidade', ['8.6'], 'pratica', 'PR-106',
+    { nota: 'Ref. ABNT NBR 7348.' }),
+  st('st_inspecao_pintura', 'Inspeção de Pintura', 'procedimento', 'Qualidade', ['8.6'], 'pratica', 'PR-107',
+    { nota: 'Ref. ABNT NBR 12321.' }),
+  st('st_it_jateamento', 'Instrução — Equipamento de Jateamento', 'instrucao', 'Operações', ['8.5.1'], 'pratica', 'IT-102'),
+  st('st_it_aplicacao', 'Instrução — Equipamento e Preparo de Tinta', 'instrucao', 'Operações', ['8.5.1'], 'pratica', 'IT-103'),
+  st('st_it_medicao', 'Instrução — Instrumento de Medição', 'instrucao', 'Qualidade', ['7.1.5'], 'pratica', 'IT-104'),
 ];
 
-const TODOS = [...NUCLEO_DOCS, ...SURFACE_TREATMENT];
+/* ══ MÓDULO ssma — segurança e meio ambiente. Não é ISO 9001; é lei. ═════════════════════════ */
+
+const SSMA = 'ssma';
+const ssma = (
+  chave: string, titulo: string, categoria: string, clausulas: string[],
+  codigoSugerido: string, nota: string,
+): DocumentoPadrao => ({
+  chave, titulo, natureza: 'procedimento', categoria, clausulas,
+  exigencia: 'legal', origem: SSMA, codigoSugerido, nota,
+});
+
+const SSMA_DOCS: DocumentoPadrao[] = [
+  ssma('ssma_epi', 'Controle de EPI e EPC', 'SSMA', ['7.1.4'], 'PR-201', 'Ref. NR-6. A ISO 9001 só pede ambiente adequado (7.1.4); quem exige o controle de EPI é a NR.'),
+  ssma('ssma_residuos', 'Gestão de Resíduos Industriais', 'SSMA', ['8.5.1'], 'PR-202', 'Ref. CONAMA 313. Jateamento gera resíduo de abrasivo e de tinta.'),
+  ssma('ssma_quimicos', 'Controle de Produtos Químicos e FISPQ', 'SSMA', ['7.1.4'], 'PR-203', 'Ref. NR-26 e ABNT NBR 14725.'),
+];
+
+const TODOS = [...NUCLEO_DOCS, ...SURFACE_TREATMENT, ...SSMA_DOCS];
 
 /* ── Consulta ─────────────────────────────────────────────────────────────────────────────── */
 
@@ -156,7 +198,7 @@ export function modulosDisponiveis(): string[] {
   return [...new Set(TODOS.map((x) => x.origem))].filter((o) => o !== NUCLEO);
 }
 
-export { NUCLEO_DOCS, SURFACE_TREATMENT, TODOS };
+export { NUCLEO_DOCS, SURFACE_TREATMENT, SSMA_DOCS, TODOS };
 
 /* ── Cobertura ────────────────────────────────────────────────────────────────────────────────
    O que a empresa tem, o que falta e o que sobra, medido contra o padrão. É o diagnóstico que a
@@ -164,8 +206,11 @@ export { NUCLEO_DOCS, SURFACE_TREATMENT, TODOS };
 
 
 export interface Cobertura {
-  /** Padrões que a empresa já tem, com o documento local que os cumpre. */
-  atendidos: { padrao: DocumentoPadrao; local: DocumentoMestre }[];
+  /** Padrões que a empresa já tem, com os documentos locais que os cumprem.
+   *  São VÁRIOS de propósito: o procedimento diz como se faz, o formulário é o registro, a
+   *  instrução é o passo a passo na máquina. Os três cumprem o mesmo padrão, e forçar um só
+   *  era o que jogava procedimento legítimo para fora. */
+  atendidos: { padrao: DocumentoPadrao; locais: DocumentoMestre[] }[];
   /** Padrões sem nenhum documento local. Os de exigência 'norma' são não conformidade. */
   faltando: DocumentoPadrao[];
   /** Documentos locais que não correspondem a nenhum padrão. Nem sempre é problema — pode ser
@@ -175,14 +220,17 @@ export interface Cobertura {
 
 export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cobertura {
   const catalogo = catalogoPara(modulos);
-  const porChave = new Map<string, DocumentoMestre>();
-  for (const doc of documentos) if (doc.padrao) porChave.set(doc.padrao, doc);
+  const porChave = new Map<string, DocumentoMestre[]>();
+  for (const doc of documentos) {
+    if (!doc.padrao) continue;
+    porChave.set(doc.padrao, [...(porChave.get(doc.padrao) ?? []), doc]);
+  }
 
   const atendidos: Cobertura['atendidos'] = [];
   const faltando: DocumentoPadrao[] = [];
   for (const padrao of catalogo) {
-    const local = porChave.get(padrao.chave);
-    if (local) atendidos.push({ padrao, local });
+    const locais = porChave.get(padrao.chave);
+    if (locais?.length) atendidos.push({ padrao, locais });
     else faltando.push(padrao);
   }
 

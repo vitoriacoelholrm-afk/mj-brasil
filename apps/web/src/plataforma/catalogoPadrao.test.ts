@@ -102,9 +102,9 @@ describe('abrir um cliente novo é escolher módulos, não digitar lista', () =>
 describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
-  it('a maior parte já está coberta', () => {
-    expect(c.atendidos.length).toBe(28);
-    expect(percentualCoberto(c)!).toBeGreaterThan(0.8);
+  it('depois do alinhamento, todo documento dela aponta para um padrão', () => {
+    expect(c.atendidos.length).toBe(41);
+    expect(percentualCoberto(c)!).toBeGreaterThan(0.85);
   });
 
   it('o que falta é tudo coisa que a norma exige — nenhuma falta é de prática', () => {
@@ -115,11 +115,13 @@ describe('a Minasjato medida contra o padrão', () => {
     expect(c.faltando.filter((x) => x.exigencia === 'pratica')).toEqual([]);
   });
 
-  it('e sobram documentos sem correspondente no padrão', () => {
-    // Não é defeito por si: pode ser requisito legal ou do cliente. Mas cada um precisa ser
-    // olhado, porque também é assim que nasce documento que ninguém usa.
-    expect(c.extras.length).toBeGreaterThan(15);
-    expect(c.extras.map((x) => x.codigo)).toContain('PSSMA-001');
+  it('não sobra nada: até o que é de outra norma achou lugar', () => {
+    // Os documentos de SSMA não são ISO 9001 — são NR-6, CONAMA 313, NR-26. Entraram como
+    // módulo próprio, com exigência 'legal', em vez de ficarem soltos como "extras".
+    expect(c.extras).toEqual([]);
+    const ssma = c.atendidos.find((a) => a.padrao.chave === 'ssma_epi')!;
+    expect(ssma.locais[0].codigo).toBe('PSSMA-001');
+    expect(ssma.padrao.exigencia).toBe('legal');
   });
 
   it('o código é apelido: a mesma chave tem código diferente em cada empresa', () => {
