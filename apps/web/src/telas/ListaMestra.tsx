@@ -109,7 +109,7 @@ export function ListaMestra() {
             ))}
           </div>
         </div>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
           <table style={s.tabela}>
             <thead>
               <tr>

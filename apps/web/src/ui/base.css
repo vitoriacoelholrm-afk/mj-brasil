@@ -1,0 +1,33 @@
+/* O pouco de CSS global que estilo inline não consegue expressar.
+   Tudo aqui é regra de base ou coisa que depende de media query. O resto continua inline. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  /* O iOS aumenta a fonte sozinho quando o celular gira. Isto desliga esse ajuste. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Nada estoura a largura do pai por acidente. Tabela larga tem o seu próprio container
+   com rolagem horizontal — é lá que a rolagem deve acontecer, não na página inteira. */
+img, svg, video, canvas { max-width: 100%; height: auto; }
+table { max-width: 100%; }
+
+input, select, textarea, button { font: inherit; max-width: 100%; }
+
+@media (max-width: 767px) {
+  /* Campo com fonte menor que 16px faz o Safari do iPhone dar zoom ao focar, e a tela fica
+     torta pelo resto da sessão. 16px é o mínimo que evita isso. */
+  input, select, textarea { font-size: 16px; }
+
+  /* Alvo de toque: o dedo não acerta um link de 11px. */
+  button { min-height: 32px; }
+}
+
+/* Rolagem horizontal de tabela com inércia no iOS, e sem barra grossa no desktop. */
+.rolagem-lateral {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

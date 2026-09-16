@@ -215,7 +215,7 @@ function Documento({ rel, anexos }: { rel: Relatorio; anexos: Anexo[] }) {
       </div>
 
       <div style={S.secao}>Aplicação</div>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
         <table style={s.tabela}>
           <thead>
             <tr>

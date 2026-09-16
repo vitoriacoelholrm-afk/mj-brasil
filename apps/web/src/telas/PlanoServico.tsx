@@ -43,7 +43,9 @@ export function PlanoServico() {
           : 'Esta empresa ainda não tem um formulário de ordem de serviço cadastrado na Lista Mestra.'}
       />
 
-      <div style={S.abas}>
+      {/* No celular as abas não cabem: viram faixa que rola, com a próxima meio à mostra
+         para se anunciar. Sem isto, a última OS fica inalcançável. */}
+      <div className="rolagem-lateral" style={S.abas}>
         {ordens.map((o, i) => {
           const r = resumirOs(o.etapas);
           const contra = compararComRelatorio(o).length;
@@ -51,6 +53,7 @@ export function PlanoServico() {
           return (
             <button key={o.id} onClick={() => setAtiva(i)} style={{
               ...S.aba,
+              flexShrink: 0,
               background: sel ? c.superficie : 'transparent',
               borderColor: sel ? c.acentoMarca : c.linha,
               borderBottomColor: sel ? c.superficie : c.linha,
@@ -153,7 +156,7 @@ export function PlanoServico() {
               </div>
             )}
 
-            <div style={{ overflowX: 'auto' }}>
+            <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
               <table style={s.tabela}>
                 <thead>
                   <tr>
@@ -256,7 +259,7 @@ function Confronto({ rel, divergencias }: { rel: Relatorio; divergencias: Diverg
       </div>
 
       {divergencias.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
           <table style={s.tabela}>
             <thead>
               <tr>
@@ -287,7 +290,7 @@ function Confronto({ rel, divergencias }: { rel: Relatorio; divergencias: Diverg
 
       <div style={S.soNoRelatorio}>
         <div style={S.tituloBloco}>O que só existe no relatório</div>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
           <table style={s.tabela}>
             <thead>
               <tr>
@@ -352,7 +355,10 @@ const S: Record<string, React.CSSProperties> = {
     color: c.alerta, marginBottom: 8,
   },
   obsLista: { margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6, color: c.tinta2 },
-  abas: { display: 'flex', gap: 6, borderBottom: `1px solid ${c.linha}`, marginBottom: -1 },
+  abas: {
+    display: 'flex', gap: 6, borderBottom: `1px solid ${c.linha}`, marginBottom: -1,
+    maxWidth: '100%', paddingBottom: 1,
+  },
   aba: {
     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px',
     border: '1px solid', borderRadius: '3px 3px 0 0', cursor: 'pointer',

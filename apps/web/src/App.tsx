@@ -12,6 +12,7 @@ import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { c, fonte } from '@/ui/estilo';
+import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/documentos/listaMestra';   // registra as empresas
 
@@ -48,6 +49,8 @@ export function App() {
   const [rota, setRota] = useState<Rota>('situacao');
   const [empresaId, setEmpresaId] = useState(() => empresaAtiva().id);
   const empresa = empresaAtiva();
+  const celular = useEhCelular();
+  const lado = margemLateral(celular);
 
   if (!pessoa) return <Entrar aoEntrar={() => setPessoa(pessoaAtual())} />;
 
@@ -56,8 +59,8 @@ export function App() {
 
   return (
     <div style={S.pagina}>
-      <header style={S.topo}>
-        <div style={S.marca}>
+      <header style={{ ...S.topo, flexWrap: celular ? 'wrap' : 'nowrap' }}>
+        <div style={{ ...S.marca, padding: celular ? '12px 16px' : '14px 24px', borderRight: celular ? 'none' : `1px solid ${c.linha}`, flex: celular ? '1 1 auto' : '0 0 auto', minWidth: 0 }}>
           <div style={{ ...S.marcaNome, color: empresa.identidade.acento }}>{empresa.identidade.nome}</div>
           <div style={S.marcaSub}>{empresa.identidade.subtitulo}</div>
           {empresas().length > 1 && (
@@ -74,7 +77,7 @@ export function App() {
           )}
         </div>
 
-        <nav style={S.nav}>
+        <nav style={{ ...S.nav, flexBasis: celular ? '100%' : 'auto', order: celular ? 3 : 0, borderTop: celular ? `1px solid ${c.linha}` : 'none' }}>
           {MENU.map((m) => {
             const ativo = m.rotulo === dominioAtivo;
             const destino = m.rota ?? m.filhas?.[0]?.rota;
@@ -84,6 +87,7 @@ export function App() {
                 onClick={() => destino && setRota(destino)}
                 style={{
                   ...S.navItem,
+                  padding: celular ? '12px 14px' : '0 20px',
                   borderBottomColor: ativo ? c.acentoMarca : 'transparent',
                   fontWeight: ativo ? 700 : 500,
                   color: ativo ? c.tinta : c.tinta2,
@@ -95,21 +99,21 @@ export function App() {
           })}
         </nav>
 
-        <div style={S.pessoa}>
+        <div style={{ ...S.pessoa, padding: celular ? '12px 16px' : '12px 24px', borderLeft: celular ? 'none' : `1px solid ${c.linha}` }}>
           <div style={S.pessoaNome}>{pessoa.nome}</div>
           <div style={S.pessoaPapel}>{pessoa.papel}</div>
           <button style={S.sair} onClick={() => { sair(); setPessoa(null); }}>Trocar de usuário</button>
         </div>
       </header>
 
-      <div style={S.faixaDev}>
+      <div style={{ ...S.faixaDev, padding: `6px ${lado}px` }}>
         {import.meta.env?.VITE_DEMO === '1'
           ? 'Demonstração — nomes de empresas, obras e pessoas foram substituídos. As telas ligadas ao banco são só de leitura aqui.'
           : 'Ambiente de desenvolvimento — entrada sem senha, dados locais.'}
       </div>
 
       {filhas && filhas.length > 1 && (
-        <div style={S.subnav}>
+        <div style={{ ...S.subnav, padding: `14px ${lado}px 0`, flexWrap: 'wrap' }}>
           {filhas.map((f) => (
             <button
               key={f.rota}
@@ -128,7 +132,7 @@ export function App() {
         </div>
       )}
 
-      <main style={S.miolo}>
+      <main style={{ ...S.miolo, padding: `${celular ? 16 : 24}px ${lado}px 40px` }}>
         {rota === 'situacao' && <Situacao irPara={setRota} />}
         {rota === 'plano' && <PlanoServico />}
         {rota === 'diagnostico' && <Diagnostico />}
@@ -138,7 +142,7 @@ export function App() {
         {rota === 'lista-mestra' && <ListaMestra />}
       </main>
 
-      <div style={S.rodape}>{appInfo.client} · {appInfo.name}</div>
+      <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>
     </div>
   );
 }
@@ -195,7 +199,9 @@ const S: Record<string, React.CSSProperties> = {
     padding: '7px 14px', borderRadius: 3, border: '1px solid',
     fontFamily: fonte.texto, fontSize: 13.5, cursor: 'pointer',
   },
-  miolo: { flex: 1, padding: '24px 28px 40px', maxWidth: 1180 },
+  // minWidth: 0 é o que impede um filho largo (tabela) de esticar o main inteiro:
+  // em flex, min-width vale 'auto' por padrão e o container cresce com o conteúdo.
+  miolo: { flex: 1, minWidth: 0, padding: '24px 28px 40px', maxWidth: 1180, width: '100%' },
   rodape: {
     padding: '14px 28px', borderTop: `1px solid ${c.linha}`,
     fontSize: 11.5, color: c.suave,
