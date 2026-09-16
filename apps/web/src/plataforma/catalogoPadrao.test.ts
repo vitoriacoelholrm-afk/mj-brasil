@@ -103,8 +103,8 @@ describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
   it('depois do alinhamento, todo documento dela aponta para um padrão', () => {
-    expect(c.atendidos.length).toBe(43);
-    expect(percentualCoberto(c)!).toBeGreaterThan(0.9);
+    expect(c.atendidos.length).toBe(45);
+    expect(percentualCoberto(c)!).toBeGreaterThan(0.95);
   });
 
   it('o manual sozinho atende três padrões: ele mesmo, o escopo e a política', () => {
@@ -118,7 +118,7 @@ describe('a Minasjato medida contra o padrão', () => {
 
   it('o que falta é tudo coisa que a norma exige — nenhuma falta é de prática', () => {
     expect(faltasDeNorma(c).map((x) => x.chave)).toEqual([
-      'propriedade_cliente', 'mudanca_producao', 'saida_nao_conforme', 'monitoramento_medicao',
+      'saida_nao_conforme', 'monitoramento_medicao',
     ]);
     // E todas as quatro são RETER — registro que nasce do fato, não texto que se escreve.
     expect(faltasDeNorma(c).every((x) => x.retencao === 'reter')).toBe(true);

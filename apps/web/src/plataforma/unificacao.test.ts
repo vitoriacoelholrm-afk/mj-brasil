@@ -13,18 +13,18 @@ describe('cada duplicidade vira uma decisão com código concreto', () => {
     const p = de('FM-011')!;
     expect(p.tipo).toBe('renumerar');
     expect(p.titulo).toContain('SWOT');
-    expect(p.para).toBe('FM-012');
+    expect(p.para).toBe('FM-022');   // segue do maior, não preenche buraco
   });
 
   it('o que usa prefixo de fora entra na numeração da casa', () => {
-    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-013' });
-    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-014' });
+    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-023' });
+    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-024' });
   });
 
   it('os cinco registros sem código recebem código, um cada', () => {
     const cadastros = plano.propostas.filter((p) => p.tipo === 'cadastrar');
     expect(cadastros).toHaveLength(5);
-    expect(cadastros.map((p) => p.para)).toEqual(['FM-015', 'FM-016', 'FM-017', 'FM-018', 'FM-019']);
+    expect(cadastros.map((p) => p.para)).toEqual(['FM-025', 'FM-026', 'FM-027', 'FM-028', 'FM-029']);
   });
 
   it('nenhum código proposto colide com um que já existe', () => {
@@ -88,12 +88,13 @@ describe('depois do alinhamento', () => {
   it('nenhum documento da Minasjato ficou fora do catálogo padrão', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
     expect(c.extras).toEqual([]);
-    expect(c.atendidos.length).toBe(43);
+    expect(c.atendidos.length).toBe(45);
   });
 
   it('o que falta continua sendo só o que a norma exige', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
-    expect(c.faltando).toHaveLength(4);
+    // Eram 4; os dois formulários novos fecharam a 8.5.3 e a 8.5.6.
+    expect(c.faltando.map((f) => f.chave)).toEqual(['saida_nao_conforme', 'monitoramento_medicao']);
     expect(c.faltando.every((f) => f.exigencia === 'norma')).toBe(true);
   });
 

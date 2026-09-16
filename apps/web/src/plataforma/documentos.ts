@@ -141,7 +141,8 @@ export function porClausula(docs: DocumentoMestre[], clausula: string): Document
 
 export type TipoConflito =
   | 'codigo_duplicado' | 'fora_da_lista' | 'codigo_paralelo'
-  | 'revisao_vencida' | 'revisao_divergente' | 'prefixo_desconhecido' | 'sem_aprovacao';
+  | 'revisao_vencida' | 'revisao_divergente' | 'prefixo_desconhecido' | 'sem_aprovacao'
+  | 'contagem_divergente';
 
 export interface Conflito {
   tipo: TipoConflito;
@@ -160,6 +161,7 @@ export const CONFLITO_ROTULO: Record<TipoConflito, string> = {
   revisao_divergente: 'A revisão da lista não bate com a do arquivo',
   prefixo_desconhecido: 'Prefixo que a legenda não conhece',
   sem_aprovacao: 'Sem aprovação registrada',
+  contagem_divergente: 'A planilha declara um total que não bate',
 };
 
 /** Tudo que impede a lista mestra de ser a única fonte de identificação. Sete verificações, e
@@ -241,6 +243,15 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
       tipo: 'codigo_duplicado', codigo: meta.codigo, titulo: 'Lista mestra de documentos',
       detalhe: meta.nota ?? `A própria lista responde também por ${meta.codigosParalelos.join(' e ')}.`,
       gravidade: 'alta',
+    });
+  }
+  const catalogados = documentos.filter((d) => !d.foraDaLista).length;
+  if (meta.totalCatalogado !== catalogados) {
+    const a = catalogados > meta.totalCatalogado;
+    out.push({
+      tipo: 'contagem_divergente', codigo: meta.codigo, titulo: 'Lista mestra de documentos',
+      detalhe: `O cabeçalho declara ${meta.totalCatalogado} documentos e a lista tem ${catalogados}. ${a ? 'Entraram documentos e o total não foi atualizado' : 'Saíram documentos e o total não foi atualizado'} — quem confere pelo número não encontra.`,
+      gravidade: 'media',
     });
   }
   if (!meta.aprovadoPor || !meta.elaboradoPor) {

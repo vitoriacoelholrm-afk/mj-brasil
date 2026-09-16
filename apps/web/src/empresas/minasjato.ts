@@ -145,6 +145,19 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('FM-008', 'Formulário — Avaliação de Fornecedores', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'] }),
   catalogado('FM-009', 'Formulário — Registro de Treinamento (LNT)', 'formulario', 'RH', 'Ger. RH', ['7.2'], 'irrestrito', { padroes: ['evidencia_competencia'] }),
   catalogado('FM-010', 'Formulário — Plano de Auditoria Interna', 'formulario', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito', { padroes: ['auditoria_interna'] }),
+  // Os dois que faltavam à norma, criados em 16/09/2026. Entram em FM-020 e FM-021 — a numeração
+  // segue do maior, nunca preenche buraco. Buraco pode ser código aposentado, e reaproveitar
+  // código aposentado faz o arquivo antigo virar armadilha: dois documentos diferentes com o
+  // mesmo número em épocas diferentes.
+  catalogado('FM-020', 'Formulário — Ocorrência com Propriedade do Cliente', 'formulario', 'Operações', 'Ger. Operações', ['8.5.3'], 'irrestrito', {
+    padroes: ['propriedade_cliente'], tela: 'propriedade-cliente',
+    nota: 'Criado em 16/09/2026 para fechar a falta da 8.5.3. Peça de cliente perdida, danificada ou inadequada: a norma pede comunicar E registrar.',
+  }),
+  catalogado('FM-021', 'Formulário — Análise Crítica de Mudança na Produção', 'formulario', 'Operações', 'Ger. Operações', ['8.5.6'], 'irrestrito', {
+    padroes: ['mudanca_producao'], tela: 'mudanca-producao',
+    nota: 'Criado em 16/09/2026 para fechar a falta da 8.5.6. Retém o resultado da análise, quem autorizou e as ações necessárias.',
+  }),
+
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
     nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código.',
   }),
@@ -212,6 +225,8 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     romaneio: 'FM-007',
     avaliacao_fornecedor: 'FM-008',
     registro_treinamento: 'FM-009',
+    propriedade_cliente: 'FM-020',
+    mudanca_producao: 'FM-021',
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
   },

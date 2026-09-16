@@ -56,7 +56,9 @@ export interface PlanoDeUnificacao {
   agrupados: ParNatural[];
 }
 
-/** Distribui códigos livres do prefixo, um por vez, sem repetir. */
+/** Distribui códigos livres do prefixo, um por vez, sem repetir.
+ *  Continua do MAIOR, nunca preenche buraco: um número vago pode ser código aposentado, e
+ *  reaproveitá-lo faz dois documentos diferentes terem o mesmo número em épocas diferentes. */
 function distribuidor(documentos: DocumentoMestre[], prefixo: string) {
   const usados = new Set(documentos.map((d) => d.codigo));
   return () => {

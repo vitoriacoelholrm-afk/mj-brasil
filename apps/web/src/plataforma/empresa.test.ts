@@ -80,7 +80,7 @@ describe('a codificação é da empresa, não da plataforma', () => {
   it('o próximo código livre respeita a numeração de cada uma', () => {
     const docsMJ = empresas().find((e) => e.id === 'minasjato')!.documentacao.documentos;
     const docsModelo = empresas().find((e) => e.id === 'modelo')!.documentacao.documentos;
-    expect(proximoCodigoLivre(docsMJ, 'FM')).toBe('FM-012');
+    expect(proximoCodigoLivre(docsMJ, 'FM')).toBe('FM-022');
     expect(proximoCodigoLivre(docsModelo, 'MQ')).toBe('MQ-005');
   });
 
@@ -129,7 +129,11 @@ describe('as mesmas sete verificações, resultados diferentes', () => {
   it('o mesmo defeito aparece em qualquer empresa que o tiver', () => {
     // Dois documentos com o mesmo código: o motor acusa sem saber de quem é.
     const inventada = {
-      meta: { ...listaMestraMeta(), codigo: 'X-001', codigosParalelos: [], aprovadoPor: 'a', elaboradoPor: 'b', proximaRevisao: '2099-01-01' },
+      meta: {
+        ...listaMestraMeta(), codigo: 'X-001', codigosParalelos: [],
+        aprovadoPor: 'a', elaboradoPor: 'b', proximaRevisao: '2099-01-01',
+        totalCatalogado: 2,   // bate com os dois abaixo, senão o motor acusa a contagem também
+      },
       legenda: { AA: 'Alguma coisa' },
       documentos: [
         { codigo: 'AA-001', titulo: 'Um', natureza: 'formulario' as const, categoria: 'X', revisao: '00', emissao: null, proximaRevisao: null, situacao: 'vigente' as const, acesso: 'irrestrito' as const, responsavel: null, clausulas: [], local: null },

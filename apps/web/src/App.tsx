@@ -11,12 +11,14 @@ import { Vencimentos } from '@/telas/Vencimentos';
 import { Instrumentos } from '@/telas/Instrumentos';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
+import { Registros } from '@/telas/Registros';
+import { MUDANCA_PRODUCAO, PROPRIEDADE_CLIENTE } from '@/plataforma/formularios';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/documentos/listaMestra';   // registra as empresas
 
-export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra';
+export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra' | 'propriedade-cliente' | 'mudanca-producao';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
@@ -26,6 +28,8 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
   { rotulo: 'Qualidade', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Lista Mestra', rota: 'lista-mestra' },
+    { rotulo: 'Propriedade do Cliente', rota: 'propriedade-cliente' },
+    { rotulo: 'Mudanças na Produção', rota: 'mudanca-producao' },
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
     { rotulo: 'Instrumentos', rota: 'instrumentos' },
   ] },
@@ -39,6 +43,8 @@ const DOMINIO: Record<Rota, string> = {
   plano: 'Ordens de Serviço',
   diagnostico: 'Qualidade',
   'lista-mestra': 'Qualidade',
+  'propriedade-cliente': 'Qualidade',
+  'mudanca-producao': 'Qualidade',
   vencimentos: 'Qualidade',
   instrumentos: 'Qualidade',
   clientes: 'Cadastros',
@@ -140,6 +146,8 @@ export function App() {
         {rota === 'instrumentos' && <Instrumentos />}
         {rota === 'clientes' && <Clientes />}
         {rota === 'lista-mestra' && <ListaMestra />}
+        {rota === 'propriedade-cliente' && <Registros def={PROPRIEDADE_CLIENTE} />}
+        {rota === 'mudanca-producao' && <Registros def={MUDANCA_PRODUCAO} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>
