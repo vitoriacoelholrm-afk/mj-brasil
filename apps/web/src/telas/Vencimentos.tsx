@@ -126,7 +126,7 @@ export function Cabecalho({ titulo, sub, acao }: { titulo: string; sub?: string;
     <div style={S.cabecalho}>
       <div>
         <h1 style={S.h1}>{titulo}</h1>
-        {sub && <p style={S.sub}>{sub}</p>}
+        {sub && <p style={{ ...S.sub, ...s.prosa }}>{sub}</p>}
       </div>
       {acao}
     </div>

@@ -201,7 +201,16 @@ const S: Record<string, React.CSSProperties> = {
   },
   // minWidth: 0 é o que impede um filho largo (tabela) de esticar o main inteiro:
   // em flex, min-width vale 'auto' por padrão e o container cresce com o conteúdo.
-  miolo: { flex: 1, minWidth: 0, padding: '24px 28px 40px', maxWidth: 1180, width: '100%' },
+  //
+  // marginInline: 'auto' centra. Sem isso o conteúdo cola na esquerda e toda a sobra de um
+  // monitor largo se junta do lado direito — parece defeito, e é.
+  //
+  // 1600 em vez de 1180: isto é painel com tabela, não artigo. O que precisa de linha curta
+  // para ler é o texto corrido, e esse tem limite próprio (`prosa`), não o container inteiro.
+  miolo: {
+    flex: 1, minWidth: 0, width: '100%', maxWidth: 1600,
+    marginInline: 'auto', padding: '24px 28px 40px',
+  },
   rodape: {
     padding: '14px 28px', borderTop: `1px solid ${c.linha}`,
     fontSize: 11.5, color: c.suave,

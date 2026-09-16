@@ -87,6 +87,9 @@ export const s: Record<string, React.CSSProperties> = {
     color: c.tinta,
     width: '100%',
   },
+  /** Texto corrido não deve passar disto: linha muito longa faz o olho perder a volta.
+   *  Vale para parágrafo e lista de observação — nunca para tabela ou grade de cartão. */
+  prosa: { maxWidth: '74ch' },
   rotulo: {
     display: 'block',
     fontSize: 11,

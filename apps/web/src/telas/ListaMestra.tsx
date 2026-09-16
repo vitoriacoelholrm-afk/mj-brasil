@@ -147,7 +147,7 @@ function LinhaConflito({ conflito }: { conflito: Conflito }) {
         </span>
         <span style={{ fontSize: 13.5, color: c.tinta2 }}>{conflito.titulo}</span>
       </div>
-      <div style={S.conflitoDetalhe}>{conflito.detalhe}</div>
+      <div style={{ ...S.conflitoDetalhe, ...s.prosa }}>{conflito.detalhe}</div>
     </div>
   );
 }
@@ -173,7 +173,7 @@ function LinhaDoc({ d }: { d: DocumentoMestre }) {
         <div style={S.subLinha}>
           {NATUREZA_ROTULO[d.natureza]}{d.local ? ` · ${d.local}` : ''}
         </div>
-        {d.nota && <div style={S.nota}>{d.nota}</div>}
+        {d.nota && <div style={{ ...S.nota, ...s.prosa }}>{d.nota}</div>}
       </td>
       <td style={s.td}>{d.categoria}</td>
       <td style={{ ...s.td, color: d.responsavel ? c.tinta2 : c.suave }}>{d.responsavel ?? '—'}</td>

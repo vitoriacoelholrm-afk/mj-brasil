@@ -84,7 +84,7 @@ export function PlanoServico() {
       {os.observacoes.length > 0 && (
         <div style={S.obs}>
           <div style={S.obsTit}>O que o documento de origem não permite afirmar</div>
-          <ul style={S.obsLista}>
+          <ul style={{ ...S.obsLista, ...s.prosa }}>
             {os.observacoes.map((o, i) => <li key={i}>{o}</li>)}
           </ul>
         </div>
