@@ -235,10 +235,10 @@ const OS_898: OrdemServico = {
   perfilRelatorio: PERFIL_WEIR,
   observacoes: [
     'UNIFICADA com o relatório WEIR-04: lotes, condições ambientais, instrumentos e aderência passaram a viver aqui. O confronto abaixo agora fecha em zero.',
-    'A rugosidade do papel era 85 e o relatório trazia 75. Foi adotado o 75; o 85 está guardado ao lado do campo. Se o 85 é o valor real, isto é uma RNC — 85 não passa nem com a tolerância, porque 50-70 aceita até 84.',
+    'DECIDIDO em 16/09/2026: a rugosidade fica 75, o valor do relatório. O 85 do papel continua guardado ao lado do campo, como histórico.',
+    'DECIDIDO em 16/09/2026: a faixa de rugosidade desta OS passa a ser 50-100, igual à da 913. O 50-70 do papel fica guardado. As duas OS do mesmo cliente e do mesmo esquema agora especificam a mesma coisa.',
     'A nota de rodapé do Plano diz "Rip Weir 01 OK" — mas o relatório emitido para esta OS é o WEIR-04.',
     'A 3ª demão estava escrita no Plano como "Polycopaky 242"; o relatório traz INTERTHANE 990, mesma cor. Foi adotado o nome do relatório.',
-    'A faixa de rugosidade especificada aqui é 50-70. Na OS 913, do mesmo cliente e do mesmo esquema, é 50-100. As duas não podem estar certas.',
   ],
   itens: [
     { descricao: 'Tampa 250CVX usinado', quantidade: 40, unidade: 'pç' },
@@ -258,9 +258,9 @@ const OS_898: OrdemServico = {
         { grandeza: 'grau_intemperismo', especificado: 'A', encontrado: 'A', dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
         { grandeza: 'abrasivo', especificado: ABRASIVO_WEIR, encontrado: ABRASIVO_WEIR, dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP },
         {
-          grandeza: 'padrao_rugosidade', especificado: '50-70', encontrado: '75',
+          grandeza: 'padrao_rugosidade', especificado: '50-100', encontrado: '75',
           dataInspecao: '2026-06-03', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: RUGOSIMETRO,
-          noPapel: { encontrado: '85' },
+          noPapel: { especificado: '50-70', encontrado: '85' },
         },
       ],
     },
@@ -278,7 +278,7 @@ const OS_898: OrdemServico = {
       dataAplicacao: '2026-06-04', condicoes: { tempAmbiente: 22, umidadeRelativa: 53, tempSubstrato: 21 },
       medicoes: [
         { grandeza: 'camada_umida', especificado: null, encontrado: null, dataInspecao: '2026-06-04', responsavelProcesso: EXEC, responsavelInspecao: INSP },
-        // 126 sobre 100 são +26%. Papel e relatório concordam: a camada saiu grossa de verdade.
+        // 126 sobre 100 são +26%. Passa desde que a tolerância acima subiu para 40%.
         { grandeza: 'camada_seca', especificado: '100', encontrado: '126', dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP, instrumentoCodigo: MEDIDOR },
         { grandeza: 'visual', especificado: 'X0Y0', encontrado: 'X0Y0', dataInspecao: '2026-06-05', responsavelProcesso: EXEC, responsavelInspecao: INSP },
       ],
@@ -377,7 +377,6 @@ const OS_913: OrdemServico = {
     'UNIFICADA com o relatório WEIR-05. O Plano registrava 2 demãos e o relatório entregava 3: a segunda demão de INTERSEAL, de 15 a 16/06, não tinha linha nenhuma no papel e entrou marcada como ausente no papel.',
     'A demão azul, que no papel estava lançada como intermediário I, voltou para a posição dela — intermediário II. Era isso que fazia tudo parecer divergente.',
     'A espessura de fundo do papel era 180 especificado e 200 encontrado; o relatório traz 100 e 110. Foi adotado o do relatório, e o do papel ficou guardado. É a divergência que sobra para você decidir.',
-    'A faixa de rugosidade especificada aqui é 50-100. Na OS 898, do mesmo cliente e do mesmo esquema, é 50-70.',
   ],
   itens: [
     { descricao: 'Câmara de alimentação 250CVX usinado', quantidade: 132, unidade: 'pç' },

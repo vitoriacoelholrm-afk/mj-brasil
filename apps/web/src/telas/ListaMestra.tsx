@@ -5,13 +5,17 @@
 // impede o app de emitir um documento com um código que o auditor não acha na Lista Mestra.
 import { useMemo, useState } from 'react';
 import {
-  CONFLITO_ROTULO, LISTA_MESTRA, LISTA_MESTRA_META, NATUREZA_ROTULO,
-  SEM_CODIGO, conflitos, type Conflito, type DocumentoMestre, type TipoConflito,
+  CONFLITO_ROTULO, LISTA_MESTRA, LISTA_MESTRA_META, NATUREZA_ROTULO, SEM_CODIGO,
+  conflitos, porCategoria, significadoDoPrefixo,
+  type Conflito, type DocumentoMestre, type TipoConflito,
 } from '@/documentos/listaMestra';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from './Vencimentos';
 
-const ORDEM_CONFLITO: TipoConflito[] = ['codigo_duplicado', 'fora_da_lista', 'revisao_vencida', 'codigo_paralelo'];
+const ORDEM_CONFLITO: TipoConflito[] = [
+  'codigo_duplicado', 'prefixo_desconhecido', 'revisao_divergente', 'fora_da_lista',
+  'revisao_vencida', 'sem_aprovacao', 'codigo_paralelo',
+];
 
 export function ListaMestra() {
   const [filtro, setFiltro] = useState<'todos' | 'formulario' | 'problema'>('todos');
@@ -50,8 +54,10 @@ export function ListaMestra() {
             )}
           </div>
         </div>
+        <Campo rot="Norma" val={LISTA_MESTRA_META.norma} />
         <Campo rot="Catalogados" val={`${LISTA_MESTRA_META.totalCatalogado} documentos`} />
-        <Campo rot="No app" val={`${LISTA_MESTRA.length} entradas`} />
+        <Campo rot="Elaborado por" val={LISTA_MESTRA_META.elaboradoPor} />
+        <Campo rot="Aprovado por" val={LISTA_MESTRA_META.aprovadoPor} />
       </div>
 
       <div style={S.contadores}>
@@ -59,6 +65,14 @@ export function ListaMestra() {
         <Contador n={cs.filter((x) => x.tipo === 'codigo_duplicado').length} rot="códigos disputados" cor={c.critico} />
         <Contador n={cs.filter((x) => x.tipo === 'fora_da_lista').length} rot="fora da lista" cor={c.alerta} />
         <Contador n={cs.filter((x) => x.tipo === 'codigo_paralelo').length} rot="com código paralelo" cor={c.alerta} fim />
+      </div>
+
+      <div style={S.categorias}>
+        {porCategoria().map(({ categoria, total }) => (
+          <span key={categoria} style={S.categoria}>
+            <strong style={{ fontFamily: fonte.mono }}>{total}</strong> {categoria}
+          </span>
+        ))}
       </div>
 
       {porTipo.map(([tipo, lista]) => (
@@ -95,11 +109,13 @@ export function ListaMestra() {
           <table style={s.tabela}>
             <thead>
               <tr>
-                <th style={{ ...s.th, width: 130 }}>Código</th>
+                <th style={{ ...s.th, width: 120 }}>Código</th>
                 <th style={s.th}>Documento</th>
-                <th style={{ ...s.th, width: 140 }}>Natureza</th>
-                <th style={{ ...s.th, width: 200 }}>Código no arquivo real</th>
-                <th style={{ ...s.th, width: 130 }}>Tela do app</th>
+                <th style={{ ...s.th, width: 130 }}>Categoria</th>
+                <th style={{ ...s.th, width: 130 }}>Responsável</th>
+                <th style={{ ...s.th, width: 110 }}>Cláusula ISO</th>
+                <th style={{ ...s.th, width: 100 }}>Acesso</th>
+                <th style={{ ...s.th, width: 170 }}>No arquivo real</th>
               </tr>
             </thead>
             <tbody>
@@ -110,8 +126,9 @@ export function ListaMestra() {
       </div>
 
       <div style={S.rodape}>
-        Os 36 documentos controlados da LM-SGQ-001 — manual, procedimentos e instruções de trabalho —
-        ainda não foram importados. Estão aqui os que o app toca e os que circulam sem entrada.
+        Importado da planilha LM-SGQ-001 rev. 3: os 47 documentos com tipo, categoria, responsável,
+        cláusula da ISO 9001:2015, local de armazenamento e nível de acesso. Mais o que circula sem
+        entrada própria.
       </div>
     </div>
   );
@@ -133,22 +150,36 @@ function LinhaConflito({ conflito }: { conflito: Conflito }) {
 
 function LinhaDoc({ d }: { d: DocumentoMestre }) {
   const semCodigo = d.codigo.startsWith(SEM_CODIGO);
+  const prefixoConhecido = semCodigo || Boolean(significadoDoPrefixo(d.codigo));
   return (
     <tr>
       <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>
-        {semCodigo ? <span style={{ color: c.critico, fontStyle: 'italic' }}>sem código</span> : d.codigo}
+        {semCodigo
+          ? <span style={{ color: c.critico, fontStyle: 'italic' }}>sem código</span>
+          : <span style={{ color: prefixoConhecido ? c.tinta : c.critico }}>{d.codigo}</span>}
         {d.revisao && <div style={{ color: c.suave, fontSize: 11 }}>rev. {d.revisao}</div>}
+        {d.revisaoNoArquivo && (
+          <div style={{ color: c.critico, fontSize: 11 }}>arquivo: rev. {d.revisaoNoArquivo.revisao}</div>
+        )}
       </td>
       <td style={{ ...s.td, color: c.tinta }}>
         {d.titulo}
         {d.foraDaLista && <span style={{ ...pastilha('critico'), marginLeft: 8 }}>fora da lista</span>}
+        {d.tela && <span style={{ ...pastilha('ok'), marginLeft: 8 }}>vira tela</span>}
+        <div style={S.subLinha}>
+          {NATUREZA_ROTULO[d.natureza]}{d.local ? ` · ${d.local}` : ''}
+        </div>
         {d.nota && <div style={S.nota}>{d.nota}</div>}
       </td>
-      <td style={s.td}>{NATUREZA_ROTULO[d.natureza]}</td>
+      <td style={s.td}>{d.categoria}</td>
+      <td style={{ ...s.td, color: d.responsavel ? c.tinta2 : c.suave }}>{d.responsavel ?? '—'}</td>
+      <td style={{ ...s.td, ...s.mono, fontSize: 12 }}>{d.clausulas.join(', ') || '—'}</td>
+      <td style={s.td}>
+        <span style={pastilha(d.acesso === 'irrestrito' ? 'neutro' : 'alerta')}>{d.acesso}</span>
+      </td>
       <td style={{ ...s.td, ...s.mono, color: d.codigosParalelos?.length ? c.critico : c.suave }}>
         {d.codigosParalelos?.join(' · ') ?? '—'}
       </td>
-      <td style={{ ...s.td, ...s.mono, color: d.tela ? c.acento : c.suave }}>{d.tela ?? '—'}</td>
     </tr>
   );
 }
@@ -197,5 +228,11 @@ const S: Record<string, React.CSSProperties> = {
   conflitoTopo: { display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' },
   conflitoDetalhe: { fontSize: 13, color: c.tinta2, marginTop: 5, lineHeight: 1.55 },
   nota: { fontSize: 11.5, color: c.suave, marginTop: 5, lineHeight: 1.5 },
+  subLinha: { fontSize: 11.5, color: c.suave, marginTop: 3 },
+  categorias: { display: 'flex', flexWrap: 'wrap', gap: 8 },
+  categoria: {
+    fontSize: 13, padding: '5px 11px', borderRadius: 3,
+    border: `1px solid ${c.linhaForte}`, background: c.superficie, color: c.tinta2,
+  },
   rodape: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, lineHeight: 1.6 },
 };

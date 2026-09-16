@@ -40,34 +40,41 @@ describe('avaliação de medição', () => {
   const rug = (esp: string, enc: string) => avaliarMedicao({ ...base, grandeza: 'padrao_rugosidade', especificado: esp, encontrado: enc });
   const seca = (esp: string, enc: string) => avaliarMedicao({ ...base, grandeza: 'camada_seca', especificado: esp, encontrado: enc });
 
+  it('a tolerância é assimétrica de propósito: -10% embaixo, +40% em cima', () => {
+    // Camada fina não protege, e por isso o limite de baixo é apertado. Camada grossa protege.
+    expect(TOLERANCIA).toEqual({ abaixo: 0.10, acima: 0.40 });
+  });
+
   it('faixa: a tolerância abre cada ponta para o seu lado', () => {
-    // 50-100 vira 45-120: -10% embaixo, +20% em cima.
-    expect(faixaTolerada(50, 100)).toEqual({ min: 45, max: 120 });
+    // 50-100 vira 45-140.
+    expect(faixaTolerada(50, 100)).toEqual({ min: 45, max: 140 });
     expect(rug('50-100', '70').resultado).toBe('conforme');
-    expect(rug('50-100', '120').resultado).toBe('conforme');  // exatamente +20%
-    expect(rug('50-100', '121').resultado).toBe('nao_conforme');
+    expect(rug('50-100', '140').resultado).toBe('conforme');  // exatamente +40%
+    expect(rug('50-100', '141').resultado).toBe('nao_conforme');
     expect(rug('50-100', '45').resultado).toBe('conforme');   // exatamente -10%
     expect(rug('50-100', '44').resultado).toBe('nao_conforme');
   });
 
-  it('alvo único: 140 aceita de 126 a 168', () => {
-    expect(faixaTolerada(140)).toEqual({ min: 126, max: 168 });
+  it('alvo único: 140 aceita de 126 a 196', () => {
+    expect(faixaTolerada(140)).toEqual({ min: 126, max: 196 });
     expect(seca('140', '156').resultado).toBe('conforme');
     expect(seca('140', '140').resultado).toBe('conforme');
     expect(seca('140', '130').resultado).toBe('conforme');    // -7,1%: erro pequeno, não é problema
     expect(seca('140', '126').resultado).toBe('conforme');
-    expect(seca('140', '168').resultado).toBe('conforme');
+    expect(seca('140', '196').resultado).toBe('conforme');
   });
 
-  it('fora da tolerância, o motivo diz de quanto foi e qual era o limite', () => {
+  it('o limite de baixo continua apertado — é onde a camada deixa de proteger', () => {
     const baixo = seca('140', '120');
     expect(baixo.resultado).toBe('nao_conforme');
     expect(baixo.motivo).toContain('14.3% abaixo de 140µm');
     expect(baixo.motivo).toContain(`a tolerância abaixo é ${TOLERANCIA.abaixo * 100}%`);
+  });
 
-    const alto = seca('100', '126');
+  it('acima de 40% ainda reprova, e o motivo diz de quanto foi', () => {
+    const alto = seca('100', '145');
     expect(alto.resultado).toBe('nao_conforme');
-    expect(alto.motivo).toContain('26% acima de 100µm');
+    expect(alto.motivo).toContain('45% acima de 100µm');
     expect(alto.motivo).toContain(`a tolerância acima é ${TOLERANCIA.acima * 100}%`);
   });
 

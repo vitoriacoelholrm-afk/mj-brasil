@@ -42,17 +42,16 @@ describe('a unificação zera as diferenças entre os dois documentos', () => {
 /* ══ 2. Nada do papel se perdeu ══════════════════════════════════════════════════════════════ */
 
 describe('o que o papel dizia fica guardado', () => {
-  it('a rugosidade de 85 da OS 898 continua registrada ao lado do 75 adotado', () => {
+  it('a rugosidade da 898 ficou 75, e o 85 do papel continua registrado ao lado', () => {
     const m = med(os898, 'jateamento', 'padrao_rugosidade');
     expect(m.encontrado).toBe('75');
     expect(m.noPapel?.encontrado).toBe('85');
   });
 
-  it('e o 85 não passaria: 50-70 com tolerância aceita até 84', () => {
+  it('a faixa da 898 virou 50-100, e o 50-70 do papel ficou guardado', () => {
     const m = med(os898, 'jateamento', 'padrao_rugosidade');
-    expect(faixaTolerada(50, 70)).toEqual({ min: 45, max: 84 });
-    expect(avaliarMedicao(m).resultado).toBe('conforme');                      // 75 passa
-    expect(avaliarMedicao({ ...m, encontrado: '85' }).resultado).toBe('nao_conforme');
+    expect(m.especificado).toBe('50-100');
+    expect(m.noPapel?.especificado).toBe('50-70');
   });
 
   it('a espessura de fundo da OS 913 guarda os 180/200 do papel', () => {
@@ -70,13 +69,12 @@ describe('o que o papel dizia fica guardado', () => {
 
 /* ══ 3. O que sobrevive à unificação é o achado de verdade ═══════════════════════════════════ */
 
-describe('OS 898 — a camada que saiu grossa', () => {
-  it('126 µm sobre 100 são +26%, acima da tolerância de +20%', () => {
+describe('OS 898 — a camada grossa cabe na tolerância nova', () => {
+  it('126 µm sobre 100 são +26%: reprovava com 20%, passa com 40%', () => {
     const m = med(os898, 'intermediario_i', 'camada_seca');
     expect([m.especificado, m.encontrado]).toEqual(['100', '126']);
-    const r = avaliarMedicao(m);
-    expect(r.resultado).toBe('nao_conforme');
-    expect(r.motivo).toContain('26% acima de 100µm');
+    expect(faixaTolerada(100)).toEqual({ min: 90, max: 140 });
+    expect(avaliarMedicao(m).resultado).toBe('conforme');
   });
 
   it('não é erro de transcrição: os dois documentos dizem 126', () => {
@@ -85,14 +83,15 @@ describe('OS 898 — a camada que saiu grossa', () => {
     expect(med(os898, 'intermediario_i', 'camada_seca').noPapel).toBeUndefined();
   });
 
-  it('a 1ª demão, com exatamente +20%, passa', () => {
-    expect(avaliarMedicao(med(os898, 'fundo', 'camada_seca')).resultado).toBe('conforme');
+  it('mas 40% é o teto, não um cheque em branco: 145 sobre 100 ainda reprova', () => {
+    const m = med(os898, 'intermediario_i', 'camada_seca');
+    expect(avaliarMedicao({ ...m, encontrado: '145' }).resultado).toBe('nao_conforme');
   });
 
-  it('é a única reprovação que resta, e ela segura a OS', () => {
+  it('com isso a 898 passa a liberar', () => {
     const r = resumirOs(os898.etapas);
-    expect(r.naoConformes).toBe(1);
-    expect(r.liberavel).toBe(false);
+    expect(r.naoConformes).toBe(0);
+    expect(r.liberavel).toBe(true);
   });
 });
 
@@ -153,11 +152,19 @@ describe('gerar o relatório a partir da OS', () => {
     expect(impedimentosDoRelatorio(os913)).toEqual([]);
   });
 
-  it('e a 898 sai REPROVADO — o WEIR-04 real foi assinado como aprovado', () => {
-    expect(gerarRelatorio(os898).resultado).toBe('reprovado');
-    expect(os898.relatorio!.resultado).toBe('aprovado');
-    expect(impedimentosDoRelatorio(os898)).toHaveLength(1);
-    expect(impedimentosDoRelatorio(os898)[0]).toContain('26% acima');
+  it('e a 898 também, agora que a tolerância acomoda os 126 µm', () => {
+    expect(gerarRelatorio(os898).resultado).toBe('aprovado');
+    expect(impedimentosDoRelatorio(os898)).toEqual([]);
+  });
+
+  it('o veredito continua sendo calculado: mexer numa medição derruba a aprovação', () => {
+    const adulterada = {
+      ...os898,
+      etapas: os898.etapas.map((e) => e.etapa !== 'intermediario_i' ? e : {
+        ...e, medicoes: e.medicoes.map((m) => m.grandeza !== 'camada_seca' ? m : { ...m, encontrado: '145' }),
+      }),
+    };
+    expect(gerarRelatorio(adulterada).resultado).toBe('reprovado');
   });
 });
 
@@ -176,10 +183,11 @@ describe('limites', () => {
     expect(impedimentosDoRelatorio(os784).length).toBeGreaterThan(0);
   });
 
-  it('as duas OS da WEIR ainda especificam faixas de rugosidade diferentes', () => {
-    // A unificação não resolve isto: é decisão de engenharia, não de transcrição.
+  it('as duas OS da WEIR passaram a especificar a mesma faixa de rugosidade', () => {
+    // Era 50-70 numa e 50-100 na outra, com o mesmo cliente e o mesmo esquema. Decisão dela.
     expect(os898.esquemaPintura).toBe(os913.esquemaPintura);
-    expect(med(os898, 'jateamento', 'padrao_rugosidade').especificado).toBe('50-70');
-    expect(med(os913, 'jateamento', 'padrao_rugosidade').especificado).toBe('50-100');
+    expect(med(os898, 'jateamento', 'padrao_rugosidade').especificado)
+      .toBe(med(os913, 'jateamento', 'padrao_rugosidade').especificado);
+    expect(med(os898, 'jateamento', 'padrao_rugosidade').noPapel?.especificado).toBe('50-70');
   });
 });

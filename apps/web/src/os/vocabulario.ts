@@ -25,10 +25,13 @@ export const ETAPA_ROTULO: Record<Etapa, string> = {
 export const TIPO_MEDIDA = ['faixa', 'tolerancia', 'categorico'] as const;
 export type TipoMedida = (typeof TIPO_MEDIDA)[number];
 
-/** A tolerância combinada com o cliente: o medido pode passar até 20% ACIMA do especificado e
- *  não pode ficar mais de 10% ABAIXO. É o que faz diferença pequena de aplicação parar de virar
- *  não conformidade — e o que mantém reprovado o que realmente saiu da faixa. */
-export const TOLERANCIA = { abaixo: 0.10, acima: 0.20 } as const;
+/** A tolerância combinada com o cliente: o medido pode passar até 40% ACIMA do especificado e
+ *  não pode ficar mais de 10% ABAIXO.
+ *
+ *  A assimetria é de propósito e vem da física: camada fina demais não protege, e por isso o
+ *  limite de baixo é apertado; camada grossa protege, e só vira problema bem mais longe.
+ *  Decidido pela Vitória em 16/09/2026 — era 20% acima. */
+export const TOLERANCIA = { abaixo: 0.10, acima: 0.40 } as const;
 
 /** O intervalo realmente aceito, depois da tolerância. Para um alvo único, min e max são o mesmo
  *  número; para uma faixa, a tolerância abre cada ponta para o seu lado. */

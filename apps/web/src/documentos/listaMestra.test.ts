@@ -1,9 +1,51 @@
 // A Lista Mestra é a única fonte de código de documento. Estes testes são a trava: se alguém
 // carimbar um código que não está catalogado, o app quebra aqui e não na auditoria.
 import { describe, it, expect } from 'vitest';
-import { LISTA_MESTRA, LISTA_MESTRA_META, carimbo, conflitos, doc } from './listaMestra';
+import {
+  CATALOGADOS, LISTA_MESTRA, LISTA_MESTRA_META, PREFIXO_ROTULO,
+  carimbo, conflitos, doc, porCategoria, porClausula, proximoCodigoLivre, significadoDoPrefixo,
+} from './listaMestra';
 
 const EM = new Date('2026-09-16');
+
+/* ══ 1. O catálogo importado da planilha ═════════════════════════════════════════════════════ */
+
+describe('os 47 documentos da LM-SGQ-001', () => {
+  it('estão todos aqui, e o total bate com o que a planilha declara', () => {
+    expect(CATALOGADOS).toHaveLength(LISTA_MESTRA_META.totalCatalogado);
+    expect(CATALOGADOS).toHaveLength(47);
+  });
+
+  it('cada um trouxe cláusula da ISO, responsável e nível de acesso', () => {
+    expect(CATALOGADOS.every((d) => d.clausulas.length > 0)).toBe(true);
+    expect(CATALOGADOS.every((d) => Boolean(d.responsavel))).toBe(true);
+    expect(doc('PQ-005').clausulas).toEqual(['7.1.5']);
+    expect(doc('PQ-005').responsavel).toBe('Ger. Qualidade');
+    expect(doc('FM-008').acesso).toBe('restrito');
+  });
+
+  it('a divisão por categoria mostra onde o sistema pesa', () => {
+    const cats = porCategoria();
+    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(47);
+    // Operações lidera — é o processo que a empresa vende.
+    expect(cats[0]).toEqual({ categoria: 'Operações', total: 12 });
+    expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(10);
+  });
+
+  it('dá para achar quem atende uma cláusula — é o que o auditor pergunta', () => {
+    expect(porClausula('8.6').map((d) => d.codigo)).toContain('PQ-003');
+    expect(porClausula('8.6').map((d) => d.codigo)).toContain('FM-002');
+    expect(porClausula('7.1.5').map((d) => d.codigo)).toEqual(['PQ-005', 'IT-004']);
+  });
+
+  it('as instruções de trabalho vivem no chão de fábrica, não no servidor', () => {
+    expect(doc('IT-001').local).toBe('Produção (físico)');
+    expect(doc('IT-004').local).toBe('Lab. Qualidade (físico)');
+    expect(doc('PSSMA-001').local).toBe('Servidor / Pasta SSMA');
+  });
+});
+
+/* ══ 2. A trava ══════════════════════════════════════════════════════════════════════════════ */
 
 describe('a Lista Mestra é a autoridade sobre código', () => {
   it('um código catalogado devolve o documento', () => {
@@ -16,9 +58,21 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
     expect(() => doc('FM-999')).toThrowError(/listaMestra\.ts/);
   });
 
-  it('o carimbo sai pronto para o rodapé do documento emitido', () => {
-    expect(carimbo('FM-001')).toBe('FM-001');
-    expect(carimbo('TR-001')).toBe('TR-001 · rev. 01');
+  it('o carimbo sai pronto para o rodapé, com a revisão', () => {
+    expect(carimbo('FM-001')).toBe('FM-001 rev. 00');
+    expect(carimbo('MQ-001')).toBe('MQ-001 rev. 01');
+  });
+
+  it('a Legenda diz o que cada prefixo significa', () => {
+    expect(significadoDoPrefixo('PSSMA-002')).toBe('Procedimento de SSMA');
+    expect(significadoDoPrefixo('FM-001')).toBe('Formulário / Modelo de Registro');
+    expect(significadoDoPrefixo('TR-001')).toBeNull();
+    expect(Object.keys(PREFIXO_ROTULO)).toHaveLength(10);
+  });
+
+  it('sabe qual é o próximo código livre — para cadastrar o que circula sem entrada', () => {
+    expect(proximoCodigoLivre('FM')).toBe('FM-012');
+    expect(proximoCodigoLivre('IT')).toBe('IT-006');
   });
 
   it('toda tela declarada aponta para uma tela que existe', () => {
@@ -29,11 +83,13 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
   });
 });
 
+/* ══ 3. Os conflitos ═════════════════════════════════════════════════════════════════════════ */
+
 describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () => {
   const cs = conflitos(EM);
   const por = (tipo: string) => cs.filter((x) => x.tipo === tipo);
 
-  it('FM-011 identifica dois documentos vigentes', () => {
+  it('FM-011 identifica dois documentos vigentes, com acessos diferentes', () => {
     const dup = por('codigo_duplicado').find((x) => x.codigo === 'FM-011')!;
     expect(dup.titulo).toContain('Pedido de Compra');
     expect(dup.titulo).toContain('SWOT');
@@ -47,36 +103,55 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(c.detalhe).toContain('MJ-REC-01');
   });
 
-  it('a Lista Mestra está com a revisão vencida desde 04/07/2026', () => {
-    const v = por('revisao_vencida').find((x) => x.codigo === 'LM-SGQ-001')!;
-    expect(v.detalhe).toContain('04/07/2026');   // o texto sai em data brasileira
+  it('o vencimento é do sistema inteiro: uma carta para os 47, não 47 cartas iguais', () => {
+    const v = por('revisao_vencida');
+    expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
+    const emBloco = v.find((x) => x.codigo === null)!;
+    expect(emBloco.titulo).toBe('47 documentos da Lista Mestra');
+    expect(emBloco.detalhe).toContain('04/07/2026');
+    expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
+  });
+
+  it('o Manual ESTÁ catalogado — o que não bate é a revisão', () => {
+    // A lista traz rev. 01 de 03/06/2025; o arquivo em uso é rev. 00 de 05/03/2026.
+    expect(doc('MQ-001').foraDaLista).toBeUndefined();
+    const r = por('revisao_divergente').find((x) => x.codigo === 'MQ-001')!;
+    expect(r.detalhe).toContain('rev. 01');
+    expect(r.detalhe).toContain('rev. 00 de 05/03/2026');
+    expect(r.gravidade).toBe('alta');
   });
 
   it('o arquivo real de oito documentos usa outro código', () => {
     const paralelos = por('codigo_paralelo');
     expect(paralelos.find((x) => x.codigo === 'FM-001')!.detalhe).toContain('MJ-OP-01');
     expect(paralelos.find((x) => x.codigo === 'PO-002')!.detalhe).toContain('MJ-RAI-01');
-    expect(paralelos.length).toBeGreaterThanOrEqual(8);
+    expect(paralelos).toHaveLength(8);
   });
 
-  it('a Lista de Presença que chegou agora usa um prefixo que a Lista Mestra não conhece', () => {
+  it('a Lista de Presença usa um prefixo que a Legenda não conhece', () => {
     const fora = por('fora_da_lista').find((x) => x.codigo === 'TR-001')!;
     expect(fora.gravidade).toBe('alta');
     expect(fora.detalhe).toContain('FM-009');
+    const prefixo = por('prefixo_desconhecido').find((x) => x.codigo === 'TR-001')!;
+    expect(prefixo.detalhe).toContain('PSSMA');
     expect(doc('TR-001').revisao).toBe('01');
   });
 
-  it('os registros sem código nenhum aparecem sem código, não com um rótulo inventado', () => {
+  it('a Lista Mestra não tem quem a elaborou nem quem a aprovou', () => {
+    expect(LISTA_MESTRA_META.aprovadoPor).toBeNull();
+    const s = por('sem_aprovacao')[0];
+    expect(s.detalhe).toContain('7.5.2');
+  });
+
+  it('os registros sem código nenhum aparecem sem código, não com rótulo inventado', () => {
     const semCodigo = por('fora_da_lista').filter((x) => x.codigo === null);
     expect(semCodigo).toHaveLength(5);
     expect(semCodigo.map((x) => x.titulo)).toContain('Plano de Calibração');
   });
 
-  it('sete registros circulam sem entrada própria', () => {
-    const fora = por('fora_da_lista');
-    expect(fora.length).toBeGreaterThanOrEqual(7);
-    expect(fora.some((x) => x.titulo.includes('Plano de Calibração'))).toBe(true);
-    expect(fora.some((x) => x.titulo.includes('Manual'))).toBe(true);
+  it('oito documentos circulam fora da lista', () => {
+    // SWOT, Lista de Presença, avaliação de impacto de calibração e 5 registros sem código.
+    expect(por('fora_da_lista')).toHaveLength(8);
   });
 
   it('nada disso é histórico: é tudo documento vigente', () => {
