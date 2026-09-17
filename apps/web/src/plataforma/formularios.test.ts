@@ -199,12 +199,15 @@ describe('portaria — o que passou pelo portão', () => {
     expect(faltando(CONTROLE_CARGAS, CARGA)).toEqual([]);
   });
 
-  it('o que é do cliente obriga a dizer em que estado chegou — peça OU insumo', () => {
+  it('tudo que é do cliente obriga a dizer em que estado chegou — peça, insumo ou os dois', () => {
     // A portaria não inspeciona, mas é quem vê primeiro. Avaria vista no portão e não
     // registrada vira discussão sobre quem amassou. E a 8.5.3 não fala de peça: fala de
     // propriedade do cliente, que pode chegar como lata de tinta.
     expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Peça de cliente' })).toEqual(['estado']);
     expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Matéria-prima ou insumo do cliente' }))
+      .toEqual(['estado']);
+    // E a carga mista, que é como o caminhão costuma chegar.
+    expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Peças e insumos do cliente' }))
       .toEqual(['estado']);
   });
 
@@ -225,6 +228,7 @@ describe('portaria — o que passou pelo portão', () => {
     expect(campoVisivel(estado, { tipo: 'Matéria-prima ou insumo da empresa' })).toBe(false);
     expect(campoVisivel(estado, { tipo: 'Peça de cliente' })).toBe(true);
     expect(campoVisivel(estado, { tipo: 'Matéria-prima ou insumo do cliente' })).toBe(true);
+    expect(campoVisivel(estado, { tipo: 'Peças e insumos do cliente' })).toBe(true);
   });
 
   it('é registro próprio, e não o recebimento nem o romaneio', () => {

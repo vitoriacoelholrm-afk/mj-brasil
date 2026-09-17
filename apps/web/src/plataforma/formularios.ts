@@ -264,7 +264,9 @@ export const CONTROLE_CARGAS: FormularioDef = {
     {
       chave: 'tipo', rotulo: 'O que é a carga', tipo: 'escolha', obrigatorio: true,
       opcoes: [
-        'Peça de cliente', 'Matéria-prima ou insumo do cliente',
+        // As três do cliente vêm juntas e primeiro: é o caso que a norma cobra, e o caminhão
+        // costuma trazer peça e tinta do cliente na mesma viagem.
+        'Peça de cliente', 'Matéria-prima ou insumo do cliente', 'Peças e insumos do cliente',
         'Matéria-prima ou insumo da empresa', 'Produto acabado', 'Resíduo', 'Equipamento', 'Outro',
       ],
       ajuda: 'De quem é a carga importa tanto quanto o que ela é: o que pertence ao cliente entra na 8.5.3, venha como peça ou como lata de tinta.',
@@ -281,7 +283,9 @@ export const CONTROLE_CARGAS: FormularioDef = {
     {
       chave: 'estado', rotulo: 'Estado aparente', tipo: 'escolha', obrigatorio: true,
       opcoes: ['Íntegra', 'Avaria aparente'],
-      dependeDe: { campo: 'tipo', valor: ['Peça de cliente', 'Matéria-prima ou insumo do cliente'] },
+      dependeDe: { campo: 'tipo', valor: [
+        'Peça de cliente', 'Matéria-prima ou insumo do cliente', 'Peças e insumos do cliente',
+      ] },
       ajuda: 'Vale para tudo que é do cliente, peça ou insumo. A portaria não inspeciona, mas é quem vê primeiro — avaria aparente aqui abre uma ocorrência de propriedade do cliente (§8.5.3).',
     },
     { chave: 'descricaoAvaria', rotulo: 'O que se viu', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'Onde e como. Sem isto, daqui a uma semana ninguém sabe se a avaria veio de fora ou aconteceu dentro.' },
