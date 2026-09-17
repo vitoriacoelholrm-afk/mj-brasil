@@ -40,3 +40,10 @@ export * from './modules/scheduling-field-service/index.js';
 export * from './modules/facility-spaces/index.js';
 export * from './modules/equipment-maintenance/index.js';
 // __MODULE_DB_EXPORTS__   <- install splices module capability re-exports here
+
+// app-local: os registros do sistema da qualidade (os formulários da ISO 9001 desta aplicação).
+export {
+  criarRegistro, criarRegistroInput,
+  listarRegistros, listarRegistrosInput,
+  lerAnexo, lerAnexoInput,
+} from './app-local/registros.js';

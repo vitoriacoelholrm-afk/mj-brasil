@@ -81,7 +81,9 @@ export function Anexos({
           {anexos.map((a) => (
             <div key={a.id} style={S.anexo}>
               <div style={S.miniatura}>
-                {a.url
+                {/* Miniatura é para imagem. O PDF também tem conteúdo agora, e desenhá-lo num
+                    <img> daria o ícone de imagem quebrada em cima de um anexo que está inteiro. */}
+                {a.tipo === 'foto' && a.url
                   ? <img src={a.url} alt={a.legenda || a.nome} style={S.img} />
                   : <span style={S.semImagem}>{a.tipo === 'foto' ? 'foto' : 'arquivo'}</span>}
               </div>

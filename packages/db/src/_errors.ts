@@ -29,5 +29,6 @@ export const NOT_FOUND_CODES = new Set([
   'METER_NOT_FOUND',
   'QR_NOT_FOUND',
   'READING_NOT_FOUND',
+  'ANEXO_NOT_FOUND',   // app-local: os registros do SGQ
   // __MODULE_NOT_FOUND_CODES__   <- install splices each module's <ENTITY>_NOT_FOUND codes here
 ]);

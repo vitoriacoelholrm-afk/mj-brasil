@@ -180,6 +180,86 @@ describe.skipIf(!HAS_DB)('registros do SGQ (Postgres real)', () => {
     expect(linhas.length).toBe(3);
   });
 
+  /* ══ 5. Pelas Functions, que é por onde a tela entra ═══════════════════════════════════════ */
+
+  describe('as Functions', () => {
+    const ctx = {
+      orgId: UMA,
+      membershipId: '00000000-0000-4000-9000-000000000006',   // a portaria
+      actor: 'member:00000000-0000-4000-9000-000000000006',
+      rbacRole: 'admin' as const,
+      permissions: new Set(['*']),
+    };
+    const semPermissao = { ...ctx, rbacRole: 'employee' as const, permissions: new Set<string>() };
+
+    it('grava registro e foto numa transação só, e a lista devolve os dois', async () => {
+      const db = await import('../src/index');
+      const criado = await withTenant(UMA, (tx) => db.criarRegistro(tx as any, ctx as any, {
+        papel: 'controle_cargas',
+        valores: carga({ sentido: 'Entrada', os: 'OS-7777', parte: 'Cliente A', placa: 'ABC1D23' }),
+        registradoPorNome: 'Beatriz Nogueira',
+        anexos: [{
+          tipo: 'foto', nome: 'portao.jpg', mime: 'image/jpeg',
+          legenda: 'Carga no portão', comentario: 'canto direito',
+          conteudoBase64: FOTO.toString('base64'),
+        }],
+      } as any));
+      expect(criado.id).toBeTruthy();
+
+      const { rows } = await withTenant(UMA, (tx) =>
+        db.listarRegistros(tx as any, ctx as any, { papel: 'controle_cargas', limite: 200 } as any)) as any;
+      const meu = rows.find((r: any) => r.id === criado.id);
+      expect(meu.valores.os).toBe('OS-7777');
+      expect(meu.registrado_por_nome).toBe('Beatriz Nogueira');
+      expect(meu.anexos).toHaveLength(1);
+      expect(meu.anexos[0].legenda).toBe('Carga no portão');
+      expect(meu.anexos[0].tamanhoBytes).toBe(FOTO.length);
+    });
+
+    it('a lista NÃO carrega os bytes das fotos — eles vêm só quando se abre o registro', async () => {
+      // Um portão com duzentas passagens e uma foto em cada traria meio giga numa resposta só,
+      // para desenhar uma lista de texto. No celular do portão isso não abre.
+      const db = await import('../src/index');
+      const { rows } = await withTenant(UMA, (tx) =>
+        db.listarRegistros(tx as any, ctx as any, { papel: 'controle_cargas', limite: 200 } as any)) as any;
+      const comFoto = rows.find((r: any) => r.anexos.length > 0);
+      expect(comFoto).toBeTruthy();
+      expect(comFoto.anexos[0].conteudo).toBeUndefined();
+      expect(comFoto.anexos[0].conteudoBase64).toBeUndefined();
+
+      const bytes = await withTenant(UMA, (tx) =>
+        db.lerAnexo(tx as any, ctx as any, { anexoId: comFoto.anexos[0].id } as any)) as any;
+      expect(Buffer.from(bytes.conteudoBase64, 'base64').equals(FOTO)).toBe(true);
+    });
+
+    it('sem permissão de escrita, não grava; sem a de leitura, não lê', async () => {
+      const db = await import('../src/index');
+      await expect(withTenant(UMA, (tx) => db.criarRegistro(tx as any, semPermissao as any, {
+        papel: 'controle_cargas', valores: carga({ sentido: 'Entrada' }), anexos: [],
+      } as any))).rejects.toThrow(/registro.write/);
+      await expect(withTenant(UMA, (tx) => db.listarRegistros(tx as any, semPermissao as any, {
+        papel: 'controle_cargas', limite: 10,
+      } as any))).rejects.toThrow(/registro.read/);
+    });
+
+    it('anexo grande demais é recusado, e o registro inteiro volta atrás', async () => {
+      // A transação é o ponto: falhar no anexo não pode deixar um registro de portão gravado sem
+      // a foto que ele exige.
+      const db = await import('../src/index');
+      const enorme = Buffer.alloc(13 * 1024 * 1024, 7).toString('base64');
+      await expect(withTenant(UMA, (tx) => db.criarRegistro(tx as any, ctx as any, {
+        papel: 'controle_cargas',
+        valores: carga({ sentido: 'Entrada', os: 'OS-NAO-DEVE-EXISTIR' }),
+        anexos: [{ tipo: 'foto', nome: 'gigante.jpg', conteudoBase64: enorme }],
+      } as any))).rejects.toMatchObject({ code: 'ANEXO_GRANDE_DEMAIS' });
+
+      const sobrou = (await withTenant(UMA, (tx) => tx.execute(
+        sql`select id from registros where valores->>'os' = 'OS-NAO-DEVE-EXISTIR'`,
+      ))) as unknown as Array<any>;
+      expect(sobrou.length).toBe(0);
+    });
+  });
+
   it('acha as passagens de uma ordem de serviço — é como o portão fecha o par', async () => {
     await gravar(UMA, 'controle_cargas', { sentido: 'Entrada', os: 'OS-9900', data: '2026-09-10' }, 'Beatriz Nogueira');
     await gravar(UMA, 'controle_cargas', { sentido: 'Saída', os: 'OS-9900', data: '2026-09-16' }, 'Beatriz Nogueira');

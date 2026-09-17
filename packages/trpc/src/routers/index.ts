@@ -10,6 +10,7 @@ import { equipmentMaintenanceRouter } from './equipment-maintenance.js';
 import { router } from '../trpc.js';
 import { chassisRouter } from './chassis.js';
 import { identityRouter } from './identity.js';
+import { registrosRouter } from './registros.js';
 
 export const appRouter = router({
   identity: identityRouter,
@@ -21,6 +22,8 @@ export const appRouter = router({
   'facility-spaces': facilitySpacesRouter,
   'equipment-maintenance': equipmentMaintenanceRouter,
   // __MODULE_ROUTER_MOUNTS__   <- install splices module routers here
+  // app-local: os formulários da ISO 9001 desta aplicação.
+  registros: registrosRouter,
 });
 
 export type AppRouter = typeof appRouter;

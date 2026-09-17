@@ -5,7 +5,7 @@
 // onze da lista mestra vão entrando, um a um, sem escrever onze telas.
 //
 // Vale a mesma regra de acesso do resto: quem confere não preenche.
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   campoVisivel, faltaFoto, pendencias, resumoDoRegistro, valoresIniciais,
   type CampoDef, type FormularioDef, type Registro, type Valores,
@@ -15,6 +15,8 @@ import { Anexos } from './Anexos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
+import { conteudoDoAnexo, criarRegistro, listarRegistros } from '@/lib/registrosApi';
+import { usarDados } from '@/lib/usarDados';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
 import { Cabecalho } from './Vencimentos';
@@ -26,10 +28,13 @@ export function Registros({ def, painel }: {
    *  função em vez de conhecer o setor. */
   painel?: (registros: Registro[]) => ReactNode;
 }) {
-  const [registros, setRegistros] = useState<Registro[]>([]);
+  const lista = usarDados<Registro[]>(() => listarRegistros(def.papel), [def.papel]);
+  const registros = lista.dados ?? [];
   const [rascunho, setRascunho] = useState<Valores | null>(null);
   const [anexos, setAnexos] = useState<Anexo[]>([]);
   const [aberto, setAberto] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [erroAoSalvar, setErroAoSalvar] = useState<string | null>(null);
 
   const papel = papelAtual();
   // Quem pode preencher depende do SETOR do formulário, não da ordem de serviço: a ficha de
@@ -47,21 +52,23 @@ export function Registros({ def, painel }: {
   const semFoto = rascunho ? faltaFoto(def, anexos) : null;
   const travado = faltando.length > 0 || semFoto !== null;
 
-  function salvar() {
-    if (!rascunho || travado) return;
-    setRegistros((todos) => [
-      {
-        id: `r-${Date.now()}`,
-        papel: def.papel,
-        valores: rascunho,
-        anexos,
-        criadoEm: new Date().toISOString().slice(0, 10),
-        criadoPor: pessoaAtual()?.nome ?? null,
-      },
-      ...todos,
-    ]);
-    setRascunho(null);
-    setAnexos([]);
+  async function salvar() {
+    if (!rascunho || travado || salvando) return;
+    setSalvando(true);
+    setErroAoSalvar(null);
+    try {
+      await criarRegistro(def.papel, rascunho, anexos, pessoaAtual()?.nome ?? null);
+      // Só limpa a tela depois que o banco confirmou. Limpar antes daria a impressão de gravado
+      // e perderia o que a pessoa digitou — no portão, com o caminhão esperando, isso não se
+      // recupera de memória.
+      setRascunho(null);
+      setAnexos([]);
+      lista.recarregar();
+    } catch (e) {
+      setErroAoSalvar((e as Error)?.message ?? 'não foi possível gravar');
+    } finally {
+      setSalvando(false);
+    }
   }
 
   const emAberto = registros.find((r) => r.id === aberto) ?? null;
@@ -97,10 +104,16 @@ export function Registros({ def, painel }: {
         </div>
       )}
 
+      {lista.erro && (
+        <div style={{ ...S.aviso, borderColor: c.critico, color: c.critico }}>
+          Não foi possível carregar os registros: {lista.erro}
+        </div>
+      )}
+
       {rascunho && (
         <Formulario
           def={def} valores={rascunho} faltando={faltando} celular={celular}
-          semFoto={semFoto} travado={travado}
+          semFoto={semFoto} travado={travado} salvando={salvando} erro={erroAoSalvar}
           anexos={def.anexos ? anexos : null} porQuem={pessoaAtual()?.nome ?? null}
           aoMudar={(chave, valor) => setRascunho((v) => ({ ...v, [chave]: valor }))}
           aoAnexar={(novos) => setAnexos((v) => [...v, ...novos])}
@@ -116,15 +129,16 @@ export function Registros({ def, painel }: {
         <Visualizacao def={def} registro={emAberto} celular={celular} aoVoltar={() => setAberto(null)} />
       )}
 
-      {!rascunho && !emAberto && painel?.(registros)}
-
-      {!rascunho && !emAberto && (
-        <Lista def={def} registros={registros} aoAbrir={setAberto} editavel={editavel} celular={celular} />
+      {!rascunho && !emAberto && lista.carregando && lista.dados === null && (
+        <div style={{ ...s.cartao, padding: '22px', ...S.vazio }}>Carregando os registros…</div>
       )}
 
-      <div style={S.rodape}>
-        Sem banco ainda — o que for registrado aqui vive só nesta sessão.
-      </div>
+      {!rascunho && !emAberto && lista.dados !== null && (
+        <>
+          {painel?.(registros)}
+          <Lista def={def} registros={registros} aoAbrir={setAberto} editavel={editavel} celular={celular} />
+        </>
+      )}
     </div>
   );
 }
@@ -190,7 +204,7 @@ function Lista({
 /* ── O formulário ─────────────────────────────────────────────────────────────────────────── */
 
 function Formulario({
-  def, valores, faltando, celular, semFoto, travado, anexos, porQuem,
+  def, valores, faltando, celular, semFoto, travado, salvando, erro, anexos, porQuem,
   aoMudar, aoAnexar, aoAlterarAnexo, aoRemoverAnexo, aoSalvar, aoCancelar,
 }: {
   def: FormularioDef;
@@ -199,6 +213,9 @@ function Formulario({
   celular: boolean;
   semFoto: string | null;
   travado: boolean;
+  salvando: boolean;
+  /** O que o banco respondeu quando recusou. Fica na tela com o rascunho intacto. */
+  erro: string | null;
   /** Null quando a definição não pede anexo — o bloco simplesmente não aparece. */
   anexos: Anexo[] | null;
   porQuem: string | null;
@@ -238,13 +255,13 @@ function Formulario({
 
       <div style={S.acoes}>
         <button
-          style={travado ? { ...s.botao, opacity: 0.55, cursor: 'not-allowed' } : s.botaoPrimario}
+          style={travado || salvando ? { ...s.botao, opacity: 0.55, cursor: 'not-allowed' } : s.botaoPrimario}
           onClick={aoSalvar}
-          disabled={travado}
+          disabled={travado || salvando}
         >
-          Salvar registro
+          {salvando ? 'Gravando…' : 'Salvar registro'}
         </button>
-        <button style={s.botao} onClick={aoCancelar}>Cancelar</button>
+        <button style={s.botao} onClick={aoCancelar} disabled={salvando}>Cancelar</button>
         {(faltando.length > 0 || semFoto) && (
           <span style={S.faltando}>
             {faltando.length > 0 && (
@@ -255,6 +272,11 @@ function Formulario({
             )}
             {faltando.length > 0 && semFoto ? ' ' : ''}
             {semFoto}
+          </span>
+        )}
+        {erro && (
+          <span style={{ ...S.faltando, color: c.critico }}>
+            Não gravou: {erro}. O que você preencheu continua aí — tente de novo.
           </span>
         )}
       </div>
@@ -325,6 +347,23 @@ function Visualizacao({
   const preenchidos = def.campos.filter((campo) => registro.valores[campo.chave]?.trim());
   const temAnexo = registro.anexos.length > 0;
 
+  // A lista traz a ficha dos anexos, não os bytes. É aqui — quando alguém abre UM registro — que
+  // as imagens vêm. Enquanto não chegam, o bloco já aparece com nome, legenda e observação; o que
+  // falta é só a miniatura.
+  const [comImagem, setComImagem] = useState<Anexo[]>(registro.anexos);
+  useEffect(() => {
+    let vivo = true;
+    setComImagem(registro.anexos);
+    void (async () => {
+      const cheios = await Promise.all(registro.anexos.map(async (a) => (
+        a.url ? a : { ...a, url: await conteudoDoAnexo(a.id).catch(() => null) }
+      )));
+      if (vivo) setComImagem(cheios);
+    })();
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registro.id]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <button onClick={aoVoltar} style={S.voltar}>← Todos os registros</button>
@@ -349,7 +388,7 @@ function Visualizacao({
 
         {temAnexo && (
           <Anexos
-            anexos={registro.anexos} podeAnexar={false}
+            anexos={comImagem} podeAnexar={false}
             titulo={def.anexos?.titulo ?? 'Evidência anexada'}
             aoAdicionar={() => {}} aoAlterar={() => {}} aoRemover={() => {}}
           />

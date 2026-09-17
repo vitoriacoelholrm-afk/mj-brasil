@@ -40,6 +40,13 @@ export function lerComoDataUrl(f: File): Promise<string | null> {
   });
 }
 
+/** A data de hoje pelo relógio local. `toISOString()` daria o dia seguinte depois das 21h daqui. */
+function dataDeHoje(): string {
+  const d = new Date();
+  const dd = (n: number) => String(n).padStart(2, '0');
+  return [d.getFullYear(), dd(d.getMonth() + 1), dd(d.getDate())].join('-');
+}
+
 /** Monta o anexo a partir do arquivo escolhido. `porQuem` fica registrado porque evidência sem
  *  autor é evidência de ninguém. */
 export async function anexoDeArquivo(f: File, i: number, porQuem: string | null): Promise<Anexo> {
@@ -48,11 +55,14 @@ export async function anexoDeArquivo(f: File, i: number, porQuem: string | null)
     id: `an-${Date.now()}-${i}`,
     tipo: ehImagem ? 'foto' : 'arquivo',
     nome: f.name,
-    url: ehImagem ? await lerComoDataUrl(f) : null,
+    // Lê o conteúdo de TUDO, e não só de imagem. Antes o certificado em PDF entrava como nome sem
+    // arquivo nenhum: aparecia anexado na tela e não havia o que gravar. Quem decide mostrar
+    // miniatura é o `tipo`, não a presença do conteúdo.
+    url: await lerComoDataUrl(f),
     legenda: '',
     comentario: '',
     etapa: null,
-    data: new Date().toISOString().slice(0, 10),
+    data: dataDeHoje(),
     adicionadoPor: porQuem,
   };
 }
