@@ -4,12 +4,14 @@
 // Duplicar teria custado pouco hoje e caro depois: são dois lugares onde a legenda importa, e
 // eles teriam divergido no primeiro ajuste.
 //
-// Dois botões, não um. "Tirar foto" pede a câmera de trás direto — no tablet do portão isso é a
-// diferença entre um toque e quatro. No computador, onde não há câmera, ele abre o seletor de
-// arquivos do mesmo jeito, e ninguém fica preso.
+// Os botões mudam com o aparelho. No celular e no tablet são dois: "Tirar foto" pede a câmera
+// de trás direto, e no portão isso é a diferença entre um toque e quatro. No computador é um
+// só, porque nem todo computador tem câmera — e onde não tem, um botão chamado "tirar foto"
+// abriria o seletor de arquivos, deixando a pessoa procurando o que o nome prometeu.
 import { useRef } from 'react';
 import { anexoDeArquivo, type Anexo } from '@/plataforma/anexos';
 import { c, dataBR, fonte, s } from '@/ui/estilo';
+import { useEhToque } from '@/ui/tela';
 
 export function Anexos({
   anexos, podeAnexar, titulo = 'Evidência anexada', vazio, porQuem = null,
@@ -27,6 +29,9 @@ export function Anexos({
 }) {
   const camera = useRef<HTMLInputElement>(null);
   const arquivo = useRef<HTMLInputElement>(null);
+  // No computador não se oferece câmera: nem todo mundo tem, e onde não tem o botão abriria
+  // o seletor de arquivos com nome de câmera. Um botão só, que faz o que diz.
+  const podeFotografar = useEhToque();
 
   async function escolher(lista: FileList | null, onde: HTMLInputElement | null) {
     if (!lista?.length) return;
@@ -40,16 +45,25 @@ export function Anexos({
         <div style={S.blocoTit}>{titulo}</div>
         {podeAnexar && (
           <>
-            <button style={S.botaoFoto} onClick={() => camera.current?.click()}>Tirar foto</button>
-            <button style={{ ...s.botao, padding: '6px 12px', fontSize: 13 }} onClick={() => arquivo.current?.click()}>
-              Anexar arquivo
+            {podeFotografar && (
+              <button style={S.botaoFoto} onClick={() => camera.current?.click()}>Tirar foto</button>
+            )}
+            <button
+              style={podeFotografar
+                ? { ...s.botao, padding: '6px 12px', fontSize: 13 }
+                : S.botaoFoto}
+              onClick={() => arquivo.current?.click()}
+            >
+              {podeFotografar ? 'Anexar arquivo' : 'Anexar foto ou arquivo'}
             </button>
           </>
         )}
-        <input
-          ref={camera} type="file" accept="image/*" capture="environment"
-          style={{ display: 'none' }} onChange={(e) => void escolher(e.target.files, camera.current)}
-        />
+        {podeFotografar && (
+          <input
+            ref={camera} type="file" accept="image/*" capture="environment"
+            style={{ display: 'none' }} onChange={(e) => void escolher(e.target.files, camera.current)}
+          />
+        )}
         <input
           ref={arquivo} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
           style={{ display: 'none' }} onChange={(e) => void escolher(e.target.files, arquivo.current)}

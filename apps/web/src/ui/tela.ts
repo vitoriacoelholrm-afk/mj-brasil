@@ -36,6 +36,32 @@ export function useEhCelular(corte = CORTE_CELULAR): boolean {
   return estreita;
 }
 
+/** Verdadeiro em aparelho que se toca com o dedo — celular e tablet.
+ *
+ *  Serve para decidir se faz sentido oferecer a câmera. Ponteiro grosso é melhor que
+ *  largura de tela para isso: tablet deitado é largo e tem câmera atrás; monitor de mesa é
+ *  largo e muitas vezes não tem câmera nenhuma. Oferecer "tirar foto" a quem não tem
+ *  câmera abre o seletor de arquivos com outro nome, e a pessoa fica procurando o que o
+ *  botão prometeu. */
+export function useEhToque(): boolean {
+  const consulta = '(pointer: coarse)';
+  const [toque, setToque] = useState(() => combina(consulta));
+
+  useEffect(() => {
+    const mq = window.matchMedia(consulta);
+    const aoMudar = (e: MediaQueryListEvent | MediaQueryList) => setToque(e.matches);
+    setToque(mq.matches);
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', aoMudar);
+      return () => mq.removeEventListener('change', aoMudar);
+    }
+    mq.addListener(aoMudar);
+    return () => mq.removeListener(aoMudar);
+  }, [consulta]);
+
+  return toque;
+}
+
 /** O respiro lateral do conteúdo. No celular o espaço é caro. */
 export function margemLateral(celular: boolean): number {
   return celular ? 16 : 28;
