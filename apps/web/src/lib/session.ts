@@ -33,7 +33,9 @@ export const EQUIPE: Pessoa[] = [
   // editáveis — que é exatamente o conjunto do papel de inspeção. Era `execucao`, que edita a
   // OS e NÃO emite relatório; por isso mudou de papel, não só de cargo.
   { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'PCC', papel: 'inspecao' },
-  { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Inspetor de Pintura N1', papel: 'inspecao' },
+  // Gerente de Produção. Ela corrigiu o cargo em 17/09/2026 e disse que ele fica com a função
+  // de produção e mantém a ordem de serviço e o RIP — o papel não muda, o nome do posto sim.
+  { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Gerente de Produção', papel: 'inspecao' },
   { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', papel: 'apoio' },
 ];
 

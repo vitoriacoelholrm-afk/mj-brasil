@@ -106,14 +106,14 @@ describe('a equipe cadastrada usa os papéis', () => {
     for (const p of EQUIPE) expect(PAPEIS, `${p.nome}`).toContain(p.papel);
   });
 
-  it('na equipe dela, quem preenche a OS é o PCC e o inspetor', () => {
+  it('na equipe dela, quem preenche a OS é o PCC e o gerente de produção', () => {
     const editam = EQUIPE.filter((p) => pode(p.papel, 'os.editar')).map((p) => p.cargo);
-    expect(editam).toEqual(['PCC', 'Inspetor de Pintura N1']);
+    expect(editam).toEqual(['PCC', 'Gerente de Produção']);
   });
 
-  it('e os dois emitem o relatório — foi o que ela pediu em 17/09/2026', () => {
+  it('e os dois assinam e emitem o RIP — foi o que ela pediu em 17/09/2026', () => {
     const emitem = EQUIPE.filter((p) => pode(p.papel, 'relatorio.emitir')).map((p) => p.cargo);
-    expect(emitem).toEqual(['PCC', 'Inspetor de Pintura N1']);
+    expect(emitem).toEqual(['PCC', 'Gerente de Produção']);
   });
 
   it('e a direção e o administrativo continuam fora da OS', () => {
