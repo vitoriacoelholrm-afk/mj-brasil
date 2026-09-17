@@ -18,13 +18,13 @@ const EM = new Date('2026-09-16');
 describe('os 47 documentos da LM-SGQ-001', () => {
   it('os 47 da planilha estão aqui, mais os dois que criamos depois', () => {
     expect(LISTA_MESTRA_META.totalCatalogado).toBe(47);   // o que a planilha declara
-    expect(CATALOGADOS).toHaveLength(50);                  // 47 + FM-020, FM-021 e FM-022
+    expect(CATALOGADOS).toHaveLength(51);                  // 47 + FM-020 a FM-023
   });
 
   it('e o app acusa que o cabeçalho da planilha ficou para trás', () => {
     const c = conflitos(EM).find((x) => x.tipo === 'contagem_divergente')!;
     expect(c.detalhe).toContain('declara 47');
-    expect(c.detalhe).toContain('tem 50');
+    expect(c.detalhe).toContain('tem 51');
   });
 
   it('cada um trouxe cláusula da ISO, responsável e nível de acesso', () => {
@@ -37,7 +37,7 @@ describe('os 47 documentos da LM-SGQ-001', () => {
 
   it('a divisão por categoria mostra onde o sistema pesa', () => {
     const cats = porCategoria();
-    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(50);
+    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(51);
     // Operações lidera — é o processo que a empresa vende, e ganhou os dois formulários novos.
     expect(cats[0]).toEqual({ categoria: 'Operações', total: 14 });
     expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(11);
@@ -82,12 +82,13 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
   });
 
   it('sabe qual é o próximo código livre — para cadastrar o que circula sem entrada', () => {
-    expect(proximoCodigoLivre('FM')).toBe('FM-023');
+    expect(proximoCodigoLivre('FM')).toBe('FM-024');
     expect(proximoCodigoLivre('IT')).toBe('IT-006');
   });
 
   it('toda tela declarada aponta para uma tela que existe', () => {
-    const telas = new Set(['plano', 'instrumentos', 'lista-mestra', 'clientes', 'diagnostico', 'vencimentos', 'situacao', 'propriedade-cliente', 'mudanca-producao', 'nao-conformidade', 'indicadores']);
+    const telas = new Set(['plano', 'instrumentos', 'lista-mestra', 'clientes', 'diagnostico', 'vencimentos', 'situacao', 'propriedade-cliente', 'mudanca-producao', 'nao-conformidade', 'indicadores', 'treinamento',
+      'cargas']);
     for (const d of LISTA_MESTRA) {
       if (d.tela) expect(telas, `${d.codigo} aponta para "${d.tela}"`).toContain(d.tela);
     }
@@ -118,7 +119,7 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const v = por('revisao_vencida');
     expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
     const emBloco = v.find((x) => x.codigo === null)!;
-    expect(emBloco.titulo).toBe('50 documentos da lista mestra');
+    expect(emBloco.titulo).toBe('51 documentos da lista mestra');
     expect(emBloco.detalhe).toContain('04/07/2026');
     expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
   });

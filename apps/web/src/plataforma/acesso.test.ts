@@ -94,6 +94,32 @@ describe('a tela diz por que não abre, e diz a coisa certa', () => {
     expect(m).toContain('responde pelo setor');
   });
 });
+
+describe('um posto de uso único vê a sua tela e mais nada', () => {
+  it('a portaria registra cargas, e só', () => {
+    expect(podeEditar('portaria', 'portaria')).toBe(true);
+    expect(podeVer('portaria', 'os')).toBe(false);
+    expect(podeVer('portaria', 'rh')).toBe(false);
+  });
+
+  it('e não enxerga o sistema da qualidade — não é console, é terminal de portão', () => {
+    // Sem esta distinção o porteiro entraria numa tela de diagnóstico da ISO travada, em vez
+    // de entrar direto no que ele tem a fazer.
+    expect(pode('portaria', 'sgq.ver')).toBe(false);
+    const outros = PAPEIS.filter((p) => p !== 'portaria');
+    expect(outros.filter((p) => !pode(p, 'sgq.ver'))).toEqual([]);
+  });
+
+  it('quem confere continua vendo o livro da portaria, sem escrever nele', () => {
+    expect(podeVer('coordenacao_qualidade', 'portaria')).toBe(true);
+    expect(podeEditar('coordenacao_qualidade', 'portaria')).toBe(false);
+  });
+
+  it('e ninguém mais entra lá', () => {
+    const dentro = PAPEIS.filter((p) => podeVer(p, 'portaria'));
+    expect(dentro).toEqual(['coordenacao_qualidade', 'portaria']);
+  });
+});
 describe('a equipe cadastrada usa os papéis', () => {
   it('cargo e papel são coisas diferentes: um é rótulo, o outro é regra', () => {
     const coord = EQUIPE.find((p) => p.nome.startsWith('Vitória'))!;
@@ -119,7 +145,7 @@ describe('a equipe cadastrada usa os papéis', () => {
   it('e a direção e o administrativo continuam fora da OS', () => {
     // Financeiro e RH não tem nada que fazer numa ordem de serviço; a direção acompanha.
     const forte = EQUIPE.filter((p) => !pode(p.papel, 'os.editar')).map((p) => p.cargo);
-    expect(forte).toEqual(['Coordenadora da Qualidade', 'Diretor', 'Financeiro e RH']);
+    expect(forte).toEqual(['Coordenadora da Qualidade', 'Diretor', 'Financeiro e RH', 'Portaria']);
   });
 
   it('sem sessão, o acesso é o mínimo — consulta, nunca escrita', () => {

@@ -230,8 +230,64 @@ export const REGISTRO_TREINAMENTO: FormularioDef = {
     { chave: 'acaoSeNaoEficaz', rotulo: 'Ação tomada', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'eficacia', valor: 'Não eficaz' }, ajuda: 'Treinamento que não funcionou e não gerou ação é achado de auditoria.' },
   ],
 };
+/* ══ Portaria — entrada e saída de cargas ════════════════════════════════════════════════════
+   A norma não exige um livro de portaria. Exige duas coisas que passam por ele:
+
+     · 8.5.3 — peça de cliente que chega avariada tem de ser relatada e registrada;
+     · 8.5.4 — o que sai tem de sair preservado, e dá para provar quando saiu e com quem.
+
+   Por isso este registro NÃO substitui o controle de recebimento nem o romaneio: aqueles
+   inspecionam a carga, este registra o veículo passando pelo portão. São fatos diferentes, e
+   juntá-los faria a portaria assinar uma inspeção que ela não fez.
+
+   O campo de estado aparente existe pelo mesmo motivo: a portaria não inspeciona, mas é a
+   primeira pessoa a ver a peça. Avaria vista no portão e não registrada vira discussão sobre
+   quem amassou.                                                                                */
+
+export const CONTROLE_CARGAS: FormularioDef = {
+  papel: 'controle_cargas',
+  setor: 'portaria',
+  titulo: 'Entrada e Saída de Cargas',
+  clausula: '8.5.3 e 8.5.4',
+  explicacao:
+    'O que passou pelo portão: em que sentido, quando, em que veículo e com quem. É o registro da portaria, não a inspeção da carga — quem confere o que chegou é o recebimento.',
+  campos: [
+    {
+      chave: 'sentido', rotulo: 'Sentido', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Entrada', 'Saída'],
+    },
+    { chave: 'data', rotulo: 'Data', tipo: 'data', obrigatorio: true },
+    { chave: 'hora', rotulo: 'Hora', tipo: 'texto', obrigatorio: true, ajuda: 'No formato hh:mm. É o que permite comparar com o horário da nota.' },
+    {
+      chave: 'tipo', rotulo: 'O que é a carga', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Peça de cliente', 'Matéria-prima ou insumo', 'Produto acabado', 'Resíduo', 'Equipamento', 'Outro'],
+    },
+    { chave: 'parte', rotulo: 'Cliente, fornecedor ou destinatário', tipo: 'texto', obrigatorio: true },
+    { chave: 'documento', rotulo: 'Documento', tipo: 'texto', ajuda: 'Nota fiscal, romaneio ou ordem de coleta que acompanha a carga.' },
+    { chave: 'os', rotulo: 'Ordem de serviço', tipo: 'texto', ajuda: 'Quando a carga é peça de cliente, é o que liga o portão ao serviço.' },
+    { chave: 'volumes', rotulo: 'Volumes', tipo: 'texto', ajuda: 'Quantidade e tipo: 12 tubos, 3 paletes, 1 caçamba.' },
+
+    { chave: 'transportadora', rotulo: 'Transportadora', tipo: 'texto' },
+    { chave: 'placa', rotulo: 'Placa do veículo', tipo: 'texto', obrigatorio: true },
+    { chave: 'motorista', rotulo: 'Motorista', tipo: 'texto', obrigatorio: true },
+
+    {
+      chave: 'estado', rotulo: 'Estado aparente da peça', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Íntegra', 'Avaria aparente'],
+      dependeDe: { campo: 'tipo', valor: 'Peça de cliente' },
+      ajuda: 'A portaria não inspeciona, mas é quem vê primeiro. Avaria aparente aqui abre uma ocorrência de propriedade do cliente (§8.5.3).',
+    },
+    { chave: 'descricaoAvaria', rotulo: 'O que se viu', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'Onde e como. Sem isto, daqui a uma semana ninguém sabe se a avaria veio de fora ou aconteceu dentro.' },
+    { chave: 'avisou', rotulo: 'Avisou quem', tipo: 'texto', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'A quem da empresa a portaria comunicou na hora.' },
+
+    { chave: 'registradoPor', rotulo: 'Registrado por', tipo: 'pessoa', obrigatorio: true },
+    { chave: 'observacoes', rotulo: 'Observações', tipo: 'texto_longo' },
+  ],
+};
+
 export const FORMULARIOS: FormularioDef[] =
-  [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, MONITORAMENTO_SGQ, REGISTRO_TREINAMENTO];
+  [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, MONITORAMENTO_SGQ,
+    REGISTRO_TREINAMENTO, CONTROLE_CARGAS];
 
 export function formularioDoPapel(papel: PapelDeFormulario): FormularioDef | null {
   return FORMULARIOS.find((f) => f.papel === papel) ?? null;

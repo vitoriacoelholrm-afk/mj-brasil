@@ -13,10 +13,10 @@ import { Indicadores } from '@/telas/Indicadores';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { Registros } from '@/telas/Registros';
-import { pode, type Permissao } from '@/plataforma/acesso';
+import { pode, type Papel, type Permissao } from '@/plataforma/acesso';
 import { papelAtual } from '@/lib/session';
 import {
-  MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
+  CONTROLE_CARGAS, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
 } from '@/plataforma/formularios';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
@@ -24,7 +24,7 @@ import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empres
 import '@/documentos/listaMestra';   // registra as empresas
 
 export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra' | 'propriedade-cliente' | 'mudanca-producao'
-  | 'nao-conformidade' | 'indicadores' | 'treinamento';
+  | 'nao-conformidade' | 'indicadores' | 'treinamento' | 'cargas';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
@@ -38,9 +38,9 @@ type ItemDeMenu = {
 };
 
 const MENU: ItemDeMenu[] = [
-  { rotulo: 'Situação', rota: 'situacao' },
+  { rotulo: 'Situação', rota: 'situacao', exige: 'sgq.ver' },
   { rotulo: 'Ordens de Serviço', rota: 'plano', exige: 'os.ver' },
-  { rotulo: 'Qualidade', filhas: [
+  { rotulo: 'Qualidade', exige: 'sgq.ver', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Lista Mestra', rota: 'lista-mestra' },
     { rotulo: 'Não Conformidades', rota: 'nao-conformidade' },
@@ -52,7 +52,8 @@ const MENU: ItemDeMenu[] = [
   ] },
   // O setor de pessoas é do RH e de mais ninguém — decisão dela em 17/09/2026.
   { rotulo: 'Pessoas', rota: 'treinamento', exige: 'rh.ver' },
-  { rotulo: 'Cadastros', filhas: [
+  { rotulo: 'Portaria', rota: 'cargas', exige: 'portaria.ver' },
+  { rotulo: 'Cadastros', exige: 'sgq.ver', filhas: [
     { rotulo: 'Clientes', rota: 'clientes' },
   ] },
 ];
@@ -63,6 +64,7 @@ const DOMINIO: Record<Rota, string> = {
   diagnostico: 'Qualidade',
   'lista-mestra': 'Qualidade',
   treinamento: 'Pessoas',
+  cargas: 'Portaria',
   'nao-conformidade': 'Qualidade',
   indicadores: 'Qualidade',
   'propriedade-cliente': 'Qualidade',
@@ -72,18 +74,37 @@ const DOMINIO: Record<Rota, string> = {
   clientes: 'Cadastros',
 };
 
+/** O menu que este papel enxerga. */
+const menuDe = (papel: Papel) => MENU.filter((m) => !m.exige || pode(papel, m.exige));
+
+/** Onde a pessoa cai ao entrar: a primeira tela que ela pode ver. */
+function primeiraRota(papel: Papel): Rota {
+  const primeira = menuDe(papel).map((m) => m.rota ?? m.filhas?.[0]?.rota).find(Boolean);
+  return primeira ?? 'situacao';
+}
+
 export function App() {
   const [pessoa, setPessoa] = useState(pessoaAtual);
-  const [rota, setRota] = useState<Rota>('situacao');
+  const [rota, setRota] = useState<Rota>(() => primeiraRota(papelAtual()));
   const [empresaId, setEmpresaId] = useState(() => empresaAtiva().id);
   const empresa = empresaAtiva();
   const celular = useEhCelular();
   const lado = margemLateral(celular);
 
-  if (!pessoa) return <Entrar aoEntrar={() => setPessoa(pessoaAtual())} />;
+  if (!pessoa) {
+    return (
+      <Entrar
+        aoEntrar={() => {
+          const quem = pessoaAtual();
+          setPessoa(quem);
+          setRota(primeiraRota(quem?.papel ?? 'coordenacao_qualidade'));
+        }}
+      />
+    );
+  }
 
   const papel = papelAtual();
-  const menu = MENU.filter((m) => !m.exige || pode(papel, m.exige));
+  const menu = menuDe(papel);
   const dominioAtivo = DOMINIO[rota];
   const filhas = menu.find((m) => m.rotulo === dominioAtivo)?.filhas;
 
@@ -175,6 +196,7 @@ export function App() {
         {rota === 'nao-conformidade' && <Registros def={NAO_CONFORMIDADE} />}
         {rota === 'indicadores' && <Indicadores />}
         {rota === 'treinamento' && <Registros def={REGISTRO_TREINAMENTO} />}
+        {rota === 'cargas' && <Registros def={CONTROLE_CARGAS} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

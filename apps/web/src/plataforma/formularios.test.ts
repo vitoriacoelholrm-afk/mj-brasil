@@ -5,7 +5,8 @@
 // passa a fechar sem provar o que a norma manda provar — e ninguém percebe até a auditoria.
 import { describe, it, expect } from 'vitest';
 import {
-  FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE,
+  CONTROLE_CARGAS, FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE,
+  PROPRIEDADE_CLIENTE,
   REGISTRO_TREINAMENTO,
   campoVisivel, formularioDoPapel, pendencias, resumoDoRegistro,
   type FormularioDef, type Valores,
@@ -180,5 +181,46 @@ describe('7.2 — treinamento dado, e se funcionou', () => {
   it('e é o registro de onde sai o indicador de eficácia de treinamento', () => {
     expect(REGISTRO_TREINAMENTO.clausula).toBe('7.2');
     expect(MINASJATO.formularios.registro_treinamento).toBe('FM-009');
+  });
+});
+
+/* ══ 6. A portaria ═══════════════════════════════════════════════════════════════════════════ */
+
+const CARGA: Valores = {
+  sentido: 'Entrada', data: '2026-09-17', hora: '07:40',
+  tipo: 'Matéria-prima ou insumo', parte: 'Fornecedor de abrasivo',
+  placa: 'ABC1D23', motorista: 'José da Silva', registradoPor: 'Beatriz Nogueira',
+};
+
+describe('portaria — o que passou pelo portão', () => {
+  it('carga comum fecha com veículo, motorista e horário', () => {
+    expect(faltando(CONTROLE_CARGAS, CARGA)).toEqual([]);
+  });
+
+  it('peça de cliente obriga a dizer em que estado chegou', () => {
+    // A portaria não inspeciona, mas é quem vê primeiro. Avaria vista no portão e não
+    // registrada vira discussão sobre quem amassou.
+    expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Peça de cliente' })).toEqual(['estado']);
+  });
+
+  it('e avaria aparente obriga a descrever e a dizer quem foi avisado', () => {
+    expect(faltando(CONTROLE_CARGAS, {
+      ...CARGA, tipo: 'Peça de cliente', estado: 'Avaria aparente',
+    })).toEqual(['descricaoAvaria', 'avisou']);
+  });
+
+  it('o estado não é pedido quando a carga não é peça de cliente', () => {
+    const estado = CONTROLE_CARGAS.campos.find((c) => c.chave === 'estado')!;
+    expect(campoVisivel(estado, { tipo: 'Resíduo' })).toBe(false);
+    expect(campoVisivel(estado, { tipo: 'Peça de cliente' })).toBe(true);
+  });
+
+  it('é registro próprio, e não o recebimento nem o romaneio', () => {
+    // FM-006 e FM-007 inspecionam a carga; este registra o veículo passando. Fatos diferentes,
+    // e juntá-los faria a portaria assinar uma inspeção que ela não fez.
+    expect(MINASJATO.formularios.controle_cargas).toBe('FM-023');
+    expect(MINASJATO.formularios.recebimento).toBe('FM-006');
+    expect(MINASJATO.formularios.romaneio).toBe('FM-007');
+    expect(CONTROLE_CARGAS.setor).toBe('portaria');
   });
 });

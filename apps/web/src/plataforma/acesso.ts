@@ -16,7 +16,8 @@ export type Papel =
   | 'direcao'
   | 'execucao'
   | 'inspecao'
-  | 'apoio';
+  | 'apoio'
+  | 'portaria';
 
 export const PAPEL_ROTULO: Record<Papel, string> = {
   coordenacao_qualidade: 'Coordenação da Qualidade',
@@ -24,6 +25,7 @@ export const PAPEL_ROTULO: Record<Papel, string> = {
   execucao: 'Execução',
   inspecao: 'Inspeção',
   apoio: 'Apoio',
+  portaria: 'Portaria',
 };
 
 export type Permissao =
@@ -38,41 +40,53 @@ export type Permissao =
   /** Abrir os registros de pessoas — treinamento e competência. */
   | 'rh.ver'
   /** Preencher esses registros. */
-  | 'rh.editar';
+  | 'rh.editar'
+  /** Abrir o livro de entrada e saída de cargas. */
+  | 'portaria.ver'
+  /** Registrar uma passagem pelo portão. */
+  | 'portaria.editar'
+  /** Enxergar o sistema da qualidade: situação, lista mestra, diagnóstico, indicadores.
+   *  Quem tem um posto de uso único — um terminal de portão, por exemplo — não tem. */
+  | 'sgq.ver';
 
 /** Um conjunto de telas que anda junto em matéria de acesso.
  *
  *  Existe porque acesso não é uma régua só. Quem preenche a ordem de serviço não é quem preenche
  *  a ficha de treinamento, e nenhum dos dois precisa do que é do outro. Sem setor, a única saída
  *  seria dar tudo a todo mundo ou inventar um papel novo a cada tela. */
-export type Setor = 'os' | 'rh';
+export type Setor = 'os' | 'rh' | 'portaria';
 
 export const SETOR_ROTULO: Record<Setor, string> = {
   os: 'ordem de serviço',
   rh: 'registros de pessoas',
+  portaria: 'entrada e saída de cargas',
 };
 
 const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
   os: { ver: 'os.ver', editar: 'os.editar' },
   rh: { ver: 'rh.ver', editar: 'rh.editar' },
+  portaria: { ver: 'portaria.ver', editar: 'portaria.editar' },
 };
 
-const TUDO_NA_OS: Permissao[] = ['os.ver', 'os.editar', 'os.anexar', 'relatorio.emitir'];
+const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 'relatorio.emitir'];
 
 const ACESSO: Record<Papel, Permissao[]> = {
   // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
-  coordenacao_qualidade: ['os.ver'],
+  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver'],
   // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica.
-  direcao: ['os.ver'],
+  direcao: ['sgq.ver', 'os.ver'],
   // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
-  execucao: ['os.ver', 'os.editar', 'os.anexar'],
+  execucao: ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar'],
   // Quem registra a medição e assina o relatório que vai ao cliente. Pode ser mais de uma
   // pessoa, e com cargos diferentes: quem planeja e quem gerencia a produção costumam assinar
   // tanto quanto quem inspeciona. O papel é um só; os cargos ficam no perfil da empresa.
   inspecao: TUDO_NA_OS,
   // Administrativo. A ordem de serviço não é assunto dele; os registros de pessoas são — e são
   // só dele. Decisão dela: o RH preenche, e ninguém mais entra nesse setor.
-  apoio: ['rh.ver', 'rh.editar'],
+  apoio: ['sgq.ver', 'rh.ver', 'rh.editar'],
+  // Posto de uso único: um terminal no portão. Não é console do sistema da qualidade, e por
+  // isso não recebe `sgq.ver` — a tela abre já no que ele tem a fazer, e nada mais aparece.
+  portaria: ['portaria.ver', 'portaria.editar'],
 };
 
 export function pode(papel: Papel, permissao: Permissao): boolean {

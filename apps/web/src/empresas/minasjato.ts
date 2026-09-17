@@ -168,6 +168,13 @@ export const CATALOGADOS: DocumentoMestre[] = [
     nota: 'Criado em 16/09/2026 para fechar a falta da 9.1.1. Um registro por indicador e por período — é assim que se compara com o período anterior.',
   }),
 
+  // A portaria, criada em 17/09/2026. FM-023 porque a numeração segue do maior — e o livro
+  // da portaria é registro próprio: não substitui o FM-006 nem o FM-007, que inspecionam a
+  // carga. Aqui se registra o veículo passando pelo portão.
+  catalogado('FM-023', 'Formulário — Controle de Entrada e Saída de Cargas', 'formulario', 'Logística', 'Logística', ['8.5.3', '8.5.4'], 'irrestrito', {
+    padroes: ['controle_cargas'], tela: 'cargas',
+  }),
+
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
     nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código.',
   }),
@@ -238,6 +245,7 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     propriedade_cliente: 'FM-020',
     mudanca_producao: 'FM-021',
     monitoramento_sgq: 'FM-022',
+    controle_cargas: 'FM-023',
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
   },

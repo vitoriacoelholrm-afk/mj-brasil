@@ -146,6 +146,9 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
     { papel: 'recebimento' }),
   d('expedicao', 'Expedição e Romaneio', 'formulario', 'Logística', ['8.5.4'], 'pratica', 'FR-019',
     { papel: 'romaneio' }),
+  d('controle_cargas', 'Controle de Entrada e Saída de Cargas', 'formulario', 'Logística', ['8.5.4'], 'pratica', 'FR-020',
+    { papel: 'controle_cargas',
+      nota: 'O livro da portaria. Não substitui o recebimento nem o romaneio: aqueles inspecionam a carga, este registra o veículo passando pelo portão.' }),
 ];
 
 /* ══ MÓDULO surface-treatment — só para quem jateia e pinta ══════════════════════════════════ */

@@ -37,6 +37,8 @@ export const EQUIPE: Pessoa[] = [
   // de produção e mantém a ordem de serviço e o RIP — o papel não muda, o nome do posto sim.
   { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Gerente de Produção', papel: 'inspecao' },
   { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', papel: 'apoio' },
+  // Portaria. Um posto só, uma tela só: entrada e saída de cargas.
+  { id: '00000000-0000-4000-9000-000000000006', nome: 'Roberta Patrocínio', cargo: 'Portaria', papel: 'portaria' },
 ];
 
 /** O papel de quem está usando o app agora. Sem sessão, o mínimo: só consulta. */

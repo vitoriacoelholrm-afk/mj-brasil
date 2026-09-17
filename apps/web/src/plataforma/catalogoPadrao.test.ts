@@ -103,7 +103,7 @@ describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
   it('depois do alinhamento, todo documento dela aponta para um padrão', () => {
-    expect(c.atendidos.length).toBe(47);
+    expect(c.atendidos.length).toBe(48);
     expect(percentualCoberto(c)).toBe(1);
   });
 

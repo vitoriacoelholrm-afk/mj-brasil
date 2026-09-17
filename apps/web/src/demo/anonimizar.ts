@@ -40,6 +40,7 @@ const TROCAS: [string, string][] = [
   ['Gustavo Moreira', 'Paulo Nunes'],
   ['Emerson William de Faria', 'Marcos Teixeira'],
   ['Edine Garcia', 'Sofia Lima'],
+  ['Roberta Patrocínio', 'Beatriz Nogueira'],
 
   // Referências de esquema e modelo de equipamento do cliente
   ['PRO.BRA.DPR.008', 'ESQ.CLI-A.004'],
