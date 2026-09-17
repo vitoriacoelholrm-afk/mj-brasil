@@ -5,9 +5,9 @@
 // onze da lista mestra vão entrando, um a um, sem escrever onze telas.
 //
 // Vale a mesma regra de acesso do resto: quem confere não preenche.
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
-  campoVisivel, faltaFoto, pendencias, resumoDoRegistro,
+  campoVisivel, faltaFoto, pendencias, resumoDoRegistro, valoresIniciais,
   type CampoDef, type FormularioDef, type Registro, type Valores,
 } from '@/plataforma/formularios';
 import type { Anexo } from '@/plataforma/anexos';
@@ -19,7 +19,13 @@ import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
 import { Cabecalho } from './Vencimentos';
 
-export function Registros({ def }: { def: FormularioDef }) {
+export function Registros({ def, painel }: {
+  def: FormularioDef;
+  /** O que o setor tem de próprio, calculado sobre os registros já feitos. A portaria soma o
+   *  pátio; outro setor somará outra coisa. A tela não precisa saber qual — por isso recebe a
+   *  função em vez de conhecer o setor. */
+  painel?: (registros: Registro[]) => ReactNode;
+}) {
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [rascunho, setRascunho] = useState<Valores | null>(null);
   const [anexos, setAnexos] = useState<Anexo[]>([]);
@@ -60,13 +66,19 @@ export function Registros({ def }: { def: FormularioDef }) {
 
   const emAberto = registros.find((r) => r.id === aberto) ?? null;
 
+  /** O registro novo já vem com o que o sistema sabe — data, hora, quem está registrando. */
+  function abrirRascunho() {
+    setRascunho(valoresIniciais(def, pessoaAtual()?.nome ?? null));
+    setAnexos([]);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo={def.titulo}
         sub={`${selo ? `${selo} · ` : ''}ISO 9001:2015 §${def.clausula} — ${def.explicacao}`}
         acao={editavel && !rascunho && !emAberto
-          ? <button style={s.botaoPrimario} onClick={() => { setRascunho({}); setAnexos([]); }}>Novo registro</button>
+          ? <button style={s.botaoPrimario} onClick={abrirRascunho}>Novo registro</button>
           : undefined}
       />
 
@@ -104,8 +116,10 @@ export function Registros({ def }: { def: FormularioDef }) {
         <Visualizacao def={def} registro={emAberto} celular={celular} aoVoltar={() => setAberto(null)} />
       )}
 
+      {!rascunho && !emAberto && painel?.(registros)}
+
       {!rascunho && !emAberto && (
-        <Lista def={def} registros={registros} aoAbrir={setAberto} editavel={editavel} />
+        <Lista def={def} registros={registros} aoAbrir={setAberto} editavel={editavel} celular={celular} />
       )}
 
       <div style={S.rodape}>
@@ -118,9 +132,10 @@ export function Registros({ def }: { def: FormularioDef }) {
 /* ── A lista ──────────────────────────────────────────────────────────────────────────────── */
 
 function Lista({
-  def, registros, aoAbrir, editavel,
+  def, registros, aoAbrir, editavel, celular,
 }: {
   def: FormularioDef; registros: Registro[]; aoAbrir: (id: string) => void; editavel: boolean;
+  celular: boolean;
 }) {
   if (registros.length === 0) {
     return (
@@ -143,12 +158,29 @@ function Lista({
         <button
           key={r.id}
           onClick={() => aoAbrir(r.id)}
-          style={{ ...S.linha, borderTop: i === 0 ? 'none' : `1px solid ${c.linha}` }}
+          style={{
+            ...S.linha,
+            borderTop: i === 0 ? 'none' : `1px solid ${c.linha}`,
+            // No celular a linha vira duas: data e autor em cima, o resumo embaixo ocupando a
+            // largura toda. Em três colunas num aparelho de 375px sobra uma coluna do meio de
+            // dois dedos, e "Entrada · Peça de cliente · Cliente tal" desce em quatro linhas.
+            ...(celular ? { display: 'grid', gridTemplateColumns: 'auto 1fr auto', rowGap: 3 } : null),
+          }}
         >
           <span style={S.linhaData}>{dataBR(r.criadoEm)}</span>
-          <span style={S.linhaResumo}>{resumoDoRegistro(def, r.valores)}</span>
-          <span style={S.linhaAutor}>{r.criadoPor}</span>
-          <span style={S.seta} aria-hidden>›</span>
+          {celular
+            ? <>
+                <span style={{ ...S.linhaAutor, textAlign: 'right' }}>{r.criadoPor}</span>
+                <span style={S.seta} aria-hidden>›</span>
+                <span style={{ ...S.linhaResumo, gridColumn: '1 / -1' }}>
+                  {resumoDoRegistro(def, r.valores)}
+                </span>
+              </>
+            : <>
+                <span style={S.linhaResumo}>{resumoDoRegistro(def, r.valores)}</span>
+                <span style={S.linhaAutor}>{r.criadoPor}</span>
+                <span style={S.seta} aria-hidden>›</span>
+              </>}
         </button>
       ))}
     </div>
@@ -268,8 +300,11 @@ function Campo({
           {EQUIPE.map((p) => <option key={p.id} value={p.nome}>{p.nome} — {p.cargo}</option>)}
         </select>
       ) : (
+        // `time` em vez de texto livre: no celular abre o relógio do aparelho, e o valor sai
+        // sempre no mesmo formato. Hora digitada à mão vinha como 7h40, 07:40 e 0740 — três
+        // grafias do mesmo instante, e nenhuma delas ordena.
         <input
-          type={campo.tipo === 'data' ? 'date' : 'text'}
+          type={campo.tipo === 'data' ? 'date' : campo.tipo === 'hora' ? 'time' : 'text'}
           style={{ ...s.campo, borderColor: borda }}
           value={valor} onChange={(e) => aoMudar(e.target.value)}
         />

@@ -11,7 +11,7 @@ import type { PapelDeFormulario } from './empresa';
 import type { Setor } from './acesso';
 import { quantasFotos, type Anexo } from './anexos';
 
-export type TipoCampo = 'texto' | 'texto_longo' | 'data' | 'escolha' | 'pessoa' | 'sim_nao';
+export type TipoCampo = 'texto' | 'texto_longo' | 'data' | 'hora' | 'escolha' | 'pessoa' | 'sim_nao';
 
 export interface CampoDef {
   chave: string;
@@ -27,6 +27,12 @@ export interface CampoDef {
    *  A lista existe porque a mesma pergunta costuma valer para opções diferentes: peça do
    *  cliente e insumo do cliente são coisas distintas na carga e a mesma coisa na norma. */
   dependeDe?: { campo: string; valor: string | string[] };
+  /** O que o sistema já sabe e por isso não deveria perguntar. Vale no registro novo, e a
+   *  pessoa continua podendo corrigir.
+   *
+   *  Não é conveniência: um horário digitado é o horário de que alguém se lembrou, e num posto
+   *  onde se registra carga atrás de carga a diferença aparece. O relógio responde sozinho. */
+  preenchidoCom?: 'hoje' | 'agora' | 'quem_registra';
 }
 
 export interface FormularioDef {
@@ -263,8 +269,8 @@ export const CONTROLE_CARGAS: FormularioDef = {
       chave: 'sentido', rotulo: 'Sentido', tipo: 'escolha', obrigatorio: true,
       opcoes: ['Entrada', 'Saída'],
     },
-    { chave: 'data', rotulo: 'Data', tipo: 'data', obrigatorio: true },
-    { chave: 'hora', rotulo: 'Hora', tipo: 'texto', obrigatorio: true, ajuda: 'No formato hh:mm. É o que permite comparar com o horário da nota.' },
+    { chave: 'data', rotulo: 'Data', tipo: 'data', obrigatorio: true, preenchidoCom: 'hoje' },
+    { chave: 'hora', rotulo: 'Hora', tipo: 'hora', obrigatorio: true, preenchidoCom: 'agora', ajuda: 'Vem do relógio ao abrir o registro. Corrija se estiver lançando uma passagem de antes.' },
     {
       chave: 'tipo', rotulo: 'O que é a carga', tipo: 'escolha', obrigatorio: true,
       opcoes: [
@@ -295,7 +301,7 @@ export const CONTROLE_CARGAS: FormularioDef = {
     { chave: 'descricaoAvaria', rotulo: 'O que se viu', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'Onde e como. Sem isto, daqui a uma semana ninguém sabe se a avaria veio de fora ou aconteceu dentro.' },
     { chave: 'avisou', rotulo: 'Avisou quem', tipo: 'texto', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'A quem da empresa a portaria comunicou na hora.' },
 
-    { chave: 'registradoPor', rotulo: 'Registrado por', tipo: 'pessoa', obrigatorio: true },
+    { chave: 'registradoPor', rotulo: 'Registrado por', tipo: 'pessoa', obrigatorio: true, preenchidoCom: 'quem_registra' },
     { chave: 'observacoes', rotulo: 'Observações', tipo: 'texto_longo' },
   ],
   anexos: {
@@ -326,6 +332,35 @@ export interface Registro {
   criadoPor: string | null;
 }
 
+/** A data de hoje pelo relógio de quem está usando, no formato que o campo de data entende. */
+export function hojeLocal(): string {
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, '0');
+  return [agora.getFullYear(), doisDigitos(agora.getMonth() + 1), doisDigitos(agora.getDate())].join('-');
+}
+
+/** O rascunho já nasce com o que o sistema sabe: data, hora e quem está registrando.
+ *
+ *  A data sai do relógio LOCAL, e não de `toISOString()`. No fuso daqui, às nove da noite o
+ *  horário universal já é o dia seguinte — o registro sairia com a data de amanhã, e o erro só
+ *  apareceria meses depois, numa auditoria, como carga que entrou antes de existir. */
+export function valoresIniciais(def: FormularioDef, quem: string | null): Valores {
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, '0');
+  const hoje = hojeLocal();
+  const hora = `${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}`;
+
+  const valores: Valores = {};
+  for (const campo of def.campos) {
+    const pronto = campo.preenchidoCom === 'hoje' ? hoje
+      : campo.preenchidoCom === 'agora' ? hora
+      : campo.preenchidoCom === 'quem_registra' ? quem
+      : null;
+    if (pronto) valores[campo.chave] = pronto;
+  }
+  return valores;
+}
+
 /** Um campo só conta quando a condição dele está satisfeita. */
 export function campoVisivel(campo: CampoDef, valores: Valores): boolean {
   if (!campo.dependeDe) return true;
@@ -353,10 +388,15 @@ export function pendencias(def: FormularioDef, valores: Valores): CampoDef[] {
   );
 }
 
-/** Uma linha curta para a lista, montada dos primeiros campos preenchidos. */
+/** Uma linha curta para a lista, montada dos primeiros campos preenchidos.
+ *
+ *  Data e hora ficam de fora: a lista já mostra a data em coluna própria, e um registro que
+ *  começa pelo relógio gastaria as três vagas dizendo quando — quando é o que menos identifica.
+ *  O que se procura numa linha é de quem era a carga, que peça era, qual o período. */
 export function resumoDoRegistro(def: FormularioDef, valores: Valores): string {
   return def.campos
-    .filter((c) => c.tipo !== 'texto_longo' && valores[c.chave]?.trim())
+    .filter((c) => c.tipo !== 'texto_longo' && c.tipo !== 'data' && c.tipo !== 'hora')
+    .filter((c) => valores[c.chave]?.trim())
     .slice(0, 3)
     .map((c) => valores[c.chave])
     .join(' · ');

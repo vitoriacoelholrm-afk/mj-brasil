@@ -13,6 +13,7 @@ import { Indicadores } from '@/telas/Indicadores';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { Registros } from '@/telas/Registros';
+import { PainelDaPortaria } from '@/telas/Portaria';
 import { pode, type Papel, type Permissao } from '@/plataforma/acesso';
 import { papelAtual } from '@/lib/session';
 import {
@@ -196,7 +197,12 @@ export function App() {
         {rota === 'nao-conformidade' && <Registros def={NAO_CONFORMIDADE} />}
         {rota === 'indicadores' && <Indicadores />}
         {rota === 'treinamento' && <Registros def={REGISTRO_TREINAMENTO} />}
-        {rota === 'cargas' && <Registros def={CONTROLE_CARGAS} />}
+        {rota === 'cargas' && (
+          <Registros
+            def={CONTROLE_CARGAS}
+            painel={(registros) => <PainelDaPortaria registros={registros} />}
+          />
+        )}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

@@ -133,6 +133,14 @@ describe('9.1.1 — os indicadores', () => {
     expect(resumoDoRegistro(MONITORAMENTO_SGQ, INDICADOR))
       .toBe('Agosto/2026 · Retrabalho por OS · até 5%');
   });
+
+  it('e a linha não começa pelo relógio: a data já está na coluna ao lado', () => {
+    // Três vagas gastas com "2026-09-17 · 11:22" descrevem quando e não dizem o quê.
+    expect(resumoDoRegistro(CONTROLE_CARGAS, {
+      sentido: 'Entrada', data: '2026-09-17', hora: '07:40',
+      tipo: 'Peça de cliente', parte: 'Cliente A Indústria Ltda',
+    })).toBe('Entrada · Peça de cliente · Cliente A Indústria Ltda');
+  });
 });
 
 /* ══ 4. As duas de 16/09, que continuam valendo ══════════════════════════════════════════════ */
