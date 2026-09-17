@@ -21,8 +21,11 @@ export interface CampoDef {
   obrigatorio?: boolean;
   /** Uma frase curta de ajuda, para quem preenche não ter de adivinhar. */
   ajuda?: string;
-  /** Só aparece quando outro campo tem certo valor. */
-  dependeDe?: { campo: string; valor: string };
+  /** Só aparece quando outro campo tem certo valor — ou um de vários.
+   *
+   *  A lista existe porque a mesma pergunta costuma valer para opções diferentes: peça do
+   *  cliente e insumo do cliente são coisas distintas na carga e a mesma coisa na norma. */
+  dependeDe?: { campo: string; valor: string | string[] };
 }
 
 export interface FormularioDef {
@@ -260,7 +263,11 @@ export const CONTROLE_CARGAS: FormularioDef = {
     { chave: 'hora', rotulo: 'Hora', tipo: 'texto', obrigatorio: true, ajuda: 'No formato hh:mm. É o que permite comparar com o horário da nota.' },
     {
       chave: 'tipo', rotulo: 'O que é a carga', tipo: 'escolha', obrigatorio: true,
-      opcoes: ['Peça de cliente', 'Matéria-prima ou insumo', 'Produto acabado', 'Resíduo', 'Equipamento', 'Outro'],
+      opcoes: [
+        'Peça de cliente', 'Matéria-prima ou insumo do cliente',
+        'Matéria-prima ou insumo da empresa', 'Produto acabado', 'Resíduo', 'Equipamento', 'Outro',
+      ],
+      ajuda: 'De quem é a carga importa tanto quanto o que ela é: o que pertence ao cliente entra na 8.5.3, venha como peça ou como lata de tinta.',
     },
     { chave: 'parte', rotulo: 'Cliente, fornecedor ou destinatário', tipo: 'texto', obrigatorio: true },
     { chave: 'documento', rotulo: 'Documento', tipo: 'texto', ajuda: 'Nota fiscal, romaneio ou ordem de coleta que acompanha a carga.' },
@@ -272,10 +279,10 @@ export const CONTROLE_CARGAS: FormularioDef = {
     { chave: 'motorista', rotulo: 'Motorista', tipo: 'texto', obrigatorio: true },
 
     {
-      chave: 'estado', rotulo: 'Estado aparente da peça', tipo: 'escolha', obrigatorio: true,
+      chave: 'estado', rotulo: 'Estado aparente', tipo: 'escolha', obrigatorio: true,
       opcoes: ['Íntegra', 'Avaria aparente'],
-      dependeDe: { campo: 'tipo', valor: 'Peça de cliente' },
-      ajuda: 'A portaria não inspeciona, mas é quem vê primeiro. Avaria aparente aqui abre uma ocorrência de propriedade do cliente (§8.5.3).',
+      dependeDe: { campo: 'tipo', valor: ['Peça de cliente', 'Matéria-prima ou insumo do cliente'] },
+      ajuda: 'Vale para tudo que é do cliente, peça ou insumo. A portaria não inspeciona, mas é quem vê primeiro — avaria aparente aqui abre uma ocorrência de propriedade do cliente (§8.5.3).',
     },
     { chave: 'descricaoAvaria', rotulo: 'O que se viu', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'Onde e como. Sem isto, daqui a uma semana ninguém sabe se a avaria veio de fora ou aconteceu dentro.' },
     { chave: 'avisou', rotulo: 'Avisou quem', tipo: 'texto', obrigatorio: true, dependeDe: { campo: 'estado', valor: 'Avaria aparente' }, ajuda: 'A quem da empresa a portaria comunicou na hora.' },
@@ -308,7 +315,9 @@ export interface Registro {
 /** Um campo só conta quando a condição dele está satisfeita. */
 export function campoVisivel(campo: CampoDef, valores: Valores): boolean {
   if (!campo.dependeDe) return true;
-  return valores[campo.dependeDe.campo] === campo.dependeDe.valor;
+  const { campo: pai, valor } = campo.dependeDe;
+  const aceitos = Array.isArray(valor) ? valor : [valor];
+  return aceitos.includes(valores[pai]);
 }
 
 /** Quais obrigatórios ainda estão vazios. Vazio = o registro pode fechar. */

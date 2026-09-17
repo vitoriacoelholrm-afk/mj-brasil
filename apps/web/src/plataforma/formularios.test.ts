@@ -37,7 +37,9 @@ describe('toda definição se sustenta sozinha', () => {
         expect(chaves, campo.chave).toContain(campo.dependeDe.campo);
         const pai = def.campos.find((c) => c.chave === campo.dependeDe!.campo)!;
         const valores = pai.tipo === 'sim_nao' ? ['Sim', 'Não'] : pai.opcoes!;
-        expect(valores, campo.chave).toContain(campo.dependeDe.valor);
+        const esperados = Array.isArray(campo.dependeDe.valor)
+          ? campo.dependeDe.valor : [campo.dependeDe.valor];
+        for (const v of esperados) expect(valores, campo.chave).toContain(v);
       }
     }
   });
@@ -188,7 +190,7 @@ describe('7.2 — treinamento dado, e se funcionou', () => {
 
 const CARGA: Valores = {
   sentido: 'Entrada', data: '2026-09-17', hora: '07:40',
-  tipo: 'Matéria-prima ou insumo', parte: 'Fornecedor de abrasivo',
+  tipo: 'Matéria-prima ou insumo da empresa', parte: 'Fornecedor de abrasivo',
   placa: 'ABC1D23', motorista: 'José da Silva', registradoPor: 'Beatriz Nogueira',
 };
 
@@ -197,10 +199,18 @@ describe('portaria — o que passou pelo portão', () => {
     expect(faltando(CONTROLE_CARGAS, CARGA)).toEqual([]);
   });
 
-  it('peça de cliente obriga a dizer em que estado chegou', () => {
+  it('o que é do cliente obriga a dizer em que estado chegou — peça OU insumo', () => {
     // A portaria não inspeciona, mas é quem vê primeiro. Avaria vista no portão e não
-    // registrada vira discussão sobre quem amassou.
+    // registrada vira discussão sobre quem amassou. E a 8.5.3 não fala de peça: fala de
+    // propriedade do cliente, que pode chegar como lata de tinta.
     expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Peça de cliente' })).toEqual(['estado']);
+    expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Matéria-prima ou insumo do cliente' }))
+      .toEqual(['estado']);
+  });
+
+  it('e o insumo da própria empresa não pergunta nada disso', () => {
+    expect(faltando(CONTROLE_CARGAS, { ...CARGA, tipo: 'Matéria-prima ou insumo da empresa' }))
+      .toEqual([]);
   });
 
   it('e avaria aparente obriga a descrever e a dizer quem foi avisado', () => {
@@ -209,10 +219,12 @@ describe('portaria — o que passou pelo portão', () => {
     })).toEqual(['descricaoAvaria', 'avisou']);
   });
 
-  it('o estado não é pedido quando a carga não é peça de cliente', () => {
+  it('o estado só aparece para o que é do cliente', () => {
     const estado = CONTROLE_CARGAS.campos.find((c) => c.chave === 'estado')!;
     expect(campoVisivel(estado, { tipo: 'Resíduo' })).toBe(false);
+    expect(campoVisivel(estado, { tipo: 'Matéria-prima ou insumo da empresa' })).toBe(false);
     expect(campoVisivel(estado, { tipo: 'Peça de cliente' })).toBe(true);
+    expect(campoVisivel(estado, { tipo: 'Matéria-prima ou insumo do cliente' })).toBe(true);
   });
 
   it('é registro próprio, e não o recebimento nem o romaneio', () => {
