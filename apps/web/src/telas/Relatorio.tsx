@@ -18,6 +18,7 @@ import { carimboDoPapel } from '@/documentos/listaMestra';
 import { pode, type Papel } from '@/plataforma/acesso';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Anexos } from './Anexos';
+import { pessoaAtual } from '@/lib/session';
 
 export function PainelRelatorio({
   os, papel, anexos, aoAdicionar, aoAlterar, aoRemover,
@@ -88,7 +89,7 @@ export function PainelRelatorio({
       )}
 
       <Anexos
-        anexos={anexos} podeAnexar={podeAnexar}
+        anexos={anexos} podeAnexar={podeAnexar} porQuem={pessoaAtual()?.nome ?? null}
         vazio="Nenhuma evidência ainda. A foto do ensaio de aderência e o certificado do abrasivo entram aqui — a legenda sai impressa no relatório, a observação fica só no registro interno."
         aoAdicionar={aoAdicionar} aoAlterar={aoAlterar} aoRemover={aoRemover}
       />

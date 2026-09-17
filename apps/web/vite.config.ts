@@ -119,5 +119,9 @@ export default defineConfig({
   resolve: { alias: { '@': join(__dirname, 'src') } },
   // Transpile the workspace TS packages the dev-API imports (instead of externalizing them as CJS).
   ssr: { noExternal: ['@app/trpc', '@app/db'] },
-  server: { port: 5273 },
+  // `host: true` faz o servidor de desenvolvimento atender a rede local, e não só esta
+  // máquina — é o que permite abrir no celular pelo IP, que é onde a câmera existe de
+  // verdade. Vale só em `vite dev`: o build não tem servidor. Em rede pública, quem estiver
+  // na mesma rede alcança a porta; o dado aqui é local e sem senha, então convém desligar.
+  server: { port: 5273, host: true },
 });
