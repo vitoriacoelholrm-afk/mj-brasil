@@ -9,6 +9,7 @@
 // "precisamos ter todos esses formulários dentro do aplicativo".
 import type { PapelDeFormulario } from './empresa';
 import type { Setor } from './acesso';
+import { quantasFotos, type Anexo } from './anexos';
 
 export type TipoCampo = 'texto' | 'texto_longo' | 'data' | 'escolha' | 'pessoa' | 'sim_nao';
 
@@ -38,6 +39,9 @@ export interface FormularioDef {
   /** Por que este formulário existe, em uma frase. Vai no topo da tela. */
   explicacao: string;
   campos: CampoDef[];
+  /** Quando o registro precisa de foto ou arquivo junto. `minimoDeFotos` trava o registro
+   *  do mesmo jeito que um campo obrigatório: há fato que texto nenhum prova. */
+  anexos?: { titulo: string; vazio: string; minimoDeFotos?: number };
 }
 
 /* ══ 8.5.3 — Propriedade pertencente ao cliente ══════════════════════════════════════════════
@@ -294,6 +298,11 @@ export const CONTROLE_CARGAS: FormularioDef = {
     { chave: 'registradoPor', rotulo: 'Registrado por', tipo: 'pessoa', obrigatorio: true },
     { chave: 'observacoes', rotulo: 'Observações', tipo: 'texto_longo' },
   ],
+  anexos: {
+    titulo: 'Fotos da carga',
+    vazio: 'A foto do que entrou ou saiu. É o que nenhum campo de texto prova: como a carga estava, quantos volumes eram, o estado da peça ao passar pelo portão. A legenda diz o que a foto mostra; a observação fica no registro interno.',
+    minimoDeFotos: 1,
+  },
 };
 
 export const FORMULARIOS: FormularioDef[] =
@@ -312,6 +321,7 @@ export interface Registro {
   id: string;
   papel: PapelDeFormulario;
   valores: Valores;
+  anexos: Anexo[];
   criadoEm: string;
   criadoPor: string | null;
 }
@@ -322,6 +332,18 @@ export function campoVisivel(campo: CampoDef, valores: Valores): boolean {
   const { campo: pai, valor } = campo.dependeDe;
   const aceitos = Array.isArray(valor) ? valor : [valor];
   return aceitos.includes(valores[pai]);
+}
+
+/** Falta foto? Devolve a frase, ou null. Fica junto das pendências de campo porque é a mesma
+ *  ideia: o registro não fecha enquanto não prova o que se propôs a provar. */
+export function faltaFoto(def: FormularioDef, anexos: Anexo[]): string | null {
+  const minimo = def.anexos?.minimoDeFotos ?? 0;
+  if (!minimo) return null;
+  const tem = quantasFotos(anexos);
+  if (tem >= minimo) return null;
+  return minimo === 1
+    ? 'Falta a foto: este registro não fecha sem ela.'
+    : `Faltam fotos: ${tem} de ${minimo}.`;
 }
 
 /** Quais obrigatórios ainda estão vazios. Vazio = o registro pode fechar. */

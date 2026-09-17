@@ -8,10 +8,11 @@ import {
   CONTROLE_CARGAS, FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE,
   PROPRIEDADE_CLIENTE,
   REGISTRO_TREINAMENTO,
-  campoVisivel, formularioDoPapel, pendencias, resumoDoRegistro,
+  campoVisivel, faltaFoto, formularioDoPapel, pendencias, resumoDoRegistro,
   type FormularioDef, type Valores,
 } from './formularios';
 import { MINASJATO } from '@/empresas/minasjato';
+import type { Anexo } from './anexos';
 
 const obrigatorios = (def: FormularioDef) =>
   def.campos.filter((c) => c.obrigatorio).map((c) => c.chave);
@@ -238,5 +239,40 @@ describe('portaria — o que passou pelo portão', () => {
     expect(MINASJATO.formularios.recebimento).toBe('FM-006');
     expect(MINASJATO.formularios.romaneio).toBe('FM-007');
     expect(CONTROLE_CARGAS.setor).toBe('portaria');
+  });
+});
+
+/* ══ 7. A foto ═══════════════════════════════════════════════════════════════════════════════ */
+
+const foto = (id: string): Anexo => ({
+  id, tipo: 'foto', nome: id + '.jpg', url: 'data:image/jpeg;base64,x',
+  legenda: '', comentario: '', data: '2026-09-17', adicionadoPor: 'Beatriz Nogueira',
+});
+const arquivo = (id: string): Anexo => ({ ...foto(id), tipo: 'arquivo', url: null });
+
+describe('há fato que texto nenhum prova', () => {
+  it('a portaria não fecha o registro sem foto', () => {
+    expect(faltaFoto(CONTROLE_CARGAS, [])).toContain('Falta a foto');
+    expect(faltaFoto(CONTROLE_CARGAS, [foto('a')])).toBe(null);
+  });
+
+  it('e arquivo anexado não conta como foto', () => {
+    // Anexar a nota fiscal em PDF não mostra como a carga estava.
+    expect(faltaFoto(CONTROLE_CARGAS, [arquivo('nf')])).toContain('Falta a foto');
+  });
+
+  it('quem não pede anexo não trava por causa disso', () => {
+    for (const def of FORMULARIOS.filter((d) => !d.anexos?.minimoDeFotos)) {
+      expect(faltaFoto(def, []), def.papel).toBe(null);
+    }
+  });
+
+  it('todo formulário que pede anexo diz o que entra ali', () => {
+    // O texto do bloco vazio é onde se explica o que fotografar. Sem ele, a pessoa anexa
+    // qualquer coisa ou não anexa nada.
+    for (const def of FORMULARIOS.filter((d) => d.anexos)) {
+      expect(def.anexos!.vazio.length, def.papel).toBeGreaterThan(40);
+      expect(def.anexos!.titulo.length, def.papel).toBeGreaterThan(3);
+    }
   });
 });

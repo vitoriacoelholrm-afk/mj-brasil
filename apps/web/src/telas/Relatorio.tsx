@@ -9,7 +9,7 @@
 //
 // E o veredito não é uma caixinha que alguém marca. Se a OS não libera, o relatório sai
 // reprovado — e o botão mostra por quê, antes de gerar.
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   gerarRelatorio, impedimentosDoRelatorio,
   type Anexo, type OrdemServico, type Relatorio,
@@ -17,6 +17,7 @@ import {
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { pode, type Papel } from '@/plataforma/acesso';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
+import { Anexos } from './Anexos';
 
 export function PainelRelatorio({
   os, papel, anexos, aoAdicionar, aoAlterar, aoRemover,
@@ -88,6 +89,7 @@ export function PainelRelatorio({
 
       <Anexos
         anexos={anexos} podeAnexar={podeAnexar}
+        vazio="Nenhuma evidência ainda. A foto do ensaio de aderência e o certificado do abrasivo entram aqui — a legenda sai impressa no relatório, a observação fica só no registro interno."
         aoAdicionar={aoAdicionar} aoAlterar={aoAlterar} aoRemover={aoRemover}
       />
 
@@ -97,105 +99,6 @@ export function PainelRelatorio({
 }
 
 /* ── Evidência ─────────────────────────────────────────────────────────────────────────────── */
-
-function Anexos({
-  anexos, podeAnexar, aoAdicionar, aoAlterar, aoRemover,
-}: {
-  anexos: Anexo[];
-  podeAnexar: boolean;
-  aoAdicionar: (novos: Anexo[]) => void;
-  aoAlterar: (id: string, campo: 'legenda' | 'comentario', valor: string) => void;
-  aoRemover: (id: string) => void;
-}) {
-  const input = useRef<HTMLInputElement>(null);
-
-  async function escolher(lista: FileList | null) {
-    if (!lista?.length) return;
-    const novos = await Promise.all([...lista].map(async (f, i): Promise<Anexo> => ({
-      id: `an-${Date.now()}-${i}`,
-      tipo: f.type.startsWith('image/') ? 'foto' : 'arquivo',
-      nome: f.name,
-      url: f.type.startsWith('image/') ? await lerComoDataUrl(f) : null,
-      legenda: '',
-      comentario: '',
-      etapa: null,
-      data: new Date().toISOString().slice(0, 10),
-      adicionadoPor: null,
-    })));
-    aoAdicionar(novos);
-    if (input.current) input.current.value = '';
-  }
-
-  return (
-    <div style={S.bloco}>
-      <div style={S.blocoTopo}>
-        <div style={S.blocoTit}>Evidência anexada</div>
-        {podeAnexar && (
-          <button style={{ ...s.botao, padding: '6px 12px', fontSize: 13 }} onClick={() => input.current?.click()}>
-            Adicionar foto ou arquivo
-          </button>
-        )}
-        <input
-          ref={input} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-          style={{ display: 'none' }} onChange={(e) => void escolher(e.target.files)}
-        />
-      </div>
-
-      {anexos.length === 0 ? (
-        <div style={S.vazio}>
-          {podeAnexar
-            ? 'Nenhuma evidência ainda. A foto do ensaio de aderência e o certificado do abrasivo entram aqui — a legenda sai impressa no relatório, o comentário fica só no registro interno.'
-            : 'Nenhuma evidência anexada a esta ordem de serviço.'}
-        </div>
-      ) : (
-        <div style={S.grade}>
-          {anexos.map((a) => (
-            <div key={a.id} style={S.anexo}>
-              <div style={S.miniatura}>
-                {a.url
-                  ? <img src={a.url} alt={a.legenda || a.nome} style={S.img} />
-                  : <span style={S.semImagem}>{a.tipo === 'foto' ? 'foto' : 'arquivo'}</span>}
-              </div>
-              <div style={S.anexoCorpo}>
-                <div style={S.anexoNome} title={a.nome}>{a.nome}</div>
-                <label style={S.rotuloCampo}>Legenda — sai no relatório</label>
-                {podeAnexar
-                  ? <input
-                      style={S.campoTexto} value={a.legenda} placeholder="Ex.: ensaio de aderência em X — X0Y0"
-                      onChange={(e) => aoAlterar(a.id, 'legenda', e.target.value)}
-                    />
-                  : <div style={S.textoFixo}>{a.legenda || <em style={{ color: c.suave }}>sem legenda</em>}</div>}
-
-                <label style={S.rotuloCampo}>Comentário — fica no registro interno</label>
-                {podeAnexar
-                  ? <textarea
-                      style={{ ...S.campoTexto, minHeight: 46, resize: 'vertical' }} value={a.comentario}
-                      placeholder="Contexto, quem pediu, o que observar na imagem"
-                      onChange={(e) => aoAlterar(a.id, 'comentario', e.target.value)}
-                    />
-                  : <div style={S.textoFixo}>{a.comentario || <em style={{ color: c.suave }}>sem comentário</em>}</div>}
-
-                <div style={S.anexoRodape}>
-                  <span style={{ fontFamily: fonte.mono, fontSize: 11, color: c.suave }}>{dataBR(a.data)}</span>
-                  {podeAnexar && <button style={S.remover} onClick={() => aoRemover(a.id)}>remover</button>}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function lerComoDataUrl(f: File): Promise<string | null> {
-  return new Promise((resolve) => {
-    const r = new FileReader();
-    r.onload = () => resolve(typeof r.result === 'string' ? r.result : null);
-    r.onerror = () => resolve(null);
-    r.readAsDataURL(f);
-  });
-}
 
 /* ── O documento ───────────────────────────────────────────────────────────────────────────── */
 

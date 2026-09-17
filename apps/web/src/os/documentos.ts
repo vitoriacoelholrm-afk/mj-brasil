@@ -8,6 +8,7 @@
 // Hoje os dois carregam os mesmos números, digitados em momentos diferentes por pessoas
 // diferentes. É daí que nasce a divergência. `compararComRelatorio` faz de máquina a conferência
 // que hoje depende de alguém pôr um papel ao lado do outro.
+import type { Anexo } from '@/plataforma/anexos';
 import { avaliarMedicao, lerNumero, normalizar, resumirOs, type EtapaPreenchida } from './regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE, type Etapa } from './vocabulario';
 
@@ -52,22 +53,10 @@ export interface OrdemServico {
   abrasivoCertificado?: string | null;
 }
 
-/** Evidência anexada: foto do ensaio, certificado do abrasivo, esquema do cliente. */
-export interface Anexo {
-  id: string;
-  tipo: 'foto' | 'arquivo';
-  nome: string;
-  /** No protótipo, o data URL que o navegador devolve ao escolher o arquivo. */
-  url: string | null;
-  /** A frase curta que aparece embaixo da imagem no relatório. */
-  legenda: string;
-  /** Observação mais longa — não sai no relatório, fica no registro interno. */
-  comentario: string;
-  etapa?: Etapa | null;
-  data: string | null;
-  adicionadoPor: string | null;
-}
-
+/** O anexo é da plataforma: foto com legenda e comentário tem a mesma forma na ordem de
+ *  serviço, na portaria e em qualquer registro que venha depois. Reexportado aqui para
+ *  quem já importava daqui não ter de mudar. */
+export type { Anexo };
 /** Cada cliente tem o seu modelo de relatório. O que muda de um para outro mora aqui. */
 export interface PerfilRelatorio {
   normas: string[];

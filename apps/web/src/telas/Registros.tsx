@@ -7,9 +7,11 @@
 // Vale a mesma regra de acesso do resto: quem confere não preenche.
 import { useMemo, useState } from 'react';
 import {
-  campoVisivel, pendencias, resumoDoRegistro,
+  campoVisivel, faltaFoto, pendencias, resumoDoRegistro,
   type CampoDef, type FormularioDef, type Registro, type Valores,
 } from '@/plataforma/formularios';
+import type { Anexo } from '@/plataforma/anexos';
+import { Anexos } from './Anexos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
@@ -20,6 +22,7 @@ import { Cabecalho } from './Vencimentos';
 export function Registros({ def }: { def: FormularioDef }) {
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [rascunho, setRascunho] = useState<Valores | null>(null);
+  const [anexos, setAnexos] = useState<Anexo[]>([]);
   const [aberto, setAberto] = useState<string | null>(null);
 
   const papel = papelAtual();
@@ -34,20 +37,25 @@ export function Registros({ def }: { def: FormularioDef }) {
     () => (rascunho ? pendencias(def, rascunho) : []),
     [def, rascunho],
   );
+  // Foto que falta trava igual a campo que falta: há fato que texto nenhum prova.
+  const semFoto = rascunho ? faltaFoto(def, anexos) : null;
+  const travado = faltando.length > 0 || semFoto !== null;
 
   function salvar() {
-    if (!rascunho || faltando.length > 0) return;
+    if (!rascunho || travado) return;
     setRegistros((todos) => [
       {
         id: `r-${Date.now()}`,
         papel: def.papel,
         valores: rascunho,
+        anexos,
         criadoEm: new Date().toISOString().slice(0, 10),
         criadoPor: pessoaAtual()?.nome ?? null,
       },
       ...todos,
     ]);
     setRascunho(null);
+    setAnexos([]);
   }
 
   const emAberto = registros.find((r) => r.id === aberto) ?? null;
@@ -58,7 +66,7 @@ export function Registros({ def }: { def: FormularioDef }) {
         titulo={def.titulo}
         sub={`${selo ? `${selo} · ` : ''}ISO 9001:2015 §${def.clausula} — ${def.explicacao}`}
         acao={editavel && !rascunho && !emAberto
-          ? <button style={s.botaoPrimario} onClick={() => setRascunho({})}>Novo registro</button>
+          ? <button style={s.botaoPrimario} onClick={() => { setRascunho({}); setAnexos([]); }}>Novo registro</button>
           : undefined}
       />
 
@@ -80,9 +88,15 @@ export function Registros({ def }: { def: FormularioDef }) {
       {rascunho && (
         <Formulario
           def={def} valores={rascunho} faltando={faltando} celular={celular}
+          semFoto={semFoto} travado={travado}
+          anexos={def.anexos ? anexos : null} porQuem={pessoaAtual()?.nome ?? null}
           aoMudar={(chave, valor) => setRascunho((v) => ({ ...v, [chave]: valor }))}
+          aoAnexar={(novos) => setAnexos((v) => [...v, ...novos])}
+          aoAlterarAnexo={(id, campo, valor) =>
+            setAnexos((v) => v.map((a) => (a.id === id ? { ...a, [campo]: valor } : a)))}
+          aoRemoverAnexo={(id) => setAnexos((v) => v.filter((a) => a.id !== id))}
           aoSalvar={salvar}
-          aoCancelar={() => setRascunho(null)}
+          aoCancelar={() => { setRascunho(null); setAnexos([]); }}
         />
       )}
 
@@ -144,13 +158,22 @@ function Lista({
 /* ── O formulário ─────────────────────────────────────────────────────────────────────────── */
 
 function Formulario({
-  def, valores, faltando, celular, aoMudar, aoSalvar, aoCancelar,
+  def, valores, faltando, celular, semFoto, travado, anexos, porQuem,
+  aoMudar, aoAnexar, aoAlterarAnexo, aoRemoverAnexo, aoSalvar, aoCancelar,
 }: {
   def: FormularioDef;
   valores: Valores;
   faltando: CampoDef[];
   celular: boolean;
+  semFoto: string | null;
+  travado: boolean;
+  /** Null quando a definição não pede anexo — o bloco simplesmente não aparece. */
+  anexos: Anexo[] | null;
+  porQuem: string | null;
   aoMudar: (chave: string, valor: string) => void;
+  aoAnexar: (novos: Anexo[]) => void;
+  aoAlterarAnexo: (id: string, campo: 'legenda' | 'comentario', valor: string) => void;
+  aoRemoverAnexo: (id: string) => void;
   aoSalvar: () => void;
   aoCancelar: () => void;
 }) {
@@ -173,19 +196,33 @@ function Formulario({
         ))}
       </div>
 
+      {anexos && def.anexos && (
+        <Anexos
+          anexos={anexos} podeAnexar titulo={def.anexos.titulo} vazio={def.anexos.vazio}
+          porQuem={porQuem}
+          aoAdicionar={aoAnexar} aoAlterar={aoAlterarAnexo} aoRemover={aoRemoverAnexo}
+        />
+      )}
+
       <div style={S.acoes}>
         <button
-          style={faltando.length ? { ...s.botao, opacity: 0.55, cursor: 'not-allowed' } : s.botaoPrimario}
+          style={travado ? { ...s.botao, opacity: 0.55, cursor: 'not-allowed' } : s.botaoPrimario}
           onClick={aoSalvar}
-          disabled={faltando.length > 0}
+          disabled={travado}
         >
           Salvar registro
         </button>
         <button style={s.botao} onClick={aoCancelar}>Cancelar</button>
-        {faltando.length > 0 && (
+        {(faltando.length > 0 || semFoto) && (
           <span style={S.faltando}>
-            Falta preencher: {faltando.map((f) => f.rotulo).join(', ')}.
-            {' '}São os campos exigidos pela ISO 9001:2015 §{def.clausula}.
+            {faltando.length > 0 && (
+              <>
+                Falta preencher: {faltando.map((f) => f.rotulo).join(', ')}.
+                {' '}São os campos exigidos pela ISO 9001:2015 §{def.clausula}.
+              </>
+            )}
+            {faltando.length > 0 && semFoto ? ' ' : ''}
+            {semFoto}
           </span>
         )}
       </div>
@@ -251,6 +288,7 @@ function Visualizacao({
   def: FormularioDef; registro: Registro; celular: boolean; aoVoltar: () => void;
 }) {
   const preenchidos = def.campos.filter((campo) => registro.valores[campo.chave]?.trim());
+  const temAnexo = registro.anexos.length > 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -273,6 +311,14 @@ function Visualizacao({
             </div>
           ))}
         </div>
+
+        {temAnexo && (
+          <Anexos
+            anexos={registro.anexos} podeAnexar={false}
+            titulo={def.anexos?.titulo ?? 'Evidência anexada'}
+            aoAdicionar={() => {}} aoAlterar={() => {}} aoRemover={() => {}}
+          />
+        )}
       </div>
     </div>
   );
