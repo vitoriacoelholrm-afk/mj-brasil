@@ -1,6 +1,10 @@
 // Quem pode o quê. A regra não é de software: quem confere não preenche.
 import { describe, it, expect } from 'vitest';
-import { ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, pode, somenteLeitura, type Papel } from './acesso';
+import {
+  ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, pode, podeEditar, podeVer,
+  somenteLeitura, type Papel,
+} from './acesso';
+import { REGISTRO_TREINAMENTO, NAO_CONFORMIDADE } from './formularios';
 import { EQUIPE, papelAtual } from '@/lib/session';
 
 const PAPEIS = Object.keys(ACESSO) as Papel[];
@@ -45,6 +49,51 @@ describe('quem faz o serviço é quem registra', () => {
   });
 });
 
+
+describe('o setor de pessoas é do RH, e de mais ninguém', () => {
+  it('o apoio preenche os registros de pessoas', () => {
+    expect(podeVer('apoio', 'rh')).toBe(true);
+    expect(podeEditar('apoio', 'rh')).toBe(true);
+  });
+
+  it('e nenhum outro papel entra lá — nem a coordenação da qualidade', () => {
+    // Foi decisão dela em 17/09/2026: só o RH. Vale registrar que isto tem consequência —
+    // quem audita a 7.2 não enxerga a evidência de competência por dentro do app.
+    const outros = PAPEIS.filter((p) => p !== 'apoio');
+    expect(outros.filter((p) => podeVer(p, 'rh'))).toEqual([]);
+  });
+
+  it('e o RH continua fora da ordem de serviço', () => {
+    expect(podeVer('apoio', 'os')).toBe(false);
+    expect(podeEditar('apoio', 'os')).toBe(false);
+  });
+
+  it('quem preenche a ficha de treinamento não é quem preenche a OS', () => {
+    expect(REGISTRO_TREINAMENTO.setor).toBe('rh');
+    expect(NAO_CONFORMIDADE.setor).toBe('os');
+    expect(podeEditar('inspecao', 'rh')).toBe(false);
+    expect(podeEditar('apoio', 'rh')).toBe(true);
+  });
+});
+
+describe('a tela diz por que não abre, e diz a coisa certa', () => {
+  it('quem pode preencher não recebe aviso nenhum', () => {
+    expect(motivoDoBloqueio('inspecao', 'os')).toBe(null);
+    expect(motivoDoBloqueio('apoio', 'rh')).toBe(null);
+  });
+
+  it('quem vê e não escreve ouve falar de independência', () => {
+    expect(motivoDoBloqueio('coordenacao_qualidade', 'os')).toContain('independente');
+  });
+
+  it('e quem nem vê ouve que o setor não é dele — não que está sem permissão', () => {
+    // A diferença importa: "você não tem acesso" soa a defeito; "este setor é de outra
+    // pessoa" é a regra da casa, e a pessoa para de procurar.
+    const m = motivoDoBloqueio('inspecao', 'rh')!;
+    expect(m).toContain('registros de pessoas');
+    expect(m).toContain('responde pelo setor');
+  });
+});
 describe('a equipe cadastrada usa os papéis', () => {
   it('cargo e papel são coisas diferentes: um é rótulo, o outro é regra', () => {
     const coord = EQUIPE.find((p) => p.nome.startsWith('Vitória'))!;

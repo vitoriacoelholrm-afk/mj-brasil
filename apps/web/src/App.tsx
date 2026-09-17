@@ -13,20 +13,33 @@ import { Indicadores } from '@/telas/Indicadores';
 import { Clientes } from '@/telas/Clientes';
 import { ListaMestra } from '@/telas/ListaMestra';
 import { Registros } from '@/telas/Registros';
-import { MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE } from '@/plataforma/formularios';
+import { pode, type Permissao } from '@/plataforma/acesso';
+import { papelAtual } from '@/lib/session';
+import {
+  MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
+} from '@/plataforma/formularios';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/documentos/listaMestra';   // registra as empresas
 
 export type Rota = 'situacao' | 'plano' | 'diagnostico' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra' | 'propriedade-cliente' | 'mudanca-producao'
-  | 'nao-conformidade' | 'indicadores';
+  | 'nao-conformidade' | 'indicadores' | 'treinamento';
 
 // Cada item de topo é um domínio; os de dentro são as telas dele. Um domínio sem tela ainda
 // aparece desabilitado — some quando o módulo entrar, não antes.
-const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota }[] }[] = [
+type ItemDeMenu = {
+  rotulo: string;
+  rota?: Rota;
+  filhas?: { rotulo: string; rota: Rota }[];
+  /** Sem esta permissão o domínio não aparece. Esconder é diferente de travar o campo: um
+   *  setor que não é seu não deveria nem sugerir que existe algo ali para você. */
+  exige?: Permissao;
+};
+
+const MENU: ItemDeMenu[] = [
   { rotulo: 'Situação', rota: 'situacao' },
-  { rotulo: 'Ordens de Serviço', rota: 'plano' },
+  { rotulo: 'Ordens de Serviço', rota: 'plano', exige: 'os.ver' },
   { rotulo: 'Qualidade', filhas: [
     { rotulo: 'Diagnóstico', rota: 'diagnostico' },
     { rotulo: 'Lista Mestra', rota: 'lista-mestra' },
@@ -37,6 +50,8 @@ const MENU: { rotulo: string; rota?: Rota; filhas?: { rotulo: string; rota: Rota
     { rotulo: 'Vencimentos', rota: 'vencimentos' },
     { rotulo: 'Instrumentos', rota: 'instrumentos' },
   ] },
+  // O setor de pessoas é do RH e de mais ninguém — decisão dela em 17/09/2026.
+  { rotulo: 'Pessoas', rota: 'treinamento', exige: 'rh.ver' },
   { rotulo: 'Cadastros', filhas: [
     { rotulo: 'Clientes', rota: 'clientes' },
   ] },
@@ -47,6 +62,7 @@ const DOMINIO: Record<Rota, string> = {
   plano: 'Ordens de Serviço',
   diagnostico: 'Qualidade',
   'lista-mestra': 'Qualidade',
+  treinamento: 'Pessoas',
   'nao-conformidade': 'Qualidade',
   indicadores: 'Qualidade',
   'propriedade-cliente': 'Qualidade',
@@ -66,8 +82,10 @@ export function App() {
 
   if (!pessoa) return <Entrar aoEntrar={() => setPessoa(pessoaAtual())} />;
 
+  const papel = papelAtual();
+  const menu = MENU.filter((m) => !m.exige || pode(papel, m.exige));
   const dominioAtivo = DOMINIO[rota];
-  const filhas = MENU.find((m) => m.rotulo === dominioAtivo)?.filhas;
+  const filhas = menu.find((m) => m.rotulo === dominioAtivo)?.filhas;
 
   return (
     <div style={S.pagina}>
@@ -90,7 +108,7 @@ export function App() {
         </div>
 
         <nav style={{ ...S.nav, flexBasis: celular ? '100%' : 'auto', order: celular ? 3 : 0, borderTop: celular ? `1px solid ${c.linha}` : 'none' }}>
-          {MENU.map((m) => {
+          {menu.map((m) => {
             const ativo = m.rotulo === dominioAtivo;
             const destino = m.rota ?? m.filhas?.[0]?.rota;
             return (
@@ -156,6 +174,7 @@ export function App() {
         {rota === 'mudanca-producao' && <Registros def={MUDANCA_PRODUCAO} />}
         {rota === 'nao-conformidade' && <Registros def={NAO_CONFORMIDADE} />}
         {rota === 'indicadores' && <Indicadores />}
+        {rota === 'treinamento' && <Registros def={REGISTRO_TREINAMENTO} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

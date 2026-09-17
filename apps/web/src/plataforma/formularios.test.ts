@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE,
+  REGISTRO_TREINAMENTO,
   campoVisivel, formularioDoPapel, pendencias, resumoDoRegistro,
   type FormularioDef, type Valores,
 } from './formularios';
@@ -148,5 +149,36 @@ describe('8.5.3 e 8.5.6 seguem em pé', () => {
     expect(obrigatorios(MUDANCA_PRODUCAO)).toEqual(expect.arrayContaining([
       'resultado', 'autorizadoPor',
     ]));
+  });
+});
+
+/* ══ 5. A 7.2 — competência ══════════════════════════════════════════════════════════════════ */
+
+const TREINO: Valores = {
+  colaborador: 'Marcos Teixeira', funcao: 'Inspetor de pintura',
+  treinamento: 'Medição de espessura de película seca', tipo: 'Interno',
+  instrutor: 'Ana Ribeiro', data: '2026-09-17', eficacia: 'A avaliar',
+};
+
+describe('7.2 — treinamento dado, e se funcionou', () => {
+  it('o registro fecha com a eficácia ainda por avaliar', () => {
+    // O prazo de avaliar costuma ser depois. Travar aqui faria a pessoa inventar uma nota.
+    expect(faltando(REGISTRO_TREINAMENTO, TREINO)).toEqual([]);
+  });
+
+  it('dizer que foi eficaz obriga a dizer como se soube, e quem julgou', () => {
+    // Lista de presença prova que a pessoa sentou na sala. Não prova que ficou competente.
+    expect(faltando(REGISTRO_TREINAMENTO, { ...TREINO, eficacia: 'Eficaz' }))
+      .toEqual(['comoAvaliado', 'avaliadoPor']);
+  });
+
+  it('e dizer que não foi obriga a dizer o que se fez a respeito', () => {
+    expect(faltando(REGISTRO_TREINAMENTO, { ...TREINO, eficacia: 'Não eficaz' }))
+      .toEqual(['acaoSeNaoEficaz']);
+  });
+
+  it('e é o registro de onde sai o indicador de eficácia de treinamento', () => {
+    expect(REGISTRO_TREINAMENTO.clausula).toBe('7.2');
+    expect(MINASJATO.formularios.registro_treinamento).toBe('FM-009');
   });
 });

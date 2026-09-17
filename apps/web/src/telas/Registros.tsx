@@ -11,7 +11,7 @@ import {
   type CampoDef, type FormularioDef, type Registro, type Valores,
 } from '@/plataforma/formularios';
 import { carimboDoPapel } from '@/documentos/listaMestra';
-import { motivoDaLeituraApenas, pode, somenteLeitura } from '@/plataforma/acesso';
+import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
@@ -23,7 +23,10 @@ export function Registros({ def }: { def: FormularioDef }) {
   const [aberto, setAberto] = useState<string | null>(null);
 
   const papel = papelAtual();
-  const podeEditar = pode(papel, 'os.editar');
+  // Quem pode preencher depende do SETOR do formulário, não da ordem de serviço: a ficha de
+  // treinamento é do RH, e quem toca a OS não entra nela.
+  const editavel = podeEditar(papel, def.setor);
+  const bloqueio = motivoDoBloqueio(papel, def.setor);
   const selo = carimboDoPapel(def.papel);
   const celular = useEhCelular();
 
@@ -54,7 +57,7 @@ export function Registros({ def }: { def: FormularioDef }) {
       <Cabecalho
         titulo={def.titulo}
         sub={`${selo ? `${selo} · ` : ''}ISO 9001:2015 §${def.clausula} — ${def.explicacao}`}
-        acao={podeEditar && !rascunho && !emAberto
+        acao={editavel && !rascunho && !emAberto
           ? <button style={s.botaoPrimario} onClick={() => setRascunho({})}>Novo registro</button>
           : undefined}
       />
@@ -67,10 +70,10 @@ export function Registros({ def }: { def: FormularioDef }) {
         </div>
       )}
 
-      {somenteLeitura(papel) && (
+      {bloqueio && (
         <div style={S.aviso}>
           <span style={pastilha('neutro')}>consulta</span>{' '}
-          <span style={s.prosa}>{motivoDaLeituraApenas(papel)}</span>
+          <span style={s.prosa}>{bloqueio}</span>
         </div>
       )}
 
@@ -88,7 +91,7 @@ export function Registros({ def }: { def: FormularioDef }) {
       )}
 
       {!rascunho && !emAberto && (
-        <Lista def={def} registros={registros} aoAbrir={setAberto} podeEditar={podeEditar} />
+        <Lista def={def} registros={registros} aoAbrir={setAberto} editavel={editavel} />
       )}
 
       <div style={S.rodape}>
@@ -101,9 +104,9 @@ export function Registros({ def }: { def: FormularioDef }) {
 /* ── A lista ──────────────────────────────────────────────────────────────────────────────── */
 
 function Lista({
-  def, registros, aoAbrir, podeEditar,
+  def, registros, aoAbrir, editavel,
 }: {
-  def: FormularioDef; registros: Registro[]; aoAbrir: (id: string) => void; podeEditar: boolean;
+  def: FormularioDef; registros: Registro[]; aoAbrir: (id: string) => void; editavel: boolean;
 }) {
   if (registros.length === 0) {
     return (
@@ -112,9 +115,9 @@ function Lista({
           Nenhum registro ainda
         </div>
         <div style={{ ...S.vazio, ...s.prosa }}>
-          {podeEditar
+          {editavel
             ? 'Quando acontecer, é aqui que fica. Um registro em branco não é problema — problema é o fato acontecer e não ter onde registrar, que era o caso até agora.'
-            : 'Quando a execução ou a inspeção registrarem uma ocorrência, ela aparece aqui.'}
+            : 'Quando quem responde pelo setor registrar uma ocorrência, ela aparece aqui.'}
         </div>
       </div>
     );

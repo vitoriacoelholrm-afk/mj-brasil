@@ -8,6 +8,7 @@
 // formulário é acrescentar uma definição, não escrever uma tela. Era o que ela pediu lá atrás —
 // "precisamos ter todos esses formulários dentro do aplicativo".
 import type { PapelDeFormulario } from './empresa';
+import type { Setor } from './acesso';
 
 export type TipoCampo = 'texto' | 'texto_longo' | 'data' | 'escolha' | 'pessoa' | 'sim_nao';
 
@@ -26,6 +27,9 @@ export interface CampoDef {
 
 export interface FormularioDef {
   papel: PapelDeFormulario;
+  /** A que setor este registro pertence. É o que decide quem preenche: a ficha de
+   *  treinamento é do RH, a ocorrência com peça de cliente é de quem toca a ordem. */
+  setor: Setor;
   titulo: string;
   clausula: string;
   /** Por que este formulário existe, em uma frase. Vai no topo da tela. */
@@ -43,6 +47,7 @@ export interface FormularioDef {
 
 export const PROPRIEDADE_CLIENTE: FormularioDef = {
   papel: 'propriedade_cliente',
+  setor: 'os',
   titulo: 'Ocorrência com Propriedade do Cliente',
   clausula: '8.5.3',
   explicacao:
@@ -76,6 +81,7 @@ export const PROPRIEDADE_CLIENTE: FormularioDef = {
 
 export const MUDANCA_PRODUCAO: FormularioDef = {
   papel: 'mudanca_producao',
+  setor: 'os',
   titulo: 'Análise Crítica de Mudança na Produção',
   clausula: '8.5.6',
   explicacao:
@@ -112,6 +118,7 @@ export const MUDANCA_PRODUCAO: FormularioDef = {
 
 export const NAO_CONFORMIDADE: FormularioDef = {
   papel: 'nao_conformidade',
+  setor: 'os',
   titulo: 'Relatório de Não Conformidade (RNC)',
   clausula: '8.7.2 e 10.2.2',
   explicacao:
@@ -160,6 +167,7 @@ export const NAO_CONFORMIDADE: FormularioDef = {
 
 export const MONITORAMENTO_SGQ: FormularioDef = {
   papel: 'monitoramento_sgq',
+  setor: 'os',
   titulo: 'Indicadores do SGQ',
   clausula: '9.1.1',
   explicacao:
@@ -179,8 +187,51 @@ export const MONITORAMENTO_SGQ: FormularioDef = {
 };
 
 
+
+/* ══ 7.2 — Competência ═══════════════════════════════════════════════════════════════════════
+   "A organização deve [...] onde aplicável, tomar ações para adquirir a competência necessária
+   e avaliar a eficácia das ações tomadas [e] reter informação documentada apropriada como
+   evidência de competência."
+
+   Duas obrigações de novo, e a segunda é a que falta na prática: quase toda empresa guarda a
+   lista de presença e nenhuma guarda a AVALIAÇÃO DA EFICÁCIA. Lista de presença prova que a
+   pessoa sentou na sala; não prova que ficou competente.
+
+   Este é também o registro de onde sai o indicador de eficácia de treinamento — o mesmo que
+   apareceu com 200% na planilha de 2025.                                                      */
+
+export const REGISTRO_TREINAMENTO: FormularioDef = {
+  papel: 'registro_treinamento',
+  setor: 'rh',
+  titulo: 'Registro de Treinamento',
+  clausula: '7.2',
+  explicacao:
+    'Treinamento dado, e se ele funcionou. A norma pede as duas coisas: a evidência de que a pessoa foi treinada e a avaliação de que ficou competente.',
+  campos: [
+    { chave: 'colaborador', rotulo: 'Colaborador', tipo: 'texto', obrigatorio: true },
+    { chave: 'funcao', rotulo: 'Função', tipo: 'texto', obrigatorio: true, ajuda: 'O posto que a pessoa ocupa — é contra ele que a competência se mede.' },
+    { chave: 'treinamento', rotulo: 'Treinamento', tipo: 'texto', obrigatorio: true },
+    {
+      chave: 'tipo', rotulo: 'Tipo', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Integração', 'Interno', 'Externo', 'No posto de trabalho', 'Reciclagem'],
+    },
+    { chave: 'instrutor', rotulo: 'Instrutor', tipo: 'texto', obrigatorio: true },
+    { chave: 'data', rotulo: 'Data', tipo: 'data', obrigatorio: true },
+    { chave: 'cargaHoraria', rotulo: 'Carga horária', tipo: 'texto', ajuda: 'Em horas.' },
+    { chave: 'conteudo', rotulo: 'Conteúdo', tipo: 'texto_longo' },
+
+    {
+      chave: 'eficacia', rotulo: 'Avaliação da eficácia', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['A avaliar', 'Eficaz', 'Não eficaz'],
+      ajuda: 'A norma não pede só o treinamento: pede avaliar se ele funcionou. Deixar em "a avaliar" é aceitável enquanto o prazo não venceu.',
+    },
+    { chave: 'comoAvaliado', rotulo: 'Como foi avaliado', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'eficacia', valor: 'Eficaz' }, ajuda: 'Prova, observação no posto, reinspeção de peça. Sem isto, "eficaz" é opinião.' },
+    { chave: 'avaliadoPor', rotulo: 'Avaliado por', tipo: 'pessoa', obrigatorio: true, dependeDe: { campo: 'eficacia', valor: 'Eficaz' } },
+    { chave: 'acaoSeNaoEficaz', rotulo: 'Ação tomada', tipo: 'texto_longo', obrigatorio: true, dependeDe: { campo: 'eficacia', valor: 'Não eficaz' }, ajuda: 'Treinamento que não funcionou e não gerou ação é achado de auditoria.' },
+  ],
+};
 export const FORMULARIOS: FormularioDef[] =
-  [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, MONITORAMENTO_SGQ];
+  [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, MONITORAMENTO_SGQ, REGISTRO_TREINAMENTO];
 
 export function formularioDoPapel(papel: PapelDeFormulario): FormularioDef | null {
   return FORMULARIOS.find((f) => f.papel === papel) ?? null;
