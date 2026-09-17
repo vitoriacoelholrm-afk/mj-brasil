@@ -42,15 +42,20 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
       values (${ORG}, 'minasjato', 'MJ Serviços Industriais Ltda', '{}'::jsonb, true, 'active')
       on conflict (id) do update set name = excluded.name`;
 
-    // A equipe, conforme as assinaturas dos procedimentos e o questionário RINA.
+    // A equipe. Os cargos vinham das assinaturas dos procedimentos e estavam desatualizados —
+    // ela corrigiu olhando a tela de entrada em 17/09/2026, e é a correção dela que vale aqui.
+    // Os ids são os mesmos de `apps/web/src/lib/session.ts`: é por eles que o registro vai dizer
+    // quem o assinou, e os dois lados têm de bater.
+    //
     // rbac_role 'admin' recebe permissões '*' em resolveContext; os demais dependeriam de
     // role_assignments, que ainda não existem — por isso todos entram como admin por ora.
     for (const p of [
-      { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', papel: 'Coordenadora da Qualidade', email: 'vitoriacoelholrm@gmail.com' },
-      { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', papel: 'Diretor', email: null },
-      { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', papel: 'Verificação', email: null },
-      { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', papel: 'Inspetor de Pintura N1', email: null },
-      { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', papel: 'Financeiro', email: 'financeiro@minasjato.net' },
+      { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', cargo: 'Coordenadora da Qualidade', email: 'vitoriacoelholrm@gmail.com' },
+      { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', cargo: 'Diretor', email: null },
+      { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'PCC', email: null },
+      { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Gerente de Produção', email: null },
+      { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', email: 'financeiro@minasjato.net' },
+      { id: '00000000-0000-4000-9000-000000000006', nome: 'Roberta Patrocínio', cargo: 'Portaria', email: null },
     ]) {
       await admin`
         insert into memberships (id, org_id, display_name, email, rbac_role, status, activated_at)

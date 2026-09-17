@@ -34,3 +34,6 @@ export * from './entities/MeterReading.js';
 export * from './entities/AssetEvent.js';
 export * from './entities/MaintenanceOrderDetail.js';
 // __MODULE_SCHEMA_EXPORTS__   <- install splices module entity re-exports here
+
+// App-local: os registros do sistema da qualidade (os formulários da ISO 9001 desta aplicação).
+export * from './app-local/Registro.js';
