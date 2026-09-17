@@ -21,13 +21,20 @@ export interface Pessoa {
   papel: Papel;
 }
 
-/** A equipe conforme as assinaturas dos procedimentos e o questionário RINA. */
+/** A equipe, conforme ela corrigiu em 17/09/2026 olhando a tela de entrada.
+ *
+ *  O cargo é o nome do posto e muda de empresa para empresa. O papel é a regra de acesso e
+ *  é o mesmo em qualquer uma — ver `plataforma/acesso.ts`. Quando os dois divergem, quem
+ *  manda no acesso é o papel. */
 export const EQUIPE: Pessoa[] = [
   { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', cargo: 'Coordenadora da Qualidade', papel: 'coordenacao_qualidade' },
   { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', cargo: 'Diretor', papel: 'direcao' },
-  { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'Verificação', papel: 'execucao' },
+  // PCC. Ela pediu explicitamente que ele tenha a ordem de serviço E o relatório de inspeção
+  // editáveis — que é exatamente o conjunto do papel de inspeção. Era `execucao`, que edita a
+  // OS e NÃO emite relatório; por isso mudou de papel, não só de cargo.
+  { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'PCC', papel: 'inspecao' },
   { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Inspetor de Pintura N1', papel: 'inspecao' },
-  { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro', papel: 'apoio' },
+  { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', papel: 'apoio' },
 ];
 
 /** O papel de quem está usando o app agora. Sem sessão, o mínimo: só consulta. */
