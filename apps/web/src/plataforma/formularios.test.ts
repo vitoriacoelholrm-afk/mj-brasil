@@ -59,22 +59,12 @@ describe('toda definição se sustenta sozinha', () => {
     for (const def of FORMULARIOS) expect(formularioDoPapel(def.papel)).toBe(def);
   });
 
-  it('e tem código na empresa — menos o que ela ainda não criou', () => {
-    // A tela precisa do código para carimbar o documento. Quando a empresa não tem o formulário,
-    // ela avisa em vez de quebrar — e é assim que um formulário novo da plataforma chega antes
-    // de a empresa adotá-lo.
-    //
-    // A matriz de comunicação (7.4) e o atendimento pós-entrega (8.5.5) são esse caso desde
-    // 21/09/2026: os formulários existem na plataforma, a Minasjato ainda não os catalogou.
-    // Enquanto não catalogar, a tela funciona e sai sem código — e o diagnóstico continua
-    // apontando a falta.
-    const semCodigo = FORMULARIOS
-      .filter((def) => !MINASJATO.formularios[def.papel])
-      .map((def) => def.papel)
-      .sort();
-    expect(semCodigo).toEqual(['comunicacao_sgq', 'pos_entrega']);
-
-    for (const def of FORMULARIOS.filter((d) => MINASJATO.formularios[d.papel])) {
+  it('e todos têm código na empresa', () => {
+    // A tela precisa do código para carimbar o documento. A matriz de comunicação e o
+    // atendimento pós-entrega ficaram sem por algumas horas em 21/09/2026, entre existirem na
+    // plataforma e ela catalogá-los — e nesse intervalo a tela funcionou avisando que saía sem
+    // código, que é como um formulário novo chega antes de a empresa adotá-lo.
+    for (const def of FORMULARIOS) {
       expect(MINASJATO.formularios[def.papel], def.papel).toMatch(/^FM-\d{3}$/);
     }
   });

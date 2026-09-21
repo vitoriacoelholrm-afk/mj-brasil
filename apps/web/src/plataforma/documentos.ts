@@ -8,7 +8,13 @@
 // codificações diferentes passam pelas mesmas funções e produzem conflitos diferentes, sem que
 // uma linha deste arquivo mude.
 
-export type SituacaoDoc = 'vigente' | 'obsoleto' | 'em_revisao';
+/** `em_elaboracao` é o documento que ainda não existe e já tem código.
+ *
+ *  Reservar o código antes de escrever é para o que a lista mestra serve: sem isso, duas pessoas
+ *  pegam o mesmo número na mesma semana. Mas catalogar como VIGENTE o que ainda não foi escrito
+ *  seria pior que não catalogar — a lista passaria a afirmar que existe documento onde há
+ *  intenção, e é a lista que o auditor lê. */
+export type SituacaoDoc = 'vigente' | 'obsoleto' | 'em_revisao' | 'em_elaboracao';
 export type Acesso = 'irrestrito' | 'restrito' | 'confidencial';
 export type Natureza = 'manual' | 'procedimento' | 'instrucao' | 'formulario' | 'registro';
 

@@ -335,6 +335,11 @@ function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMe
       <td style={{ ...s.td, color: c.tinta }}>
         {d.titulo}
         {d.foraDaLista && <span style={{ ...pastilha('critico'), marginLeft: 8 }}>fora da lista</span>}
+        {/* Código reservado antes do documento existir. Sem esta marca, quem lê a lista conclui
+            que o documento existe — e é a lista que o auditor lê. */}
+        {d.situacao === 'em_elaboracao' && (
+          <span style={{ ...pastilha('alerta'), marginLeft: 8 }}>a escrever</span>
+        )}
         {d.tela && <span style={{ ...pastilha('ok'), marginLeft: 8 }}>vira tela</span>}
         <div style={S.subLinha}>
           {NATUREZA_ROTULO[d.natureza]}{d.local ? ` · ${d.local}` : ''}

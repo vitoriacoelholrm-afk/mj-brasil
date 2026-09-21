@@ -306,6 +306,11 @@ export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cob
   const catalogo = catalogoPara(modulos);
   const porChave = new Map<string, DocumentoMestre[]>();
   for (const doc of documentos) {
+    // Documento EM ELABORAÇÃO não cobre nada. Reservar o código é o primeiro passo, e é um passo
+    // real — mas contá-lo como atendido faria a cobertura subir no dia em que se decide escrever,
+    // e não no dia em que se escreve. Verde por intenção é o pior verde que existe: some na
+    // auditoria, que pede o documento e não a linha da planilha.
+    if (doc.situacao === 'em_elaboracao') continue;
     for (const chave of doc.padroes ?? []) {
       porChave.set(chave, [...(porChave.get(chave) ?? []), doc]);
     }

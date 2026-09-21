@@ -18,14 +18,17 @@ describe('cada duplicidade vira uma decisão com código concreto', () => {
   });
 
   it('o que usa prefixo de fora entra na numeração da casa', () => {
-    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-025' });
-    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-026' });
+    // Os códigos andaram: FM-025 e FM-026 foram reservados em 21/09/2026 para a matriz de
+    // comunicação e o atendimento pós-entrega. O plano recalcula sozinho — é para isso que ele
+    // lê a lista em vez de carregar números fixos.
+    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-027' });
+    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-028' });
   });
 
   it('os cinco registros sem código recebem código, um cada', () => {
     const cadastros = plano.propostas.filter((p) => p.tipo === 'cadastrar');
     expect(cadastros).toHaveLength(5);
-    expect(cadastros.map((p) => p.para)).toEqual(['FM-027', 'FM-028', 'FM-029', 'FM-030', 'FM-031']);
+    expect(cadastros.map((p) => p.para)).toEqual(['FM-029', 'FM-030', 'FM-031', 'FM-032', 'FM-033']);
   });
 
   it('nenhum código proposto colide com um que já existe', () => {

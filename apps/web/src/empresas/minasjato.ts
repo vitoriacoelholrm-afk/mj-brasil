@@ -218,6 +218,36 @@ export const CATALOGADOS: DocumentoMestre[] = [
     nota: 'Era FM-011, que colidia com o Pedido de Compra. Renumerada em 21/09/2026 para FM-024. A Lista Mestra e o arquivo ainda trazem o código antigo — atualizar os dois é o que fecha a pendência.',
   }),
 
+  // ── Os três de 21/09/2026, catalogados EM ELABORAÇÃO ────────────────────────────────────────
+  //
+  // Decisão dela: reservar o código agora, escrever depois. É para isso que a lista mestra serve
+  // — sem reserva, duas pessoas pegam o mesmo número na mesma semana.
+  //
+  // Vão como `em_elaboracao` e NÃO como vigente, e a diferença não é detalhe: a lista mestra é o
+  // que o auditor lê. Dizer "vigente" num documento que ainda não foi escrito é a lista afirmar
+  // que existe documento onde há intenção — e é achado na hora em que ele pede para ver.
+  //
+  // Por isso também vão sem emissão e sem próxima revisão: documento que não nasceu não tem data
+  // de nascimento. Quando ela escrever, muda a situação e entra a data.
+
+  catalogado('FM-025', 'Formulário — Matriz de Comunicação do SGQ', 'formulario', 'Gestão da Qualidade', 'Dir. Geral', ['7.4'], 'irrestrito', {
+    padroes: ['comunicacao_sgq'], tela: 'comunicacao',
+    situacao: 'em_elaboracao', emissao: null, proximaRevisao: null, revisao: null,
+    nota: 'Reservado em 21/09/2026. A 7.4 pede cinco coisas determinadas: sobre o quê, quando, com quem, como e quem comunica. Quem determina é a direção — a tela já está no ar e recebe uma linha por rotina de comunicação.',
+  }),
+
+  catalogado('PO-009', 'Atividades Pós-Entrega', 'procedimento', 'Operações', 'Ger. Operações', ['8.5.5'], 'irrestrito', {
+    padroes: ['pos_entrega'],
+    situacao: 'em_elaboracao', emissao: null, proximaRevisao: null, revisao: null,
+    nota: 'Reservado em 21/09/2026. É a POLÍTICA: o que a empresa oferece depois da entrega, por quanto tempo e sob que condições. O roteiro do que precisa cobrir está no catálogo padrão, e o texto se escreve na empresa modelo.',
+  }),
+
+  catalogado('FM-026', 'Formulário — Atendimento Pós-Entrega', 'formulario', 'Operações', 'Ger. Operações', ['8.5.5'], 'irrestrito', {
+    padroes: ['atendimento_pos_entrega'], tela: 'pos-entrega',
+    situacao: 'em_elaboracao', emissao: null, proximaRevisao: null, revisao: null,
+    nota: 'Reservado em 21/09/2026. É o REGISTRO de cada chamado — garantia, retoque em campo, assistência. A tela já está no ar; o que falta é a aprovação do formulário junto com o PO-009.',
+  }),
+
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
     nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código.',
   }),
@@ -289,6 +319,10 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
     controle_cargas: 'FM-023',
     plano_auditoria: 'FM-010',
     pedido_compra: 'FM-011',
+    // Reservados em 21/09/2026, ainda em elaboração. O mapa aponta assim mesmo: é ele que faz a
+    // tela carimbar o código, e a tela existe antes do documento ficar pronto.
+    comunicacao_sgq: 'FM-025',
+    pos_entrega: 'FM-026',
   },
   indicadores: INDICADORES,
   apuracoes: APURACOES,

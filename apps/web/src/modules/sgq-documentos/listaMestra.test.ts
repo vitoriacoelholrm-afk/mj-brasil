@@ -21,13 +21,13 @@ const EM = new Date('2026-09-16');
 describe('os 47 documentos da LM-SGQ-001', () => {
   it('os 47 da planilha estão aqui, mais os que criamos depois', () => {
     expect(LISTA_MESTRA_META.totalCatalogado).toBe(47);   // o que a planilha declara
-    expect(CATALOGADOS).toHaveLength(52);                  // 47 + FM-020 a FM-024
+    expect(CATALOGADOS).toHaveLength(55);                  // 47 + FM-020 a FM-026 + PO-009
   });
 
   it('e o app acusa que o cabeçalho da planilha ficou para trás', () => {
     const c = conflitos(EM).find((x) => x.tipo === 'contagem_divergente')!;
     expect(c.detalhe).toContain('declara 47');
-    expect(c.detalhe).toContain('tem 52');
+    expect(c.detalhe).toContain('tem 55');
   });
 
   it('cada um trouxe cláusula da ISO, responsável e nível de acesso', () => {
@@ -40,11 +40,12 @@ describe('os 47 documentos da LM-SGQ-001', () => {
 
   it('a divisão por categoria mostra onde o sistema pesa', () => {
     const cats = porCategoria();
-    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(52);
-    // Operações lidera — é o processo que a empresa vende, e ganhou os dois formulários novos.
-    expect(cats[0]).toEqual({ categoria: 'Operações', total: 14 });
-    // Gestão da Qualidade subiu de 11 para 12 em 21/09/2026: a SWOT entrou na lista.
-    expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(12);
+    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(55);
+    // Operações lidera — é o processo que a empresa vende. Subiu de 14 para 16 em 21/09/2026,
+    // com a política e o registro de pós-entrega.
+    expect(cats[0]).toEqual({ categoria: 'Operações', total: 16 });
+    // Gestão da Qualidade: 11 → 12 com a SWOT, → 13 com a matriz de comunicação.
+    expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(13);
   });
 
   it('dá para achar quem atende uma cláusula — é o que o auditor pergunta', () => {
@@ -89,12 +90,12 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
   });
 
   it('sabe qual é o próximo código livre — para cadastrar o que circula sem entrada', () => {
-    expect(proximoCodigoLivre('FM')).toBe('FM-025');   // o FM-024 foi para a SWOT em 21/09/2026
+    expect(proximoCodigoLivre('FM')).toBe('FM-027');   // FM-024 a FM-026 saíram em 21/09/2026
     expect(proximoCodigoLivre('IT')).toBe('IT-006');
   });
 
   it('toda tela declarada aponta para uma tela que existe', () => {
-    const telas = new Set(['plano', 'instrumentos', 'lista-mestra', 'clientes', 'diagnostico', 'vencimentos', 'situacao', 'propriedade-cliente', 'mudanca-producao', 'nao-conformidade', 'indicadores', 'treinamento',
+    const telas = new Set(['plano', 'instrumentos', 'lista-mestra', 'clientes', 'diagnostico', 'vencimentos', 'situacao', 'propriedade-cliente', 'mudanca-producao', 'nao-conformidade', 'indicadores', 'treinamento', 'comunicacao', 'pos-entrega',
       'cargas']);
     for (const d of LISTA_MESTRA) {
       if (d.tela) expect(telas, `${d.codigo} aponta para "${d.tela}"`).toContain(d.tela);
@@ -138,6 +139,8 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const v = por('revisao_vencida');
     expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
     const emBloco = v.find((x) => x.codigo === null)!;
+    // 52, e não 55: os três reservados em 21/09/2026 não entram na conta do vencimento. Documento
+    // que ainda não foi escrito não tem revisão para vencer.
     expect(emBloco.titulo).toBe('52 documentos da lista mestra');
     expect(emBloco.detalhe).toContain('04/07/2026');
     expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
@@ -187,7 +190,17 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(por('fora_da_lista')).toHaveLength(7);
   });
 
-  it('nada disso é histórico: é tudo documento vigente', () => {
-    expect(LISTA_MESTRA.every((d) => d.situacao === 'vigente')).toBe(true);
+  it('nada disso é histórico — e o que ainda não foi escrito diz que não foi', () => {
+    // Três códigos foram RESERVADOS em 21/09/2026 sem o documento existir: a matriz de
+    // comunicação e as duas peças do pós-entrega. Entram como `em_elaboracao`, e não como
+    // vigentes, porque a lista mestra é o que o auditor lê — dizer "vigente" num documento que
+    // ninguém escreveu é a lista afirmar que existe papel onde há intenção.
+    const emElaboracao = LISTA_MESTRA.filter((d) => d.situacao === 'em_elaboracao');
+    expect(emElaboracao.map((d) => d.codigo).sort()).toEqual(['FM-025', 'FM-026', 'PO-009']);
+    // E documento que não nasceu não tem data de nascimento.
+    expect(emElaboracao.every((d) => d.emissao === null && d.revisao === null)).toBe(true);
+
+    const resto = LISTA_MESTRA.filter((d) => d.situacao !== 'em_elaboracao');
+    expect(resto.every((d) => d.situacao === 'vigente')).toBe(true);
   });
 });
