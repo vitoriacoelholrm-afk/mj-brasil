@@ -90,7 +90,7 @@ describe('o semáforo continua legível', () => {
 
   it('e nenhum veredito usa uma cor da marca', () => {
     const vereditos = [c.ok, c.alerta, c.critico, c.okFraco, c.alertaFraco, c.criticoFraco];
-    const daMarca = [marca.navy, marca.azul, marca.turquesa, marca.verde, marca.amarelo];
+    const daMarca = [marca.azulProfundo, marca.azul, marca.turquesa, marca.verde, marca.amarelo];
     for (const v of vereditos) expect(daMarca).not.toContain(v);
   });
 });

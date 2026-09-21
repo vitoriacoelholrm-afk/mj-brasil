@@ -3,14 +3,21 @@
 // real entrar.
 import { EQUIPE, entrar } from '@/lib/session';
 import { somenteLeitura } from '@/plataforma/acesso';
+import { empresaAtiva } from '@/plataforma/empresa';
 import { c, fonte, s } from '@/ui/estilo';
 
 export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
   return (
     <div style={S.pagina}>
       <div style={S.caixa}>
-        <div style={S.marca}>MJ Serviços Industriais Ltda</div>
-        <h1 style={S.titulo}>Sistema da Qualidade</h1>
+        {/* A marca do SISTEMA em cima, e o nome do CLIENTE embaixo dela — a mesma divisão de
+            territórios do app: quem entra precisa saber em que sistema está e em qual empresa,
+            e as duas respostas não são a mesma. */}
+        {/* Sem régua abaixo: a assinatura já traz as três barras dentro dela, e repeti-las seria
+            a mesma marca dita duas vezes em quatro centímetros. */}
+        <img src="/marca/BraMex_logo_principal.svg" alt="BraMex — Sistema de Qualidade e Gestão" style={S.logo} />
+        <div style={S.cliente}>{empresaAtiva().identidade.nome}</div>
+        <h1 style={S.titulo}>Entrar</h1>
         <p style={S.sub}>Escolha quem está usando o sistema.</p>
 
         <div style={S.lista}>
@@ -44,10 +51,11 @@ const S: Record<string, React.CSSProperties> = {
     minHeight: '100vh', background: c.fundo, color: c.tinta, fontFamily: fonte.texto,
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
   },
-  caixa: { ...s.cartao, width: 460, maxWidth: '100%', padding: '32px 30px' },
-  marca: {
+  caixa: { ...s.cartao, width: 460, maxWidth: '100%', padding: '30px 30px 32px', overflow: 'hidden' },
+  logo: { display: 'block', width: 280, maxWidth: '100%', height: 'auto', margin: '0 0 4px -10px' },
+  cliente: {
     fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase',
-    color: c.suave, fontWeight: 700, marginBottom: 14,
+    color: c.suave, fontWeight: 700, margin: '10px 0 16px',
   },
   titulo: { fontSize: 27, fontWeight: 700, letterSpacing: '-.02em', margin: '0 0 6px' },
   sub: { fontSize: 14.5, color: c.suave, margin: '0 0 22px' },

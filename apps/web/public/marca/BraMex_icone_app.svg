@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="r" x1="0" y1="1" x2="1" y2="0">
+  <stop offset="0%" stop-color="#F4C430"/><stop offset="32%" stop-color="#00A651"/>
+  <stop offset="68%" stop-color="#00BFAE"/><stop offset="100%" stop-color="#1468D5"/>
+ </linearGradient>
+</defs>
+<rect width="512" height="512" rx="92" fill="#0B2F5A"/>
+<path d="M92 410V92Q92 64 120 64H300Q394 64 394 150Q394 192 360 212Q404 235 404 300Q404 366 336 366H252V316H326Q350 316 350 288Q350 262 322 262H180V410Z" fill="#0B2F5A"/>
+<path d="M92 344C142 282 190 240 252 214C300 194 337 196 364 222C382 239 389 260 385 283C378 317 347 347 318 374L286 410H230L296 346C318 325 337 302 337 282C337 268 329 260 316 260C288 260 250 276 211 304C168 335 133 369 113 397Z" fill="url(#r)"/>
+<path d="M337 214C380 224 413 258 417 296C423 360 376 401 326 418H266L307 378C341 350 361 323 364 297C367 272 353 252 332 245Z" fill="#1468D5"/>
+<path d="M190 300L228 338L317 247L341 271L229 388L166 325Z" fill="#1468D5"/>
+</svg>

@@ -22,9 +22,9 @@ export const c = {
   suave: '#6B7280',
   linha: '#E2E8F0',
   linhaForte: '#CBD5E1',
-  acento: '#0B3A6E',
-  acentoMarca: '#0F6FDB',
-  acentoFraco: '#E7F0FB',
+  acento: '#0B2F5A',
+  acentoMarca: '#1468D5',
+  acentoFraco: '#E8EFFB',
   ok: '#046B37',
   okFraco: '#E4F5EC',
   alerta: '#7A5B00',
@@ -38,17 +38,19 @@ export const c = {
  *  O vermelho não está aqui de propósito: a marca não tem um, e um sistema de qualidade precisa
  *  de um. Ele vive em `c.critico`, que é semáforo e não identidade. */
 export const marca = {
-  navy: '#012043',
-  azulProfundo: '#0B3A6E',
-  azul: '#0F6FDB',
-  turquesa: '#00C2C7',
+  /** Os valores são os DOS ARQUIVOS da logo, e não os da prancha de identidade — as duas
+   *  divergiam em três cores. O arquivo é o que aparece na tela: se a coluna e o SVG discordarem,
+   *  a emenda aparece justamente onde os dois se encostam. */
+  azulProfundo: '#0B2F5A',
+  azul: '#1468D5',
+  turquesa: '#00BFAE',
   verde: '#00A651',
   amarelo: '#F4C430',
   cinza: '#6B7280',
-  /** Sobre o navy da coluna: item, item ativo, e o rótulo de seção. */
-  emNavy: '#CBDBEB',
-  emNavyForte: '#FFFFFF',
-  emNavyFraco: '#6F90B4',
+  /** Sobre o azul profundo da coluna: item, item ativo, e o rótulo de seção. */
+  emFundoEscuro: '#C7D8EC',
+  emFundoEscuroForte: '#FFFFFF',
+  emFundoEscuroFraco: '#7796B8',
 };
 
 /** A régua de três cores que fecha a casca. Não entra no conteúdo: lá, listra colorida seria cor

@@ -127,6 +127,9 @@ export function App() {
           >
             {menuAberto ? '✕' : '☰'}
           </button>
+          {/* Aqui vai o ÍCONE, e não a assinatura inteira: a 36px de altura o subtítulo da
+              assinatura seria um borrão, e borrão não identifica nada. */}
+          <img src="/marca/BraMex_icone_app.svg" alt="BraMex" style={S.iconeCelular} />
           <div style={{ minWidth: 0 }}>
             <div style={S.marcaNomeCelular}>BraMex</div>
             <div style={S.clienteCelular}>{empresa.identidade.nome}</div>
@@ -153,8 +156,9 @@ export function App() {
         {/* A marca fica na gaveta também: aberta, ela cobre a barra do celular, e sem isto o menu
             aberto seria a única tela do sistema que não diz que sistema é. */}
         <div style={S.marca}>
-          <div style={S.marcaNome}>BraMex</div>
-          <div style={S.marcaSub}>Sistema de Qualidade e Gestão</div>
+          {/* O arquivo de fundo escuro traz o próprio fundo, na mesma cor da coluna — por isso a
+              coluna é a cor do arquivo, e não o contrário. */}
+          <img src="/marca/BraMex_logo_fundo_escuro.svg" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
         </div>
 
         <nav style={S.nav}>
@@ -246,7 +250,11 @@ export function App() {
             : tela?.render({ irPara: ir, modulos: meus, instalados }) ?? <Situacao irPara={ir} />}
         </main>
 
-        <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>
+        {/* O rodapé diz o SISTEMA. Dizer o cliente aqui o repetiria pela terceira vez na mesma
+            tela — ele já está no cabeçalho e no conteúdo inteiro. */}
+        <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>
+          BraMex · Sistema de Qualidade e Gestão · {appInfo.chassisVersion}
+        </div>
       </div>
     </div>
   );
@@ -263,7 +271,7 @@ function ItemDeMenu({ rotulo, ativo, aoClicar }: {
         ...S.item,
         background: ativo ? 'rgba(15,111,219,.22)' : 'transparent',
         borderLeftColor: ativo ? marca.turquesa : 'transparent',
-        color: ativo ? marca.emNavyForte : marca.emNavy,
+        color: ativo ? marca.emFundoEscuroForte : marca.emFundoEscuro,
         fontWeight: ativo ? 600 : 400,
       }}
     >
@@ -287,7 +295,7 @@ const S: Record<string, React.CSSProperties> = {
 
   /* ── a coluna: território da marca ─────────────────────────────────────────────────────── */
   coluna: {
-    width: COLUNA, flexShrink: 0, background: marca.navy, color: marca.emNavyForte,
+    width: COLUNA, flexShrink: 0, background: marca.azulProfundo, color: marca.emFundoEscuroForte,
     display: 'flex', flexDirection: 'column',
     // Sticky e não fixed: a coluna acompanha a rolagem sem tirar o miolo do fluxo, e uma coluna
     // mais alta que a tela ainda rola por dentro.
@@ -297,16 +305,16 @@ const S: Record<string, React.CSSProperties> = {
     position: 'fixed', top: 0, left: 0, zIndex: 40,
     boxShadow: '4px 0 24px rgba(0,0,0,.35)', transition: 'transform .18s ease-out',
   },
-  marca: { padding: '18px 20px 16px', borderBottom: '1px solid rgba(255,255,255,.10)' },
-  marcaNome: { fontSize: 20, fontWeight: 700, letterSpacing: '-.02em' },
-  marcaSub: {
-    fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
-    color: marca.emNavyFraco, fontWeight: 600, marginTop: 3,
+  // O respiro é padding e não margem no arquivo: o SVG traz o fundo na cor da coluna, então o
+  // espaço em volta dele desaparece dentro da própria coluna.
+  marca: {
+    padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,.10)', flexShrink: 0,
   },
+  marcaImg: { display: 'block', width: '100%', height: 'auto' },
   nav: { flex: 1, overflowY: 'auto', padding: '8px 0 16px', minHeight: 0 },
   secao: {
     fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
-    color: marca.emNavyFraco, fontWeight: 700, padding: '16px 20px 6px',
+    color: marca.emFundoEscuroFraco, fontWeight: 700, padding: '16px 20px 6px',
   },
   item: {
     display: 'block', width: '100%', textAlign: 'left',
@@ -318,7 +326,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   trocaEmpresa: {
     width: '100%', marginBottom: 10, fontFamily: fonte.texto, fontSize: 11.5,
-    color: marca.emNavy, padding: '4px 6px', borderRadius: 4,
+    color: marca.emFundoEscuro, padding: '4px 6px', borderRadius: 4,
     border: '1px solid rgba(255,255,255,.26)', background: 'rgba(255,255,255,.06)',
   },
   eu: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -328,31 +336,32 @@ const S: Record<string, React.CSSProperties> = {
     color: '#FFFFFF', fontWeight: 700, fontSize: 12,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
-  pessoaNome: { fontSize: 12.5, fontWeight: 600, color: marca.emNavyForte },
-  pessoaPapel: { fontSize: 11, color: marca.emNavyFraco, marginTop: 1 },
+  pessoaNome: { fontSize: 12.5, fontWeight: 600, color: marca.emFundoEscuroForte },
+  pessoaPapel: { fontSize: 11, color: marca.emFundoEscuroFraco, marginTop: 1 },
   sair: {
     width: '100%', marginTop: 10, padding: '5px 9px', borderRadius: 4,
     border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
-    color: marca.emNavy, fontFamily: fonte.texto, fontSize: 11, cursor: 'pointer',
+    color: marca.emFundoEscuro, fontFamily: fonte.texto, fontSize: 11, cursor: 'pointer',
   },
 
   /* ── o celular: barra fina e gaveta ────────────────────────────────────────────────────── */
   topoCelular: {
     display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px',
-    background: marca.navy, color: marca.emNavyForte, position: 'sticky', top: 0, zIndex: 30,
+    background: marca.azulProfundo, color: marca.emFundoEscuroForte, position: 'sticky', top: 0, zIndex: 30,
   },
   hamburguer: {
     width: 36, height: 36, flexShrink: 0, borderRadius: 6, cursor: 'pointer',
     border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
-    color: marca.emNavyForte, fontSize: 15, lineHeight: 1,
+    color: marca.emFundoEscuroForte, fontSize: 15, lineHeight: 1,
   },
+  iconeCelular: { width: 30, height: 30, borderRadius: 7, display: 'block', flexShrink: 0 },
   marcaNomeCelular: { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em' },
   clienteCelular: {
     fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
-    color: marca.emNavyFraco, fontWeight: 600, marginTop: 1,
+    color: marca.emFundoEscuroFraco, fontWeight: 600, marginTop: 1,
   },
   veu: {
-    position: 'fixed', inset: 0, zIndex: 35, background: 'rgba(1,32,67,.45)',
+    position: 'fixed', inset: 0, zIndex: 35, background: 'rgba(11,47,90,.5)',
     border: 'none', padding: 0, cursor: 'pointer',
   },
 

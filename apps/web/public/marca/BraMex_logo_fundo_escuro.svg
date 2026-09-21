@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+  <defs>
+    <linearGradient id="ribbon" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F4C430"/>
+      <stop offset="32%" stop-color="#00A651"/>
+      <stop offset="68%" stop-color="#00BFAE"/>
+      <stop offset="100%" stop-color="#1468D5"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="#0B2F5A"/>
+  
+    <g transform="translate(55,65)">
+      <!-- stylized B / P -->
+      <path d="M18 210V28Q18 10 36 10H132Q205 10 205 78Q205 112 178 128
+               Q212 145 212 181Q212 226 160 226H112V190H153Q169 190 169 174
+               Q169 158 151 158H83V210Z" fill="#0B2F5A"/>
+      <!-- flowing Brazil/Mexico ribbon -->
+      <path d="M18 176C58 128 95 101 144 83C180 70 208 72 228 91
+               C241 103 247 119 244 135C239 160 215 182 192 201
+               L166 226H124L177 174C194 157 207 142 207 127
+               C207 117 201 111 191 111C170 111 141 124 111 145
+               C78 167 51 192 35 216Z" fill="url(#ribbon)"/>
+      <!-- blue outer sweep -->
+      <path d="M193 83C226 91 250 117 253 147C258 196 222 226 183 239
+               H137L169 207C194 187 211 168 213 148C215 129 204 113 188 108Z" fill="#1468D5"/>
+      <!-- check -->
+      <path d="M96 145L125 174L193 105L211 123L126 211L78 163Z" fill="#1468D5"/>
+    </g>
+    
+  <text x="350" y="190" font-family="Arial, Helvetica, sans-serif" font-size="112"
+        font-weight="800" letter-spacing="-5" fill="#FFFFFF">
+    Bra<tspan fill="#00BFAE">Mex</tspan>
+  </text>
+  <text x="355" y="260" font-family="Arial, Helvetica, sans-serif" font-size="31"
+        font-weight="500" letter-spacing="4" fill="#FFFFFF">
+    SISTEMA DE QUALIDADE
+  </text>
+  <text x="475" y="302" font-family="Arial, Helvetica, sans-serif" font-size="31"
+        font-weight="500" letter-spacing="4" fill="#FFFFFF">
+    E GESTÃO
+  </text>
+  <rect x="355" y="315" width="125" height="8" rx="4" fill="#00A651"/>
+  <rect x="495" y="315" width="125" height="8" rx="4" fill="#1468D5"/>
+  <rect x="635" y="315" width="125" height="8" rx="4" fill="#00BFAE"/>
+</svg>
