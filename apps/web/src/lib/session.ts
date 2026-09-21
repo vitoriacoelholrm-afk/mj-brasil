@@ -39,6 +39,16 @@ export const EQUIPE: Pessoa[] = [
   { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', papel: 'apoio' },
   // Portaria. Um posto só, uma tela só: entrada e saída de cargas.
   { id: '00000000-0000-4000-9000-000000000006', nome: 'Roberta Patrocínio', cargo: 'Portaria', papel: 'portaria' },
+  // Quem faz a migração do banco, pela BraMex. Não é da empresa atendida — entra aqui porque a
+  // entrada de desenvolvimento é esta lista, e sai daqui junto com ela quando a autenticação de
+  // verdade chegar.
+  //
+  // Papel de COORDENAÇÃO DA QUALIDADE, que é o assento da consultoria: é o que enxerga mais sem
+  // escrever em registro de cliente nenhum. Não existe papel que abra tudo, e isso é de projeto:
+  // registros de pessoas são só do RH e suprimentos só do apoio, por decisão dela — e cada uma
+  // dessas exclusividades tem teste. Para ver esses dois setores, ele entra como Edine Garcia; a
+  // senha é a mesma para todo mundo enquanto não há banco.
+  { id: '00000000-0000-4000-9000-000000000007', nome: 'Adrian Bazbaz', cargo: 'Suporte técnico — BraMex', papel: 'coordenacao_qualidade' },
 ];
 
 /* ── Entrada por usuário e senha ───────────────────────────────────────────────────────────── */

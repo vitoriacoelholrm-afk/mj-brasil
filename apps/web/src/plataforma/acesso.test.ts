@@ -250,8 +250,17 @@ describe('a equipe cadastrada usa os papéis', () => {
 
   it('e a direção e o administrativo continuam fora da OS', () => {
     // Financeiro e RH não tem nada que fazer numa ordem de serviço; a direção acompanha.
+    //
+    // A lista é por CARGO e não por tamanho: cadastrar alguém novo não pode fazer este teste
+    // passar nem falhar sozinho. O que ele guarda é que estes quatro postos não escrevem na OS —
+    // e quem entra depois entra pelo papel, não por estar ou não nesta linha.
     const forte = EQUIPE.filter((p) => !pode(p.papel, 'os.editar')).map((p) => p.cargo);
-    expect(forte).toEqual(['Coordenadora da Qualidade', 'Diretor', 'Financeiro e RH', 'Portaria']);
+    for (const cargo of ['Coordenadora da Qualidade', 'Diretor', 'Financeiro e RH', 'Portaria']) {
+      expect(forte, cargo).toContain(cargo);
+    }
+    // E a recíproca continua exata: quem escreve na OS são dois, e estão nomeados acima.
+    const escrevem = EQUIPE.filter((p) => pode(p.papel, 'os.editar')).map((p) => p.cargo);
+    expect(escrevem).toEqual(['PCC', 'Gerente de Produção']);
   });
 
   it('sem sessão, o acesso é o mínimo — consulta, nunca escrita', () => {
