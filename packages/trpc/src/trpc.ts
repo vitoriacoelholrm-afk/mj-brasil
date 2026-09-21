@@ -56,6 +56,7 @@ const NOT_FOUND = new Set([
   'QR_NOT_FOUND',
   'READING_NOT_FOUND',
   'ANEXO_NOT_FOUND',   // app-local: os registros do SGQ
+  'ARQUIVO_NOT_FOUND',   // app-local: o arquivo de um documento da lista mestra
   // __MODULE_NOT_FOUND_CODES__   <- install splices each module's <ENTITY>_NOT_FOUND codes here
 ]);
 

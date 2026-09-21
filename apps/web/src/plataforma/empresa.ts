@@ -10,6 +10,7 @@
 // aqui. Se o valor é o mesmo para todo mundo que jateia e pinta, mora no módulo setorial
 // (`src/os`). Se é o mesmo para qualquer setor, mora na plataforma (`src/plataforma`).
 import type { ExclusaoDeRequisito } from './aplicabilidade';
+import type { ModoDeContratacao } from './contratacao';
 import type { Documentacao } from './documentos';
 import type { Apuracao, Indicador } from './indicadores';
 
@@ -51,6 +52,11 @@ export interface PerfilDaEmpresa {
    *  acompanha os seus: não há lista de indicadores que sirva para todo mundo. */
   indicadores?: Indicador[];
   apuracoes?: Apuracao[];
+  /** O QUE ELA CONTRATOU — auditoria, gestão, ou as duas. Ver `contratacao.ts`.
+   *
+   *  Obrigatório de propósito: é o campo que decide se o sistema é livro ou é ferramenta, e um
+   *  cliente novo que não o declarasse herdaria a decisão por acidente. */
+  modo: ModoDeContratacao;
   /** Os módulos setoriais que esta empresa usa. Quem não jateia não recebe tratamento-superficie. */
   modulos: string[];
   /** Os requisitos da norma que ESTA empresa determinou não serem aplicáveis, com justificativa —
@@ -89,6 +95,12 @@ export function definirEmpresaAtiva(id: string): PerfilDaEmpresa {
   if (!REGISTRO.has(id)) throw new Error(`Empresa "${id}" não está registrada.`);
   ativa = id;
   return empresaAtiva();
+}
+
+/** O modo contratado pela empresa ativa. As funções de permissão o recebem explícito; esta é o
+ *  atalho de quem já está dentro do app. */
+export function modoAtivo(): ModoDeContratacao {
+  return empresaAtiva().modo;
 }
 
 /** Os requisitos que a empresa ativa declarou não aplicáveis. Vazio é o padrão, e é o que faz o

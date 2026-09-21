@@ -8,6 +8,9 @@
 // Por isso a coordenação da qualidade, que é onde a consultoria entra, VÊ TUDO e não escreve
 // nada. Preencher é de quem executa e de quem inspeciona, dentro da empresa.
 
+import type { ModoDeContratacao } from './contratacao';
+import { temGestao } from './contratacao';
+
 /** O papel de alguém dentro da empresa atendida. É o que decide o acesso.
  *  Não confundir com o CARGO, que é o nome que a empresa dá — "Gerente de Produção" é cargo,
  *  `inspecao` é papel. Duas empresas com cargos diferentes usam os mesmos papéis. */
@@ -74,7 +77,24 @@ export type Permissao =
    *  existir cliente. Quem o escreve é quem conhece a norma — e é por isso que esta permissão é
    *  da coordenação da qualidade, e só dela. Ver `podeEditarOModelo`, que é onde a regra ganha
    *  dente: a permissão sozinha não abre nada fora do modelo. */
-  | 'modelo.editar';
+  | 'modelo.editar'
+  /** Escrever o texto do manual DA EMPRESA, cláusula por cláusula.
+   *
+   *  Não contraria "quem confere não preenche", e a diferença é o objeto. Aquela regra protege o
+   *  REGISTRO: a ordem de serviço, o RNC, a ficha de treinamento — a evidência de que a empresa
+   *  fez o trabalho. O manual não é evidência de trabalho feito; é a declaração do que a empresa
+   *  faz, e mantê-lo é justamente o ofício do Coordenador da Qualidade (MQ-001 §5.3).
+   *
+   *  Quem decide se ela vale é o MODO CONTRATADO, e não o papel sozinho — ver `podeEscreverOManual`.
+   *  Em contrato só de auditoria ela não abre: ali quem escreve o manual é a empresa, fora daqui. */
+  | 'manual.editar'
+  /** Juntar o ARQUIVO de um documento da lista mestra — o .docx do procedimento, o .pdf do
+   *  formulário assinado.
+   *
+   *  É o que falta para a tela da cláusula responder a pergunta inteira. Hoje ela diz que o
+   *  PG-004 responde pela 9.2; com isto ela ABRE o PG-004. O auditor pede o documento, não o
+   *  nome dele. */
+  | 'documentos.anexar';
 
 /** Um conjunto de telas que anda junto em matéria de acesso.
  *
@@ -103,7 +123,7 @@ const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 
 
 const ACESSO: Record<Papel, Permissao[]> = {
   // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
-  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar'],
+  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar', 'manual.editar', 'documentos.anexar'],
   // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica. Mas o que a
   // NORMA manda a organização determinar sobre o próprio sistema é dela: a 7.4 pede determinar o
   // que se comunica e por quem, e determinar é ato de liderança (§5.1, §5.3).
@@ -179,6 +199,35 @@ export function motivoDoBloqueio(papel: Papel, setor: Setor): string | null {
  *  oferecer um botão de editar. Tela esquece; função não. */
 export function podeEditarOModelo(papel: Papel, empresaEhModelo: boolean): boolean {
   return empresaEhModelo && pode(papel, 'modelo.editar');
+}
+
+/** Verdadeiro quando este papel pode escrever o texto do manual desta empresa.
+ *
+ *  Duas portas, e são portas diferentes:
+ *
+ *    · na EMPRESA MODELO vale `modelo.editar` — ali se escreve o molde do produto, antes de
+ *      existir cliente, e quem o escreve é quem conhece a norma;
+ *    · numa empresa de verdade vale `manual.editar` E o contrato incluir gestão. Em contrato só
+ *      de auditoria o manual do cliente não se escreve por aqui: o sistema apresenta o que ela
+ *      emitiu, e quem confere não escreve o que vai conferir.
+ *
+ *  O que NÃO muda em modo nenhum é o registro. `sgq.editar`, `os.editar`, `rh.editar` continuam
+ *  fora da coordenação da qualidade — manter o manual é declarar o que a empresa faz; preencher
+ *  registro é afirmar que ela fez. Confundir os dois é o que a §9.2 proíbe. */
+export function podeEscreverOManual(
+  papel: Papel, modo: ModoDeContratacao, empresaEhModelo: boolean,
+): boolean {
+  return empresaEhModelo
+    ? pode(papel, 'modelo.editar')
+    : pode(papel, 'manual.editar') && temGestao(modo);
+}
+
+/** Verdadeiro quando este papel pode juntar o arquivo de um documento da lista mestra.
+ *
+ *  Segue o manual porque é o mesmo ato: colocar no sistema o documento que a empresa emitiu. Sem
+ *  gestão contratada, o acervo é só apresentado — não se alimenta por aqui. */
+export function podeAnexarEmDocumento(papel: Papel, modo: ModoDeContratacao): boolean {
+  return pode(papel, 'documentos.anexar') && temGestao(modo);
 }
 
 export { ACESSO };

@@ -51,3 +51,9 @@ export {
   listarTextos, listarTextosInput,
   salvarTexto, salvarTextoInput,
 } from './app-local/documentoTextos.js';
+export {
+  listarArquivos, listarArquivosInput,
+  anexarArquivo, anexarArquivoInput,
+  lerArquivo, lerArquivoInput,
+  removerArquivo, removerArquivoInput,
+} from './app-local/documentoArquivos.js';

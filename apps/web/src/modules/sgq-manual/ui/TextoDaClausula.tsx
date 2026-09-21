@@ -8,9 +8,13 @@
 //   · o PERFIL traz o texto do documento emitido (ou, no modelo, o exemplo). É a base.
 //   · o BANCO traz o que alguém escreveu pela tela. Quando existe, vale este — foi escrito depois.
 //
-// Escrever só abre na empresa modelo, pela regra de sempre: no cliente, quem escreve é a empresa.
+// QUEM ESCREVE depende do que a empresa contratou. Com gestão contratada, o Coordenador da
+// Qualidade mantém o manual pela tela — é o ofício dele (MQ-001 §5.3), e travá-lo seria vender um
+// sistema da qualidade em que a empresa não pode manter o próprio manual. Em contrato só de
+// auditoria não abre: ali o sistema apresenta o que a empresa emitiu, e quem confere não escreve
+// o que vai conferir. Ver `plataforma/contratacao.ts`.
 import { useEffect, useState } from 'react';
-import { podeEditarOModelo } from '@/plataforma/acesso';
+import { podeEscreverOManual } from '@/plataforma/acesso';
 import { empresaAtiva } from '@/plataforma/empresa';
 import { papelAtual, pessoaAtual } from '@/lib/session';
 import {
@@ -35,7 +39,7 @@ export function TextoDaClausula({ ref_ }: { ref_: string }) {
   const empresa = empresaAtiva();
   const manual = manualDaEmpresa();
   const doPerfil = textoDaClausula(ref_);
-  const podeEscrever = podeEditarOModelo(papelAtual(), empresa.modelo === true);
+  const podeEscrever = podeEscreverOManual(papelAtual(), empresa.modo, empresa.modelo === true);
 
   const [gravado, setGravado] = useState<TextoDeDocumento | null>(null);
   const [texto, setTexto] = useState('');

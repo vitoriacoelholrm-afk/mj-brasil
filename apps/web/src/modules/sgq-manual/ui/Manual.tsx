@@ -7,12 +7,17 @@
 // É a tela que o auditor pede sem pedir: ele diz "me mostre a 8.5.3" e alguém sai abrindo pasta.
 // Aqui a resposta é um clique, e é calculada do que já existe — o manual não guarda nada próprio,
 // porque guardar seria criar um quinto lugar para divergir dos outros quatro.
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ContextoDeTela } from '@/plataforma/modulo';
 import { AVALIACAO_ROTULO, type Avaliacao } from '@/modules/sgq-documentos/diagnostico/vocabulario';
 import { NATUREZA_ROTULO } from '@/plataforma/documentos';
 import { exclusoesAtivas } from '@/plataforma/empresa';
 import { exclusaoDe, seAplica } from '@/plataforma/aplicabilidade';
+import { podeAnexarEmDocumento } from '@/plataforma/acesso';
+import { empresaAtiva } from '@/plataforma/empresa';
+import { papelAtual, pessoaAtual } from '@/lib/session';
+import { listarArquivos, type ArquivoDeDocumento } from '@/modules/sgq-documentos/arquivos';
+import { ArquivosDoDocumento } from './ArquivosDoDocumento';
 import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
 import { quantosEspecificos, relacionadosDa } from '../relacionados';
 import { clausulasEscritas, manualDaEmpresa } from '../texto';
@@ -160,6 +165,26 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
 }) {
   const r = relacionadosDa(ref_, modulos, instalados);
   const excluida = exclusaoDe(ref_, exclusoesAtivas());
+  const empresa = empresaAtiva();
+  const podeAnexar = podeAnexarEmDocumento(papelAtual(), empresa.modo);
+
+  // O acervo vem de uma vez para a cláusula inteira, e não um pedido por documento: uma cláusula
+  // chega a listar meia dúzia deles, e seis idas ao servidor para desenhar seis linhas é o tipo
+  // de coisa que só aparece quando o acervo cresce.
+  const [arquivos, setArquivos] = useState<Map<string, ArquivoDeDocumento[]>>(new Map());
+  const [recarga, setRecarga] = useState(0);
+  const recarregar = useCallback(() => setRecarga((n) => n + 1), []);
+
+  useEffect(() => {
+    let vivo = true;
+    listarArquivos(empresa.id)
+      .then((m) => { if (vivo) setArquivos(m); })
+      // Falhar aqui não pode derrubar a cláusula: o acervo é acréscimo, e o que ela responde
+      // primeiro — o texto do manual e quais documentos declaram a cláusula — não depende dele.
+      .catch(() => { if (vivo) setArquivos(new Map()); });
+    return () => { vivo = false; };
+  }, [empresa.id, recarga]);
+
   if (!r) return <div style={S.vazio}>Cláusula não encontrada.</div>;
 
   return (
@@ -221,6 +246,15 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
                 {d.emissao ? ` · ${dataBR(d.emissao)}` : ''}
                 {d.responsavel ? ` · ${d.responsavel}` : ''}
               </span>
+              <ArquivosDoDocumento
+                perfil={empresa.id}
+                codigo={d.codigo}
+                revisaoNaLista={d.revisao}
+                arquivos={arquivos.get(d.codigo) ?? []}
+                podeAnexar={podeAnexar}
+                quem={pessoaAtual()?.nome ?? null}
+                aoMudar={recarregar}
+              />
             </span>
           </div>
         ))}

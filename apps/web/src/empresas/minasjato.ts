@@ -395,6 +395,9 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
   },
   indicadores: INDICADORES,
   apuracoes: APURACOES,
+  // Ela implanta E a empresa usa: a consultoria audita, e a Minasjato opera o sistema no dia a
+  // dia. É o que abre a escrita do manual pela tela.
+  modo: 'auditoria_e_gestao',
   modulos: ['tratamento-superficie', 'ssma', 'portaria'],
   exclusoes: EXCLUSOES,
 });

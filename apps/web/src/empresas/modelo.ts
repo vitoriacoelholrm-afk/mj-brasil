@@ -66,6 +66,10 @@ export const MODELO: PerfilDaEmpresa = registrar({
   tolerancia: { abaixo: 0.05, acima: 0.15 },
   documentacao: { meta: META, legenda: LEGENDA_PADRAO, documentos: DOCUMENTOS },
   formularios: FORMULARIOS,
+  // O molde: quem o abre está escrevendo o produto, não operando uma empresa. O modo mais
+  // completo é o ponto de partida honesto — tirar o que o cliente não contratou é mais seguro do
+  // que descobrir na primeira semana que falta metade.
+  modo: 'auditoria_e_gestao',
   modulos: MODULOS,
   // A norma INTEIRA se aplica, porque ninguém declarou o contrário ainda. É o estado certo de um
   // cliente novo: as 37 cláusulas são cobradas até a empresa determinar, por escrito e com
