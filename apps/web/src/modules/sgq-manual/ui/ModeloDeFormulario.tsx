@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { SETOR_ROTULO } from '@/plataforma/acesso';
 import type { CampoDef, FormularioDef } from '@/plataforma/formularios';
 import { carimboDoPapel, codigoDoPapel } from '@/modules/sgq-documentos/listaMestra';
+import { abrirFormularioEmJanela } from './imprimirFormulario';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 
 const TIPO_ROTULO: Record<CampoDef['tipo'], string> = {
@@ -53,6 +54,7 @@ export function ModelosDeFormulario({ defs }: { defs: FormularioDef[] }) {
 function Modelo({ def }: { def: FormularioDef }) {
   // Um formulário só por vez aberto: a cláusula que tem três viraria uma parede de campos.
   const [aberto, setAberto] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
   // O código é da empresa, não do formulário: cada cliente numera o seu. Sem código cadastrado a
   // tela diz isso em vez de carimbar um número inventado.
   const codigo = codigoDoPapel(def.papel);
@@ -60,16 +62,35 @@ function Modelo({ def }: { def: FormularioDef }) {
 
   return (
     <div style={S.bloco}>
-      <button style={S.cabeca} onClick={() => setAberto((x) => !x)}>
-        <span style={S.codigo}>{carimbo ?? 'sem código'}</span>
-        <span style={S.cabecaCorpo}>
-          <span style={S.titulo}>{def.titulo}</span>
-          <span style={S.sub}>
-            cláusula {def.clausula} · {SETOR_ROTULO[def.setor]} · {def.campos.length} campos
+      <div style={S.cabecaLinha}>
+        <button style={S.cabeca} onClick={() => setAberto((x) => !x)}>
+          <span style={S.codigo}>{carimbo ?? 'sem código'}</span>
+          <span style={S.cabecaCorpo}>
+            <span style={S.titulo}>{def.titulo}</span>
+            <span style={S.sub}>
+              cláusula {def.clausula} · {SETOR_ROTULO[def.setor]} · {def.campos.length} campos
+            </span>
           </span>
-        </span>
-        <span style={S.seta} aria-hidden>{aberto ? '⌄' : '›'}</span>
-      </button>
+          <span style={S.seta} aria-hidden>{aberto ? '⌄' : '›'}</span>
+        </button>
+        {/* A sanfona serve para conferir o desenho aqui dentro. A janela serve para pôr na frente
+            do auditor e para descer ao chão de fábrica em papel — são duas coisas diferentes, e é
+            por isso que o botão não substitui o clique na linha. */}
+        <button
+          style={S.janela}
+          title="Abre o formulário em branco numa janela própria, pronto para imprimir ou salvar em PDF"
+          onClick={() => setBloqueado(!abrirFormularioEmJanela(def))}
+        >
+          Abrir em janela
+        </button>
+      </div>
+
+      {bloqueado && (
+        <div style={{ ...S.bloqueado, ...s.prosa }}>
+          O navegador bloqueou a janela. Libere os pop-ups para este endereço e clique de novo —
+          a janela é uma página do próprio sistema, não um site de fora.
+        </div>
+      )}
 
       {aberto && (
         <div style={S.corpo}>
@@ -163,8 +184,19 @@ const S: Record<string, React.CSSProperties> = {
   },
   aviso: { fontSize: 13, color: c.suave, lineHeight: 1.6, padding: '12px 18px 4px' },
   bloco: { borderTop: `1px solid ${c.linha}` },
+  cabecaLinha: { display: 'flex', alignItems: 'flex-start', gap: 8, paddingRight: 14, flexWrap: 'wrap' },
+  janela: {
+    flexShrink: 0, marginTop: 11, padding: '5px 11px', cursor: 'pointer',
+    fontFamily: fonte.texto, fontSize: 12, color: c.acento,
+    background: c.superficie, border: `1px solid ${c.linhaForte}`, borderRadius: 3,
+  },
+  bloqueado: {
+    fontSize: 12.5, color: c.alerta, lineHeight: 1.6, margin: '0 18px 12px',
+    padding: '9px 12px', borderRadius: 3,
+    background: c.alertaFraco, border: `1px solid ${c.alerta}`,
+  },
   cabeca: {
-    display: 'flex', alignItems: 'flex-start', gap: 14, width: '100%', textAlign: 'left',
+    display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 220, textAlign: 'left',
     padding: '11px 18px', border: 'none', background: 'none', cursor: 'pointer',
     fontFamily: fonte.texto,
   },
