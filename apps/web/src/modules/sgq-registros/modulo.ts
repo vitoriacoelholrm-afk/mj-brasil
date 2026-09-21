@@ -28,16 +28,19 @@ export const sgqRegistros: Modulo = {
     {
       rotulo: 'Não Conformidades',
       rota: 'nao-conformidade',
+      formulario: 'nao_conformidade',
       render: () => createElement(Registros, { def: NAO_CONFORMIDADE }),
     },
     {
       rotulo: 'Propriedade do Cliente',
       rota: 'propriedade-cliente',
+      formulario: 'propriedade_cliente',
       render: () => createElement(Registros, { def: PROPRIEDADE_CLIENTE }),
     },
     {
       rotulo: 'Mudanças na Produção',
       rota: 'mudanca-producao',
+      formulario: 'mudanca_producao',
       render: () => createElement(Registros, { def: MUDANCA_PRODUCAO }),
     },
   ],
@@ -57,6 +60,7 @@ export const sgqCompetencia: Modulo = {
   telas: [{
     rotulo: 'Registro de Treinamento',
     rota: 'treinamento',
+    formulario: 'registro_treinamento',
     render: () => createElement(Registros, { def: REGISTRO_TREINAMENTO }),
   }],
 };

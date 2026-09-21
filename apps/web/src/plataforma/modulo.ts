@@ -11,15 +11,27 @@
 // deixa de servir para o cliente seguinte — que é o problema que tudo isto existe para evitar.
 import type { Permissao } from './acesso';
 import type { FormularioDef } from './formularios';
+import type { PapelDeFormulario } from './empresa';
 
 /** O endereço de uma tela. A lista fica no registro dos módulos, e é lá que se acrescenta uma. */
 export type Rota = string;
 
+/** O que a tela recebe para funcionar sem conhecer o app: para onde navegar, e quais módulos
+ *  estão instalados. Passar isto em vez de deixar a tela importar o registro é o que impede a
+ *  volta circular — o registro conhece os módulos, os módulos não conhecem o registro. */
+export interface ContextoDeTela {
+  irPara: (rota: Rota) => void;
+  modulos: Modulo[];
+}
+
 export interface TelaDeModulo {
   rotulo: string;
   rota: Rota;
+  /** O formulário que esta tela preenche, quando é uma tela de formulário. É o que permite ao
+   *  manual mandar a pessoa da cláusula direto para o lugar de registrar. */
+  formulario?: PapelDeFormulario;
   /** O que desenhar. Função, e não componente, para o registro não precisar de JSX. */
-  render: () => React.ReactNode;
+  render: (ctx: ContextoDeTela) => React.ReactNode;
 }
 
 export interface Modulo {

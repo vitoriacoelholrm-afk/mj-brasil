@@ -149,7 +149,7 @@ export function App() {
           // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
           // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
           // tela em branco.
-          : tela?.render() ?? <Situacao irPara={setRota} />}
+          : tela?.render({ irPara: setRota, modulos: meus }) ?? <Situacao irPara={setRota} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

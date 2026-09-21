@@ -26,6 +26,7 @@ export const portaria: Modulo = {
   telas: [{
     rotulo: 'Entrada e Saída de Cargas',
     rota: 'cargas',
+    formulario: 'controle_cargas',
     // `createElement` em vez de JSX porque este arquivo é o manifesto, não a tela: mantê-lo em
     // .ts deixa claro que não há desenho aqui dentro.
     render: () => createElement(Registros, {

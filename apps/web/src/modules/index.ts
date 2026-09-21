@@ -16,10 +16,12 @@ import { cadastros, nucleo } from './nucleo/modulo';
 import { portaria } from './portaria/modulo';
 import { sgqCompetencia, sgqRegistros } from './sgq-registros/modulo';
 import { sgqDocumentos } from './sgq-documentos/modulo';
+import { sgqManual } from './sgq-manual/modulo';
 import { sgqIndicadores } from './sgq-indicadores/modulo';
 import { tratamentoSuperficie } from './tratamento-superficie/modulo';
 
 export const MODULOS: Modulo[] = [
+  sgqManual,
   tratamentoSuperficie,
   sgqDocumentos,
   sgqRegistros,
