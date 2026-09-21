@@ -55,10 +55,25 @@ describe('toda definição se sustenta sozinha', () => {
     }
   });
 
-  it('todo papel definido tem código na empresa, senão a tela não sabe que documento é', () => {
-    for (const def of FORMULARIOS) {
+  it('todo papel definido é achável pelo papel', () => {
+    for (const def of FORMULARIOS) expect(formularioDoPapel(def.papel)).toBe(def);
+  });
+
+  it('e tem código na empresa — menos o que ela ainda não criou', () => {
+    // A tela precisa do código para carimbar o documento. Quando a empresa não tem o formulário,
+    // ela avisa em vez de quebrar — e é assim que um formulário novo da plataforma chega antes
+    // de a empresa adotá-lo.
+    //
+    // A matriz de comunicação (7.4) é esse caso desde 21/09/2026: o formulário existe na
+    // plataforma, a Minasjato ainda não o catalogou. Enquanto não catalogar, a tela funciona e
+    // sai sem código — e o diagnóstico continua apontando a falta.
+    const semCodigo = FORMULARIOS
+      .filter((def) => !MINASJATO.formularios[def.papel])
+      .map((def) => def.papel);
+    expect(semCodigo).toEqual(['comunicacao_sgq']);
+
+    for (const def of FORMULARIOS.filter((d) => MINASJATO.formularios[d.papel])) {
       expect(MINASJATO.formularios[def.papel], def.papel).toMatch(/^FM-\d{3}$/);
-      expect(formularioDoPapel(def.papel)).toBe(def);
     }
   });
 });

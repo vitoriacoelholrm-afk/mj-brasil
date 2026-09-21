@@ -48,6 +48,17 @@ export type Permissao =
   /** Enxergar o sistema da qualidade: situação, lista mestra, diagnóstico, indicadores.
    *  Quem tem um posto de uso único — um terminal de portão, por exemplo — não tem. */
   | 'sgq.ver'
+  /** Manter o que a DIREÇÃO determina sobre o próprio sistema: a matriz de comunicação (§7.4) e
+   *  o que vier junto dela.
+   *
+   *  Existia um buraco aqui. Os setores até agora eram de quem EXECUTA — a ordem de serviço, os
+   *  registros de pessoas, o portão. Nenhum era da gestão do sistema, e o resultado é que as
+   *  cláusulas de liderança não tinham dono dentro da empresa: a coordenação da qualidade vê e
+   *  não escreve, e a direção não escrevia nada.
+   *
+   *  A 7.4 manda a ORGANIZAÇÃO determinar o que se comunica, quando, com quem, como e por quem.
+   *  Determinar é ato de liderança (§5.1, §5.3) — por isso esta permissão é da direção. */
+  | 'sgq.editar'
   /** Escrever o texto dos documentos da EMPRESA MODELO — o molde que vai para o próximo cliente.
    *
    *  Isto NÃO contraria "quem confere não preenche", e a diferença é o que a regra protege. Aquela
@@ -66,18 +77,20 @@ export type Permissao =
  *  Existe porque acesso não é uma régua só. Quem preenche a ordem de serviço não é quem preenche
  *  a ficha de treinamento, e nenhum dos dois precisa do que é do outro. Sem setor, a única saída
  *  seria dar tudo a todo mundo ou inventar um papel novo a cada tela. */
-export type Setor = 'os' | 'rh' | 'portaria';
+export type Setor = 'os' | 'rh' | 'portaria' | 'sgq';
 
 export const SETOR_ROTULO: Record<Setor, string> = {
   os: 'ordem de serviço',
   rh: 'registros de pessoas',
   portaria: 'entrada e saída de cargas',
+  sgq: 'gestão do sistema da qualidade',
 };
 
 const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
   os: { ver: 'os.ver', editar: 'os.editar' },
   rh: { ver: 'rh.ver', editar: 'rh.editar' },
   portaria: { ver: 'portaria.ver', editar: 'portaria.editar' },
+  sgq: { ver: 'sgq.ver', editar: 'sgq.editar' },
 };
 
 const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 'relatorio.emitir'];
@@ -85,8 +98,10 @@ const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 
 const ACESSO: Record<Papel, Permissao[]> = {
   // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
   coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar'],
-  // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica.
-  direcao: ['sgq.ver', 'os.ver'],
+  // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica. Mas o que a
+  // NORMA manda a organização determinar sobre o próprio sistema é dela: a 7.4 pede determinar o
+  // que se comunica e por quem, e determinar é ato de liderança (§5.1, §5.3).
+  direcao: ['sgq.ver', 'os.ver', 'sgq.editar'],
   // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
   execucao: ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar'],
   // Quem registra a medição e assina o relatório que vai ao cliente. Pode ser mais de uma

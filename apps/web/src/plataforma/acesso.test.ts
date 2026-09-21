@@ -9,6 +9,34 @@ import { EQUIPE, papelAtual } from '@/lib/session';
 
 const PAPEIS = Object.keys(ACESSO) as Papel[];
 
+/* ══ A gestão do sistema é da direção ════════════════════════════════════════════════════════ */
+
+describe('o setor de gestão do SGQ', () => {
+  it('quem determina a comunicação (7.4) é a direção, e mais ninguém', () => {
+    // A cláusula manda a ORGANIZAÇÃO determinar o que se comunica e por quem. Determinar é ato
+    // de liderança (§5.1, §5.3) — não é o inspetor nem o porteiro que decide a rotina de
+    // comunicação da empresa.
+    expect(podeEditar('direcao', 'sgq')).toBe(true);
+    for (const papel of PAPEIS.filter((p) => p !== 'direcao')) {
+      expect(podeEditar(papel, 'sgq'), papel).toBe(false);
+    }
+  });
+
+  it('e a coordenação continua vendo sem escrever — inclusive aqui', () => {
+    // O setor novo não abriu porta para a consultoria. Ela vê a matriz, aponta o que falta nela,
+    // e não determina a comunicação da empresa no lugar da direção.
+    expect(podeVer('coordenacao_qualidade', 'sgq')).toBe(true);
+    expect(podeEditar('coordenacao_qualidade', 'sgq')).toBe(false);
+    expect(motivoDoBloqueio('coordenacao_qualidade', 'sgq')).toContain('consulta');
+  });
+
+  it('o posto de uso único não enxerga a gestão do sistema', () => {
+    // A portaria não tem sgq.ver: o terminal do portão abre numa tela e nada mais.
+    expect(podeVer('portaria', 'sgq')).toBe(false);
+    expect(motivoDoBloqueio('portaria', 'sgq')).toContain('não fazem parte do seu acesso');
+  });
+});
+
 /* ══ O modelo é a exceção que confirma a regra ═══════════════════════════════════════════════ */
 
 describe('escrever o MODELO é da coordenação, e só no modelo', () => {

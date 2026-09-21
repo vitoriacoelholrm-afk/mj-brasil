@@ -5,6 +5,53 @@
 // qualquer cliente novo já o recebe pronto.
 import type { FormularioDef } from '@/plataforma/formularios';
 
+/* ══ 7.4 — Comunicação ═══════════════════════════════════════════════════════════════════════
+   "A organização deve determinar as comunicações internas e externas relevantes para o sistema
+   de gestão da qualidade, incluindo: a) sobre o que comunicar; b) quando comunicar; c) com quem
+   se comunicar; d) como comunicar; e) quem comunica."
+
+   Cinco perguntas, cinco campos obrigatórios. É das poucas cláusulas que traz a lista pronta — e
+   é das que mais vira achado, porque quase toda empresa comunica e quase nenhuma escreveu como.
+
+   Isto é MATRIZ, não ocorrência: cada linha é uma rotina que vale de hoje em diante, e não um
+   fato que aconteceu. Por isso o documento se MANTÉM — revisa-se quando a rotina muda — em vez
+   de se reter.
+
+   A evidência NÃO é obrigatória, de propósito: a cláusula não a pede. Mas linha sem evidência é
+   linha que ninguém prova, e o auditor pergunta. Fica como campo forte e não como trava — a
+   mesma regra que vale para a 10.2.2 dentro do RNC.                                             */
+
+export const COMUNICACAO_SGQ: FormularioDef = {
+  papel: 'comunicacao_sgq',
+  setor: 'sgq',
+  titulo: 'Matriz de Comunicação do SGQ',
+  clausula: '7.4',
+  explicacao:
+    'O que a empresa comunica sobre o sistema da qualidade, para dentro e para fora: sobre o quê, quando, com quem, como e por quem. Uma linha por rotina de comunicação.',
+  campos: [
+    { chave: 'assunto', rotulo: 'Sobre o que se comunica', tipo: 'texto', obrigatorio: true, ajuda: 'O assunto, não o documento: "resultado dos indicadores do mês", "abertura de não conformidade", "mudança de esquema de pintura".' },
+    {
+      chave: 'direcao', rotulo: 'Para dentro ou para fora', tipo: 'escolha', obrigatorio: true,
+      opcoes: ['Interna', 'Externa', 'Interna e externa'],
+      ajuda: 'A cláusula pede as duas: a comunicação interna e a externa. Matriz com uma metade só atende metade.',
+    },
+    { chave: 'publico', rotulo: 'Com quem se comunica', tipo: 'texto', obrigatorio: true, ajuda: 'Quem precisa receber: a produção, a direção, o cliente, o fornecedor, o organismo certificador.' },
+    { chave: 'quando', rotulo: 'Quando se comunica', tipo: 'texto', obrigatorio: true, ajuda: 'A periodicidade ou o gatilho: mensal, a cada ocorrência, antes de iniciar o serviço, na análise crítica.' },
+    {
+      chave: 'meio', rotulo: 'Como se comunica', tipo: 'escolha', obrigatorio: true,
+      opcoes: [
+        'Reunião', 'Quadro de gestão à vista', 'E-mail', 'Sistema da qualidade',
+        'Treinamento ou integração', 'Ofício ou carta', 'Telefone', 'Mural', 'Outro',
+      ],
+    },
+    { chave: 'responsavel', rotulo: 'Quem comunica', tipo: 'pessoa', obrigatorio: true, ajuda: 'A cláusula é explícita neste: "quem comunica". É o campo que mais falta nas matrizes que já existem — e sem ele a rotina não tem dono.' },
+    { chave: 'evidencia', rotulo: 'Como se prova que chegou', tipo: 'texto', ajuda: 'Lista de presença, e-mail arquivado, registro no sistema, ata. A cláusula não exige — mas linha sem evidência é linha que ninguém prova em auditoria.' },
+    { chave: 'observacoes', rotulo: 'Observações', tipo: 'texto_longo' },
+    { chave: 'vigenteDesde', rotulo: 'Vigente desde', tipo: 'data', obrigatorio: true, preenchidoCom: 'hoje', ajuda: 'A matriz se mantém: quando a rotina mudar, a linha nova entra com a data nova e a antiga fica como histórico.' },
+    { chave: 'determinadoPor', rotulo: 'Determinado por', tipo: 'pessoa', obrigatorio: true, preenchidoCom: 'quem_registra', ajuda: 'A 7.4 manda a ORGANIZAÇÃO determinar, e determinar é ato de liderança. Quem assina aqui responde pela rotina.' },
+  ],
+};
+
 /* ══ 8.5.3 — Propriedade pertencente ao cliente ══════════════════════════════════════════════
    "Quando a propriedade de um cliente for perdida, danificada ou de outra forma constatada
    inadequada para uso, a organização deve relatar isso ao cliente e reter informação

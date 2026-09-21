@@ -168,7 +168,12 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
   // ATENDER (8.5.5) — e não há como demonstrar que se determinou sem ter escrito em algum lugar.
   // Por isso a falta é achado de auditoria mesmo sem ser exigência literal de documento.
 
-  d('comunicacao_sgq', 'Comunicação do Sistema da Qualidade', 'procedimento', 'Gestão da Qualidade', ['7.4'], 'pratica', 'PR-009', {
+  // Vira tela: a matriz É o documento, e cada linha dela é uma rotina de comunicação. Por isso
+  // `papel`, e por isso `retencao: 'manter'` — a matriz se revisa quando a rotina muda, não se
+  // acumula a cada vez que alguém comunica. Confundir manter com reter é o erro mais caro aqui.
+  d('comunicacao_sgq', 'Matriz de Comunicação do SGQ', 'formulario', 'Gestão da Qualidade', ['7.4'], 'pratica', 'PR-009', {
+    papel: 'comunicacao_sgq',
+    retencao: 'manter',
     comoAtender: 'Uma matriz de uma página basta. A cláusula lista cinco perguntas e o documento responde as cinco, linha por linha de comunicação.',
     nota: 'Não confundir com a comunicação COM O CLIENTE (8.2.1), que é outra cláusula e costuma ter procedimento próprio. Esta cobre as duas pontas: o que circula dentro da empresa e o que sai dela.',
     roteiro: [

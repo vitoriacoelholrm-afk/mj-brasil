@@ -10,7 +10,7 @@
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
 import {
-  MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
+  COMUNICACAO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
 } from './formularios';
 import { Registros } from '@/ui/Registros';
 
@@ -19,11 +19,13 @@ export const sgqRegistros: Modulo = {
   nome: 'Registros do SGQ',
   descricao:
     'Os registros que a norma exige de qualquer empresa certificada: propriedade do cliente, mudança na produção, saída não conforme e competência.',
-  clausulas: ['7.2', '8.5.3', '8.5.6', '8.7.2', '10.2.2'],
+  clausulas: ['7.2', '7.4', '8.5.3', '8.5.6', '8.7.2', '10.2.2'],
   dominio: 'Qualidade',
   exige: 'sgq.ver',
   essencial: true,
-  formularios: [PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, REGISTRO_TREINAMENTO],
+  formularios: [
+    PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, REGISTRO_TREINAMENTO, COMUNICACAO_SGQ,
+  ],
   telas: [
     {
       rotulo: 'Não Conformidades',
@@ -42,6 +44,15 @@ export const sgqRegistros: Modulo = {
       rota: 'mudanca-producao',
       formulario: 'mudanca_producao',
       render: () => createElement(Registros, { def: MUDANCA_PRODUCAO }),
+    },
+    // A matriz de comunicação fica no mesmo domínio de menu, mas é de OUTRO setor: quem a
+    // determina é a direção (§7.4 manda a organização determinar, e determinar é liderança).
+    // A tela abre para todos e só escreve quem tem o setor — a própria tela explica isso.
+    {
+      rotulo: 'Comunicação',
+      rota: 'comunicacao',
+      formulario: 'comunicacao_sgq',
+      render: () => createElement(Registros, { def: COMUNICACAO_SGQ }),
     },
   ],
 };

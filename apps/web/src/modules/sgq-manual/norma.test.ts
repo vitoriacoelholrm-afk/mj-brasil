@@ -149,12 +149,21 @@ describe('quem declara a seção cobre as cláusulas de dentro', () => {
   });
 
   it('e o índice separa "coberto" de "com documento próprio"', () => {
-    // A 7.4 está coberta no papel — o manual percorre a norma inteira. Mas nenhum procedimento,
+    // A 5.1 está coberta no papel — o manual percorre a norma inteira. Mas nenhum procedimento,
     // formulário ou tela responde por ela, e é isso que a auditoria cobra.
-    expect(quantoTem('7.4', MODULOS)).toBeGreaterThan(0);
-    expect(quantosEspecificos('7.4', MODULOS)).toBe(0);
+    expect(quantoTem('5.1', MODULOS)).toBeGreaterThan(0);
+    expect(quantosEspecificos('5.1', MODULOS)).toBe(0);
     // Já a 8.5.3 tem dois formulários e duas telas.
     expect(quantosEspecificos('8.5.3', MODULOS)).toBeGreaterThan(0);
+  });
+
+  it('a 7.4 saiu do "só no manual" ao ganhar tela, mesmo sem documento catalogado', () => {
+    // A matriz de comunicação virou tela em 21/09/2026. A Minasjato ainda não a catalogou na
+    // lista mestra — e é por isso que a tela existe e a falta continua sendo apontada. Uma coisa
+    // é ter onde registrar; outra é ter o documento com código, que é o que o auditor pede.
+    expect(quantosEspecificos('7.4', MODULOS)).toBeGreaterThan(0);
+    expect(relacionadosDa('7.4', MODULOS)!.telas.map((t) => t.tela.rota)).toContain('comunicacao');
+    expect(relacionadosDa('7.4', MODULOS)!.faltando.map((f) => f.chave)).toContain('comunicacao_sgq');
   });
 
   it('a 4.1 e a 4.2 deixaram de ser "só no manual" quando a SWOT entrou na lista', () => {
