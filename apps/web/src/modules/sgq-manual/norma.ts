@@ -104,7 +104,29 @@ export function clausulaDe(ref: string): ClausulaDaNorma | null {
   return melhor;
 }
 
-/** Verdadeiro quando um texto de cláusula (de documento ou formulário) toca esta cláusula. */
+/** Verdadeiro quando um texto de cláusula (de documento ou formulário) toca esta cláusula.
+ *
+ *  Vale nos DOIS sentidos, e o segundo é o que quase passou batido:
+ *
+ *    · mais fundo — um registro que diz "8.7.2" conta para a 8.7;
+ *    · mais raso — um documento que diz "4" ou "8.5" cobre as cláusulas de dentro.
+ *
+ *  O segundo caso é o do manual da qualidade, que declara as seções inteiras: 4, 5, 6, 7, 8, 9,
+ *  10. Sem ele, o manual da empresa não aparecia em cláusula nenhuma e treze delas pareciam
+ *  vazias — quando na verdade eram as seções que o documento mais importante da empresa cobre.
+ *
+ *  O que NÃO vale é irmão: 9.1.1 e 9.1.2 não se cobrem, e o auditor pergunta pelas duas. */
 export function tocaClausula(texto: string, ref: string): boolean {
-  return refsNoTexto(texto).some((r) => clausulaDe(r)?.ref === ref);
+  return refsNoTexto(texto).some((r) =>
+    r === ref || r.startsWith(`${ref}.`) || ref.startsWith(`${r}.`));
+}
+
+/** Quão específica foi a declaração que fez o texto tocar a cláusula — em número de níveis.
+ *
+ *  Serve para ordenar: o procedimento que cita "8.5.3" vem antes do manual que cita "8", porque é
+ *  quem responde de verdade pela cláusula. O manual continua na lista, no fim, onde cabe. */
+export function especificidade(texto: string, ref: string): number {
+  const casam = refsNoTexto(texto).filter((r) =>
+    r === ref || r.startsWith(`${ref}.`) || ref.startsWith(`${r}.`));
+  return Math.max(0, ...casam.map((r) => r.split('.').length));
 }

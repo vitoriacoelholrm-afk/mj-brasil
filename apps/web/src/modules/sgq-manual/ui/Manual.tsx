@@ -12,7 +12,7 @@ import type { ContextoDeTela } from '@/plataforma/modulo';
 import { AVALIACAO_ROTULO, type Avaliacao } from '@/modules/sgq-documentos/diagnostico/vocabulario';
 import { NATUREZA_ROTULO } from '@/plataforma/documentos';
 import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
-import { quantoTem, relacionadosDa } from '../relacionados';
+import { quantosNomeiam, relacionadosDa } from '../relacionados';
 import { Cabecalho } from '@/ui/Cabecalho';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
@@ -32,7 +32,7 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
     return <Clausula ref_={aberta} modulos={modulos} irPara={irPara} aoVoltar={() => setAberta(null)} />;
   }
 
-  const semNada = CLAUSULAS.filter((x) => quantoTem(x.ref, modulos) === 0).length;
+  const semEndereco = CLAUSULAS.filter((x) => quantosNomeiam(x.ref, modulos) === 0).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -42,15 +42,15 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
       />
 
       <div style={S.resumo}>
-        <span style={pastilha(semNada ? 'alerta' : 'ok')}>
-          {semNada
-            ? `${semNada} de ${CLAUSULAS.length} sem nada ainda`
-            : `as ${CLAUSULAS.length} cláusulas têm algo`}
+        <span style={pastilha(semEndereco ? 'alerta' : 'ok')}>
+          {semEndereco
+            ? `${semEndereco} de ${CLAUSULAS.length} sem documento próprio`
+            : `as ${CLAUSULAS.length} cláusulas têm documento próprio`}
         </span>
         <span style={{ ...s.prosa, fontSize: 13, color: c.suave }}>
-          "Sem nada" quer dizer nenhum documento na lista mestra e nenhuma tela de registro. Não é
-          o mesmo que não atender — pode estar atendido na prática e não documentado, que é
-          exatamente o que a auditoria cobra.
+          Todas as cláusulas estão cobertas no papel: o Manual da Qualidade declara as sete seções
+          inteiras. Mas o auditor não pergunta onde está coberto — pergunta QUAL documento responde
+          por esta cláusula. Nas marcadas, a única resposta é o manual.
         </span>
       </div>
 
@@ -63,7 +63,7 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
           <div style={{ ...S.resumoSecao, ...s.prosa }}>{secao.resumo}</div>
           <div>
             {clausulasDaSecao(secao.numero).map((x, i) => {
-              const quantos = quantoTem(x.ref, modulos);
+              const quantos = quantosNomeiam(x.ref, modulos);
               return (
                 <button
                   key={x.ref}
@@ -79,7 +79,7 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
                   <span style={S.titulo}>{x.titulo}</span>
                   {!celular && (
                     <span style={quantos ? pastilha('neutro') : pastilha('alerta')}>
-                      {quantos === 0 ? 'nada ainda' : `${quantos} ${quantos === 1 ? 'item' : 'itens'}`}
+                      {quantos === 0 ? 'só pelo manual' : `${quantos} ${quantos === 1 ? 'documento' : 'documentos'}`}
                     </span>
                   )}
                   {!celular && <span style={S.seta} aria-hidden>›</span>}

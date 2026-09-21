@@ -9,7 +9,7 @@ import { MODULOS } from '@/modules';
 import {
   CLAUSULAS, SECOES, clausulaDe, clausulaPorRef, clausulasDaSecao, refsNoTexto, tocaClausula,
 } from './norma';
-import { quantoTem, relacionadosDa } from './relacionados';
+import { quantoTem, quantosNomeiam, relacionadosDa } from './relacionados';
 
 describe('a árvore da norma', () => {
   it('tem as sete seções de requisito, e não as três de abertura', () => {
@@ -122,5 +122,38 @@ describe('o que a cláusula tem', () => {
     expect(quantoTem('8.5.3', MODULOS)).toBe(
       relacionadosDa('8.5.3', MODULOS)!.documentos.length + 2,
     );
+  });
+});
+
+/* ══ Declarar a SEÇÃO inteira — o caso do manual da qualidade ════════════════════════════════ */
+
+describe('quem declara a seção cobre as cláusulas de dentro', () => {
+  it('um documento que diz "4" aparece na 4.1', () => {
+    // O Manual da Qualidade declara 4, 5, 6, 7, 8, 9 e 10. Antes disto ele não aparecia em
+    // cláusula nenhuma, e treze delas pareciam vazias — quando o que faltava era a regra, não o
+    // documento.
+    expect(tocaClausula('4', '4.1')).toBe(true);
+    expect(tocaClausula('8', '8.5.3')).toBe(true);
+    expect(relacionadosDa('4.1', MODULOS)!.documentos.map((d) => d.codigo)).toContain('MQ-001');
+  });
+
+  it('mas irmão não cobre irmão', () => {
+    expect(tocaClausula('4.1', '4.2')).toBe(false);
+    expect(tocaClausula('9.1.1', '9.1.2')).toBe(false);
+  });
+
+  it('o mais específico vem primeiro na lista', () => {
+    // Quem responde pela cláusula antes de quem cobre a seção. Na tela, o manual fica no fim.
+    const docs = relacionadosDa('8.5.3', MODULOS)!.documentos.map((d) => d.codigo);
+    expect(docs.indexOf('FM-020')).toBeLessThan(docs.indexOf('MQ-001'));
+  });
+
+  it('e o índice separa "coberto" de "nomeado"', () => {
+    // A 4.1 está coberta no papel — o manual declara a seção 4. Nomeada, não está: nenhum
+    // documento diz "4.1". Para a auditoria, a segunda é a que vale.
+    expect(quantoTem('4.1', MODULOS)).toBeGreaterThan(0);
+    expect(quantosNomeiam('4.1', MODULOS)).toBe(0);
+    // Já a 8.5.3 tem dois formulários que a nomeiam, e duas telas.
+    expect(quantosNomeiam('8.5.3', MODULOS)).toBeGreaterThan(0);
   });
 });
