@@ -41,6 +41,43 @@ export const EQUIPE: Pessoa[] = [
   { id: '00000000-0000-4000-9000-000000000006', nome: 'Roberta Patrocínio', cargo: 'Portaria', papel: 'portaria' },
 ];
 
+/* ── Entrada por usuário e senha ───────────────────────────────────────────────────────────── */
+
+/** A senha, igual para todos, ATÉ O BANCO ENTRAR.
+ *
+ *  Está aqui à vista e é para estar: senha em código é senha pública, e escondê-la num arquivo de
+ *  ambiente daria a impressão de segredo onde não há nenhum. O que protege este app hoje não é
+ *  esta constante — é o middleware do `vite dev`, que só aceita a sessão com ALLOW_DEV_LOGIN=true
+ *  e na própria máquina.
+ *
+ *  Quando a autenticação real entrar, é `autenticar` que muda, e só ela: a tela pede usuário e
+ *  senha do mesmo jeito, e o resto do app não sabe a diferença. */
+export const SENHA_PROVISORIA = '123456';
+
+/** Sem acento, sem caixa e sem espaço sobrando. Quem digita "vitoria" às pressas entra. */
+const normalizar = (texto: string) =>
+  texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+/** Quem é esta pessoa, ou null quando usuário e senha não fecham.
+ *
+ *  Devolve NULL nos dois casos — usuário inexistente e senha errada. Dizer qual dos dois falhou
+ *  transforma a tela de entrada numa lista de quem trabalha na empresa, que é justamente o que
+ *  ela não deve ser. */
+export function autenticar(usuario: string, senha: string): Pessoa | null {
+  if (senha !== SENHA_PROVISORIA) return null;
+
+  const alvo = normalizar(usuario);
+  if (!alvo) return null;
+
+  const porNomeInteiro = EQUIPE.find((p) => normalizar(p.nome) === alvo);
+  if (porNomeInteiro) return porNomeInteiro;
+
+  // O primeiro nome serve quando não há dúvida. Havendo duas Marias, nenhuma entra por "maria" —
+  // entrar como a pessoa errada é pior do que não entrar.
+  const porPrimeiroNome = EQUIPE.filter((p) => normalizar(p.nome).split(' ')[0] === alvo);
+  return porPrimeiroNome.length === 1 ? porPrimeiroNome[0] : null;
+}
+
 /** O papel de quem está usando o app agora. Sem sessão, o mínimo: só consulta. */
 export function papelAtual(): Papel {
   return pessoaAtual()?.papel ?? 'coordenacao_qualidade';
