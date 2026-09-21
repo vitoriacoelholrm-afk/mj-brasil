@@ -22,6 +22,7 @@ import { modulosVisiveis, telaDaRota, type Modulo, type Rota } from '@/plataform
 import { pode, type Papel } from '@/plataforma/acesso';
 import { c, fonte, marca, reguaDaMarca } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
+import { publico } from '@/ui/publico';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/empresas';   // põe as empresas atendidas no registro
 
@@ -135,7 +136,7 @@ export function App() {
               E é o símbolo, não a assinatura: a 36px de altura o subtítulo viraria borrão, e
               borrão não identifica nada. */}
           <span style={S.placa}>
-            <img src="/marca/BraMex_simbolo_exata.png" alt="BraMex" style={S.iconeCelular} />
+            <img src={publico('marca/BraMex_simbolo_exata.png')} alt="BraMex" style={S.iconeCelular} />
           </span>
           <div style={{ minWidth: 0 }}>
             <div style={S.marcaNomeCelular}>BraMex</div>
@@ -167,7 +168,7 @@ export function App() {
               símbolo como unidade, respiro de 0,162 e o texto com 2,27 de largura. É a forma que
               uma coluna pede — a vertical custava 172px de altura contra 74 desta, e a diferença
               saía do menu. */}
-          <img src="/marca/BraMex_logo_horizontal_exata.png" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
+          <img src={publico('marca/BraMex_logo_horizontal_exata.png')} alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
         </div>
 
         <nav style={S.nav}>

@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { autenticar, entrar } from '@/lib/session';
 import { c, fonte, marca } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
+import { publico } from '@/ui/publico';
 
 /** Os tons que só existem nesta tela, tirados da prancha. Os que a paleta já tinha a menos de um
  *  fio de distância — o azul do painel, o do botão, o do título — usam o token, para o produto
@@ -65,7 +66,7 @@ export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
               versão de fundo escuro em mãos, a placa sai e a assinatura vai direto no azul. */}
           <div style={S.placa}>
             <img
-              src="/marca/BraMex_logo_exata.png"
+              src={publico('marca/BraMex_logo_exata.png')}
               alt="BraMex — Sistema de Qualidade e Gestão"
               style={S.logo}
             />
