@@ -190,24 +190,34 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(por('fora_da_lista')).toHaveLength(7);
   });
 
-  it('a coluna Responsável diz quem é de fora — e o miolo do sistema está com a consultoria', () => {
-    // Confirmado por ela em 21/09/2026: o "RQ" dos dez documentos é a consultoria, não um posto da
-    // Minasjato. Na planilha ele aparece na mesma coluna que "Ger. Qualidade", e quem lê conclui
-    // que tem dono lá dentro. Não tem.
+  it('o miolo do sistema está com a consultoria — mas o POSTO existe, e isso muda o achado', () => {
+    // Confirmado por ela em 21/09/2026, depois de eu ler o manual: o "RQ" dos dez documentos é o
+    // Coordenador da Qualidade do MQ-001 §5.3, e não um rótulo solto. O posto está descrito,
+    // ligado à Alta Direção, com as responsabilidades listadas.
+    //
+    // Logo a §5.3 ESTÁ atendida. Meu primeiro achado dizia o contrário e estava errado: acusar
+    // falta de atribuição onde o manual atribui faz a empresa defender na auditoria o que ninguém
+    // perguntou, e deixa a pergunta real — a da sucessão — sem resposta.
     const c = por('responsavel_externo');
     expect(c).toHaveLength(1);               // uma carta por rótulo, não dez cartas iguais
     expect(c[0].titulo).toBe('10 documentos sob "RQ"');
-    expect(c[0].detalhe).toContain('§5.3');  // atribuir responsabilidades DENTRO da organização
     expect(c[0].gravidade).toBe('media');    // é o estado normal da implantação, não um erro
+    expect(c[0].detalhe).toContain('Coordenador da Qualidade');
+    expect(c[0].detalhe).toContain('§5.3 está atendida');
+    expect(c[0].detalhe).toContain('sucessão, não de atribuição');
     // E diz QUAIS, porque a decisão é sobre documento e não sobre número.
     for (const codigo of ['PG-001', 'PG-004', 'PG-005', 'FM-003', 'FM-024']) {
       expect(c[0].detalhe, codigo).toContain(codigo);
     }
+    // De quebra, aponta que os dois documentos controlados chamam o mesmo posto de dois jeitos.
+    expect(c[0].detalhe).toContain('o manual diz "Coordenador da Qualidade"');
   });
 
   it('e é o rótulo que carrega isso — não o documento, um por um', () => {
     expect(responsavelDeFora('RQ')?.quem).toContain('consultoria');
-    // Os postos da própria empresa continuam sendo postos da empresa.
+    expect(responsavelDeFora('RQ')?.posto?.nome).toBe('Coordenador da Qualidade');
+    expect(responsavelDeFora('RQ')?.posto?.onde).toContain('MQ-001');
+    // Os postos ocupados por gente da casa continuam sem marca nenhuma.
     expect(responsavelDeFora('Ger. Qualidade')).toBeNull();
     expect(responsavelDeFora('Dir. Geral')).toBeNull();
     expect(responsavelDeFora(null)).toBeNull();

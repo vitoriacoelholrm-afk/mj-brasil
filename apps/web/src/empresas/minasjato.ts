@@ -39,19 +39,26 @@ const META: ListaMestraMeta = {
   nota: 'O arquivo se identifica como LM-SGQ-001; o MJ-CDT-01 §11 manda mantê-la sob MJ-REG-LMD-01; e a planilha "Controle de Documentos" traz a aba sob MJ-REC-01 — que já é o código do formulário de Recebimento.',
 };
 
-/** Quem, na coluna Responsável, não é da Minasjato.
+/** Quem, na coluna Responsável, é hoje preenchido por gente de fora da Minasjato.
  *
  *  A planilha veio com "RQ" em dez documentos — e os dez são os do miolo do sistema: controle de
  *  documentos, riscos, auditoria interna, não conformidade, objetivos, RNC, plano de ação, plano
- *  de auditoria, indicadores e a SWOT. Confirmado em 21/09/2026: o RQ é a consultoria.
+ *  de auditoria, indicadores e a SWOT.
  *
- *  Declarar isto aqui é o que faz a lista parar de mentir por omissão. "RQ" na mesma coluna que
- *  "Ger. Qualidade" passa por posto da empresa, e não é. */
+ *  O POSTO EXISTE. O MQ-001 §5.3 descreve a Gestão da Qualidade ligada diretamente à Alta Direção,
+ *  sob o Coordenador da Qualidade, com as responsabilidades listadas — manter e monitorar o SGQ,
+ *  controlar informação documentada, acompanhar indicadores, apoiar auditorias e relatar o
+ *  desempenho. O "RQ" da lista mestra é esse posto, confirmado por ela em 21/09/2026.
+ *
+ *  Logo a §5.3 está atendida, e o que está em aberto é a SUCESSÃO: quem o ocupa hoje é a
+ *  consultoria. Foi um achado meu mal formulado antes desta confirmação — ele dizia que a
+ *  responsabilidade não estava atribuída, e está. */
 const RESPONSAVEIS_EXTERNOS = [
   {
     rotulo: 'RQ',
-    quem: 'a consultoria que implanta o sistema, e não um posto da Minasjato',
-    nota: 'É o estado normal de uma implantação — quem escreve o sistema é quem sabe escrevê-lo. O que fecha esta pendência não é o app: é a direção nomear alguém de dentro para assumir os dez, antes da certificação.',
+    quem: 'a consultoria que implanta o sistema',
+    posto: { nome: 'Coordenador da Qualidade', onde: 'MQ-001 §5.3 — organograma e tabela de papéis' },
+    nota: 'É o estado normal de uma implantação: quem escreve o sistema é quem sabe escrevê-lo. O que fecha a pendência não é o app — é a direção nomear alguém de dentro para o posto, antes da certificação.',
   },
 ];
 

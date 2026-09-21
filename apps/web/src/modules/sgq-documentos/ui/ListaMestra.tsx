@@ -85,7 +85,7 @@ export function ListaMestra() {
         <Contador n={cs.filter((x) => x.tipo === 'codigo_duplicado').length} rot="códigos disputados" cor={c.critico} />
         <Contador n={cs.filter((x) => x.tipo === 'fora_da_lista').length} rot="fora da lista" cor={c.alerta} />
         <Contador n={cs.filter((x) => x.tipo === 'codigo_paralelo').length} rot="com código paralelo" cor={c.alerta} />
-        <Contador n={deFora} rot="sob responsável de fora" cor={c.alerta} fim />
+        <Contador n={deFora} rot="com responsável de fora" cor={c.alerta} fim />
       </div>
 
       <div style={S.categorias}>
@@ -353,11 +353,21 @@ function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMe
       <td style={s.td}>{d.categoria}</td>
       <td style={{ ...s.td, color: d.responsavel ? c.tinta2 : c.suave }}>
         {d.responsavel ?? '—'}
-        {/* "RQ" na mesma coluna que "Ger. Qualidade" passa por posto da empresa. Aqui é o único
-            lugar onde a lista conta que não é — sem isto, quem lê conclui que tem dono lá dentro. */}
+        {/* A sigla sozinha não conta quem a ocupa. Aqui é o único lugar onde a lista diz que o
+            posto existe e que quem o preenche hoje vem de fora. */}
         {externo && (
           <div style={{ marginTop: 3 }}>
-            <span style={pastilha('alerta')} title={externo.quem}>de fora da empresa</span>
+            <span
+              style={pastilha('alerta')}
+              title={externo.posto
+                ? `${externo.posto.nome} (${externo.posto.onde}) — hoje quem ocupa é ${externo.quem}`
+                : externo.quem}
+            >
+              {externo.posto ? 'ocupado por quem é de fora' : 'não é posto da empresa'}
+            </span>
+            {externo.posto && (
+              <div style={{ fontSize: 11.5, color: c.suave, marginTop: 2 }}>{externo.posto.nome}</div>
+            )}
           </div>
         )}
       </td>

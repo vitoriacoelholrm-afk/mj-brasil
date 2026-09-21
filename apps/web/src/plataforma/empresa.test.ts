@@ -146,6 +146,37 @@ describe('as mesmas oito verificações, resultados diferentes', () => {
     expect(cs[0].codigo).toBe('AA-001');
   });
 
+  it('sem posto descrito, o achado é de ATRIBUIÇÃO e cita a §5.3', () => {
+    // O contrário do caso da Minasjato, onde o manual descreve o posto. Aqui o rótulo não
+    // corresponde a posto nenhum, e é a atribuição que falta — outro achado, outra saída.
+    const base = {
+      meta: {
+        ...listaMestraMeta(), codigo: 'X-001', codigosParalelos: [],
+        aprovadoPor: 'a', elaboradoPor: 'b', proximaRevisao: '2099-01-01', totalCatalogado: 1,
+      },
+      legenda: { AA: 'Alguma coisa' },
+      documentos: [
+        { codigo: 'AA-001', titulo: 'Um', natureza: 'formulario' as const, categoria: 'X', revisao: '00', emissao: null, proximaRevisao: null, situacao: 'vigente' as const, acesso: 'irrestrito' as const, responsavel: 'Consultoria', clausulas: [], local: null },
+      ],
+      responsaveisExternos: [{ rotulo: 'Consultoria', quem: 'um escritório contratado' }],
+    };
+    const c = acharConflitos(base, new Date('2026-09-16'))[0];
+    expect(c.tipo).toBe('responsavel_externo');
+    expect(c.detalhe).toContain('não corresponde a posto nenhum');
+    expect(c.detalhe).toContain('§5.3');
+
+    // Com posto descrito, o mesmo dado deixa de acusar a cláusula e passa a falar de sucessão.
+    const comPosto = acharConflitos({
+      ...base,
+      responsaveisExternos: [{
+        ...base.responsaveisExternos[0],
+        posto: { nome: 'Coordenador da Qualidade', onde: 'MQ-009 §5.3' },
+      }],
+    }, new Date('2026-09-16'))[0];
+    expect(comPosto.detalhe).toContain('§5.3 está atendida');
+    expect(comPosto.detalhe).not.toContain('não corresponde a posto nenhum');
+  });
+
   it('responsável de fora é rótulo que a EMPRESA declara — o motor não conhece nenhum', () => {
     // A Minasjato chama "RQ"; outra chamaria "Consultoria" ou o nome do escritório. O motor não
     // tem lista de rótulos suspeitos: compara com o que veio no perfil, e só.

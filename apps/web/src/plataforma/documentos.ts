@@ -83,16 +83,25 @@ export interface ListaMestraMeta {
  *  Cada empresa tem a sua — não há prefixo universal. */
 export type Legenda = Record<string, string>;
 
-/** Um rótulo da coluna "Responsável" que, na verdade, é de FORA da empresa.
+/** Um rótulo da coluna "Responsável" que hoje é preenchido por alguém de FORA da empresa.
  *
- *  Existe porque a coluna não distingue. Ao lado de "Ger. Qualidade", que é um posto da empresa,
- *  pode estar um rótulo que é a consultoria que implanta o sistema — e quem lê a lista não tem
- *  como saber qual é qual. O rótulo parece gente de dentro, e não é. */
+ *  Existe porque a coluna não distingue. Ao lado de "Ger. Qualidade", que é um posto ocupado por
+ *  gente da casa, pode estar um rótulo que hoje é a consultoria que implanta o sistema — e quem
+ *  lê a lista não tem como saber qual é qual.
+ *
+ *  A distinção que MUDA a conclusão é `posto`. Um posto descrito no manual quer dizer que a
+ *  responsabilidade FOI atribuída, e a §5.3 está atendida: o que está aberto é quem o ocupa. Sem
+ *  posto, a responsabilidade não está atribuída a lugar nenhum, e aí sim é a §5.3 que falha. São
+ *  achados diferentes e se resolvem de formas diferentes — trocar um pelo outro faz a empresa
+ *  responder à auditoria com a defesa errada. */
 export interface ResponsavelExterno {
   /** O rótulo exatamente como está na coluna Responsável — "RQ", "Consultoria". */
   rotulo: string;
-  /** Quem é, em palavras. É isto que a lista não dizia em lugar nenhum. */
+  /** Quem o ocupa hoje, em palavras. É isto que a lista não dizia em lugar nenhum. */
   quem: string;
+  /** O posto da empresa que este rótulo nomeia, e o documento que o descreve. Ausente quando o
+   *  rótulo não corresponde a posto nenhum — que é o caso grave. */
+  posto?: { nome: string; onde: string };
   /** Por que ainda é assim, quando há motivo — implantação em curso, contrato vigente. */
   nota?: string;
 }
@@ -184,7 +193,7 @@ export const CONFLITO_ROTULO: Record<TipoConflito, string> = {
   prefixo_desconhecido: 'Prefixo que a legenda não conhece',
   sem_aprovacao: 'Sem aprovação registrada',
   contagem_divergente: 'A planilha declara um total que não bate',
-  responsavel_externo: 'O responsável não é de dentro da empresa',
+  responsavel_externo: 'O responsável do documento é de fora da empresa',
 };
 
 /** O rótulo externo por trás de um nome de responsável, ou null quando é posto da própria empresa.
@@ -262,9 +271,9 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
     });
   }
 
-  // Responsável que não é da empresa. Uma carta por rótulo, e não uma por documento: o que está em
-  // aberto é uma decisão só — quem, lá dentro, assume o que hoje é de fora. Dez cartas iguais
-  // esconderiam que a pergunta é uma.
+  // Posto ocupado por quem é de fora. Uma carta por rótulo, e não uma por documento: o que está em
+  // aberto é uma decisão só — quem, lá dentro, assume. Dez cartas iguais esconderiam que a
+  // pergunta é uma.
   //
   // Gravidade média de propósito. Durante a implantação isto é o estado esperado, e não um erro:
   // a consultoria escreve o sistema porque ninguém lá dentro sabe escrevê-lo ainda. O que não pode
@@ -273,10 +282,18 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
     const seus = documentos.filter((d) => d.responsavel === r.rotulo);
     if (!seus.length) continue;
     const n = seus.length;
+    const quais = `${n > 1 ? 'São' : 'É'}: ${seus.map((d) => codigoReal(d) ?? d.titulo).join(', ')}.`;
+    // Com posto descrito, a responsabilidade ESTÁ atribuída e a §5.3 está atendida: o que falta é
+    // sucessão. Sem posto, é a atribuição que falta, e aí a cláusula é a que falha. Dizer §5.3
+    // onde o manual já atribui faria a empresa responder à auditoria defendendo o que não foi
+    // questionado — e deixaria a pergunta real, a da sucessão, sem resposta.
+    const detalhe = r.posto
+      ? `"${r.rotulo}" é como a lista mestra chama o ${r.posto.nome}, posto descrito em ${r.posto.onde}. A responsabilidade está atribuída, e a ${meta.norma} §5.3 está atendida — o que está em aberto é QUEM o ocupa: hoje é ${r.quem}. ${n > 1 ? 'Estes documentos ficam' : 'Este documento fica'} sem dono no dia em que o contrato terminar, e a pendência é de sucessão, não de atribuição. ${quais} Vale alinhar também o nome: dois documentos controlados chamam o mesmo posto de dois jeitos — a lista mestra diz "${r.rotulo}", o manual diz "${r.posto.nome}".`
+      : `"${r.rotulo}" é ${r.quem}, e não corresponde a posto nenhum da empresa — na coluna Responsável ele aparece igual aos postos de dentro, e a lista não diz que não é. A ${meta.norma} §5.3 manda a direção atribuir e comunicar as responsabilidades DENTRO da organização; enquanto o posto não existir lá, ${n > 1 ? 'estes documentos não têm' : 'este documento não tem'} a quem voltar. ${quais}`;
     out.push({
       tipo: 'responsavel_externo', codigo: null,
       titulo: `${n} documento${n > 1 ? 's' : ''} sob "${r.rotulo}"`,
-      detalhe: `"${r.rotulo}" é ${r.quem} — não é posto de dentro da empresa, e a lista não diz isso em lugar nenhum: na coluna Responsável ele aparece igual a "Ger. Qualidade", que é gente de lá. A ${meta.norma} §5.3 manda a direção atribuir e comunicar as responsabilidades DENTRO da organização; enquanto ninguém de lá for nomeado, ${n > 1 ? 'estes documentos ficam' : 'este documento fica'} sem dono no dia em que o contrato terminar. ${n > 1 ? 'São' : 'É'}: ${seus.map((d) => codigoReal(d) ?? d.titulo).join(', ')}.${r.nota ? ` ${r.nota}` : ''}`,
+      detalhe: r.nota ? `${detalhe} ${r.nota}` : detalhe,
       gravidade: 'media',
     });
   }
