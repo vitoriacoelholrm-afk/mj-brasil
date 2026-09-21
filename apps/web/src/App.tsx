@@ -156,9 +156,10 @@ export function App() {
         {/* A marca fica na gaveta também: aberta, ela cobre a barra do celular, e sem isto o menu
             aberto seria a única tela do sistema que não diz que sistema é. */}
         <div style={S.marca}>
-          {/* O arquivo de fundo escuro traz o próprio fundo, na mesma cor da coluna — por isso a
-              coluna é a cor do arquivo, e não o contrário. */}
-          <img src="/marca/BraMex_logo_fundo_escuro.svg" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
+          {/* A assinatura escolhida é vertical e feita para fundo BRANCO: a borda dela é branca e
+              o "Bra" é azul quase preto. Sobre escuro, a borda vira auréola e o "Bra" some. Por
+              isso a coluna é clara — é o fundo que o arquivo pede. */}
+          <img src="/marca/BraMex_logo_exata.png" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
         </div>
 
         <nav style={S.nav}>
@@ -269,10 +270,10 @@ function ItemDeMenu({ rotulo, ativo, aoClicar }: {
       aria-current={ativo ? 'page' : undefined}
       style={{
         ...S.item,
-        background: ativo ? 'rgba(15,111,219,.22)' : 'transparent',
-        borderLeftColor: ativo ? marca.turquesa : 'transparent',
-        color: ativo ? marca.emFundoEscuroForte : marca.emFundoEscuro,
-        fontWeight: ativo ? 600 : 400,
+        background: ativo ? c.acentoFraco : 'transparent',
+        borderLeftColor: ativo ? marca.azul : 'transparent',
+        color: ativo ? c.acento : c.tinta2,
+        fontWeight: ativo ? 700 : 400,
       }}
     >
       {rotulo}
@@ -295,7 +296,8 @@ const S: Record<string, React.CSSProperties> = {
 
   /* ── a coluna: território da marca ─────────────────────────────────────────────────────── */
   coluna: {
-    width: COLUNA, flexShrink: 0, background: marca.azulProfundo, color: marca.emFundoEscuroForte,
+    width: COLUNA, flexShrink: 0, background: c.superficie, color: c.tinta,
+    borderRight: `1px solid ${c.linhaForte}`,
     display: 'flex', flexDirection: 'column',
     // Sticky e não fixed: a coluna acompanha a rolagem sem tirar o miolo do fluxo, e uma coluna
     // mais alta que a tela ainda rola por dentro.
@@ -308,13 +310,13 @@ const S: Record<string, React.CSSProperties> = {
   // O respiro é padding e não margem no arquivo: o SVG traz o fundo na cor da coluna, então o
   // espaço em volta dele desaparece dentro da própria coluna.
   marca: {
-    padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,.10)', flexShrink: 0,
+    padding: '16px 16px 12px', borderBottom: `1px solid ${c.linha}`, flexShrink: 0,
   },
-  marcaImg: { display: 'block', width: '100%', height: 'auto' },
+  marcaImg: { display: 'block', width: 140, maxWidth: '100%', height: 'auto', margin: '0 auto' },
   nav: { flex: 1, overflowY: 'auto', padding: '8px 0 16px', minHeight: 0 },
   secao: {
     fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
-    color: marca.emFundoEscuroFraco, fontWeight: 700, padding: '16px 20px 6px',
+    color: c.suave, fontWeight: 700, padding: '16px 20px 6px',
   },
   item: {
     display: 'block', width: '100%', textAlign: 'left',
@@ -322,12 +324,12 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: fonte.texto, fontSize: 13.5, cursor: 'pointer',
   },
   rodapeColuna: {
-    padding: '12px 18px 14px', borderTop: '1px solid rgba(255,255,255,.12)', flexShrink: 0,
+    padding: '12px 18px 14px', borderTop: `1px solid ${c.linha}`, flexShrink: 0,
   },
   trocaEmpresa: {
     width: '100%', marginBottom: 10, fontFamily: fonte.texto, fontSize: 11.5,
-    color: marca.emFundoEscuro, padding: '4px 6px', borderRadius: 4,
-    border: '1px solid rgba(255,255,255,.26)', background: 'rgba(255,255,255,.06)',
+    color: c.tinta2, padding: '4px 6px', borderRadius: 4,
+    border: `1px solid ${c.linhaForte}`, background: c.superficie2,
   },
   eu: { display: 'flex', alignItems: 'center', gap: 10 },
   bolha: {
@@ -336,12 +338,12 @@ const S: Record<string, React.CSSProperties> = {
     color: '#FFFFFF', fontWeight: 700, fontSize: 12,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
-  pessoaNome: { fontSize: 12.5, fontWeight: 600, color: marca.emFundoEscuroForte },
-  pessoaPapel: { fontSize: 11, color: marca.emFundoEscuroFraco, marginTop: 1 },
+  pessoaNome: { fontSize: 12.5, fontWeight: 600, color: c.tinta },
+  pessoaPapel: { fontSize: 11, color: c.suave, marginTop: 1 },
   sair: {
     width: '100%', marginTop: 10, padding: '5px 9px', borderRadius: 4,
-    border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
-    color: marca.emFundoEscuro, fontFamily: fonte.texto, fontSize: 11, cursor: 'pointer',
+    border: `1px solid ${c.linhaForte}`, background: c.superficie,
+    color: c.tinta2, fontFamily: fonte.texto, fontSize: 11, cursor: 'pointer',
   },
 
   /* ── o celular: barra fina e gaveta ────────────────────────────────────────────────────── */

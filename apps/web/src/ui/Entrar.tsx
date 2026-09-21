@@ -15,7 +15,7 @@ export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
             e as duas respostas não são a mesma. */}
         {/* Sem régua abaixo: a assinatura já traz as três barras dentro dela, e repeti-las seria
             a mesma marca dita duas vezes em quatro centímetros. */}
-        <img src="/marca/BraMex_logo_principal.svg" alt="BraMex — Sistema de Qualidade e Gestão" style={S.logo} />
+        <img src="/marca/BraMex_logo_exata.png" alt="BraMex — Sistema de Qualidade e Gestão" style={S.logo} />
         <div style={S.cliente}>{empresaAtiva().identidade.nome}</div>
         <h1 style={S.titulo}>Entrar</h1>
         <p style={S.sub}>Escolha quem está usando o sistema.</p>
@@ -52,10 +52,13 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
   },
   caixa: { ...s.cartao, width: 460, maxWidth: '100%', padding: '30px 30px 32px', overflow: 'hidden' },
-  logo: { display: 'block', width: 280, maxWidth: '100%', height: 'auto', margin: '0 0 4px -10px' },
+  // A assinatura EXATA é vertical e foi feita para fundo branco — é aqui que ela cai bem, dentro
+  // do cartão branco e com altura sobrando. Na coluna ela não caberia: teria 218px de altura e
+  // empurraria o menu para baixo da dobra.
+  logo: { display: 'block', width: 190, maxWidth: '100%', height: 'auto', margin: '0 auto 6px' },
   cliente: {
     fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase',
-    color: c.suave, fontWeight: 700, margin: '10px 0 16px',
+    color: c.suave, fontWeight: 700, margin: '14px 0 16px', textAlign: 'center',
   },
   titulo: { fontSize: 27, fontWeight: 700, letterSpacing: '-.02em', margin: '0 0 6px' },
   sub: { fontSize: 14.5, color: c.suave, margin: '0 0 22px' },
