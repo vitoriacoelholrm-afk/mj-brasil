@@ -1,13 +1,48 @@
 // Quem pode o quê. A regra não é de software: quem confere não preenche.
 import { describe, it, expect } from 'vitest';
 import {
-  ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, pode, podeEditar, podeVer,
-  somenteLeitura, type Papel,
+  ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, pode, podeEditar,
+  podeEditarOModelo, podeVer, somenteLeitura, type Papel,
 } from './acesso';
 import { NAO_CONFORMIDADE, REGISTRO_TREINAMENTO } from '@/modules/sgq-registros/formularios';
 import { EQUIPE, papelAtual } from '@/lib/session';
 
 const PAPEIS = Object.keys(ACESSO) as Papel[];
+
+/* ══ O modelo é a exceção que confirma a regra ═══════════════════════════════════════════════ */
+
+describe('escrever o MODELO é da coordenação, e só no modelo', () => {
+  const NO_MODELO = true;
+  const NA_EMPRESA = false;
+
+  it('a coordenação escreve o modelo', () => {
+    // É o produto da consultoria, escrito antes de existir cliente. Quem o escreve é quem conhece
+    // a norma — e não há registro de empresa nenhuma em jogo.
+    expect(podeEditarOModelo('coordenacao_qualidade', NO_MODELO)).toBe(true);
+  });
+
+  it('e NÃO escreve no sistema da empresa atendida — nem tendo a permissão', () => {
+    // Esta é a linha inteira. Se a permissão sozinha abrisse a porta, a coordenação passaria a
+    // escrever dentro do sistema do cliente, e o registro dele deixaria de ser evidência DELE.
+    expect(pode('coordenacao_qualidade', 'modelo.editar')).toBe(true);
+    expect(podeEditarOModelo('coordenacao_qualidade', NA_EMPRESA)).toBe(false);
+  });
+
+  it('e mais ninguém escreve o modelo, nem no modelo', () => {
+    for (const papel of PAPEIS.filter((p) => p !== 'coordenacao_qualidade')) {
+      expect(podeEditarOModelo(papel, NO_MODELO), papel).toBe(false);
+      expect(podeEditarOModelo(papel, NA_EMPRESA), papel).toBe(false);
+    }
+  });
+
+  it('a permissão de escrever o modelo não abre nada dentro da empresa', () => {
+    // Trava contra o atalho fácil: dar `modelo.editar` e, de quebra, deixar editar a OS ou os
+    // registros. São portas diferentes.
+    expect(podeEditar('coordenacao_qualidade', 'os')).toBe(false);
+    expect(podeEditar('coordenacao_qualidade', 'rh')).toBe(false);
+    expect(podeEditar('coordenacao_qualidade', 'portaria')).toBe(false);
+  });
+});
 
 describe('a coordenação da qualidade vê e não escreve', () => {
   it('abre tudo, altera nada', () => {

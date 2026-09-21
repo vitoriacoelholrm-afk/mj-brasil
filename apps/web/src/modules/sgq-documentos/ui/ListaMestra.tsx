@@ -16,6 +16,7 @@ import {
 import {
   PROPOSTA_ROTULO, planoDeUnificacao, resumoDoPlano, type PlanoDeUnificacao, type Proposta,
 } from '@/modules/sgq-documentos/unificacao';
+import { Documento } from './Documento';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from '@/ui/Cabecalho';
 
@@ -26,6 +27,9 @@ const ORDEM_CONFLITO: TipoConflito[] = [
 
 export function ListaMestra() {
   const [filtro, setFiltro] = useState<'todos' | 'formulario' | 'problema'>('todos');
+  // O documento aberto. Clicar numa linha deixou de ser enfeite: é onde se lê e, no modelo, onde
+  // se escreve o texto dele.
+  const [aberto, setAberto] = useState<DocumentoMestre | null>(null);
   const empresa = empresaAtiva();
   const LISTA_MESTRA = listaMestra();
   const LISTA_MESTRA_META = listaMestraMeta();
@@ -44,11 +48,13 @@ export function ListaMestra() {
     .map((tipo) => [tipo, cs.filter((x) => x.tipo === tipo)] as const)
     .filter(([, lista]) => lista.length > 0);
 
+  if (aberto) return <Documento doc={aberto} aoVoltar={() => setAberto(null)} />;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo="Lista Mestra de Documentos"
-        sub={`A autoridade sobre código de ${empresa.identidade.nome}. Toda alteração de identificação se faz aqui, e as telas acompanham.`}
+        sub={`A autoridade sobre código de ${empresa.identidade.nome}. Toda alteração de identificação se faz aqui, e as telas acompanham.${empresa.modelo ? ' Este é o MODELO: clique num documento para escrever o texto dele.' : ' Clique num documento para abrir a ficha.'}`}
       />
 
       <div style={S.cabecalhoDoc}>
@@ -135,7 +141,7 @@ export function ListaMestra() {
               </tr>
             </thead>
             <tbody>
-              {docs.map((d, i) => <LinhaDoc key={`${d.codigo}-${i}`} d={d} />)}
+              {docs.map((d, i) => <LinhaDoc key={`${d.codigo}-${i}`} d={d} aoAbrir={setAberto} />)}
             </tbody>
           </table>
         </div>
@@ -312,11 +318,11 @@ function LinhaConflito({ conflito }: { conflito: Conflito }) {
   );
 }
 
-function LinhaDoc({ d }: { d: DocumentoMestre }) {
+function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMestre) => void }) {
   const semCodigo = d.codigo.startsWith(SEM_CODIGO);
   const prefixoConhecido = semCodigo || Boolean(significadoDoPrefixo(d.codigo));
   return (
-    <tr>
+    <tr onClick={() => aoAbrir(d)} style={{ cursor: 'pointer' }}>
       <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>
         {semCodigo
           ? <span style={{ color: c.critico, fontStyle: 'italic' }}>sem código</span>

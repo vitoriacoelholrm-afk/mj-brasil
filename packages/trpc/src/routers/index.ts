@@ -11,6 +11,7 @@ import { router } from '../trpc.js';
 import { chassisRouter } from './chassis.js';
 import { identityRouter } from './identity.js';
 import { registrosRouter } from './registros.js';
+import { documentosRouter } from './documentos.js';
 
 export const appRouter = router({
   identity: identityRouter,
@@ -24,6 +25,7 @@ export const appRouter = router({
   // __MODULE_ROUTER_MOUNTS__   <- install splices module routers here
   // app-local: os formulários da ISO 9001 desta aplicação.
   registros: registrosRouter,
+  documentos: documentosRouter,
 });
 
 export type AppRouter = typeof appRouter;

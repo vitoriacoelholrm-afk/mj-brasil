@@ -47,7 +47,19 @@ export type Permissao =
   | 'portaria.editar'
   /** Enxergar o sistema da qualidade: situação, lista mestra, diagnóstico, indicadores.
    *  Quem tem um posto de uso único — um terminal de portão, por exemplo — não tem. */
-  | 'sgq.ver';
+  | 'sgq.ver'
+  /** Escrever o texto dos documentos da EMPRESA MODELO — o molde que vai para o próximo cliente.
+   *
+   *  Isto NÃO contraria "quem confere não preenche", e a diferença é o que a regra protege. Aquela
+   *  regra existe para o registro do cliente continuar sendo evidência DA EMPRESA: se quem audita
+   *  preenche o RNC dela, o registro vira evidência de quem auditou e a independência da
+   *  conferência (§9.2) some junto.
+   *
+   *  O modelo não é registro de cliente nenhum. É o produto da consultoria, escrito antes de
+   *  existir cliente. Quem o escreve é quem conhece a norma — e é por isso que esta permissão é
+   *  da coordenação da qualidade, e só dela. Ver `podeEditarOModelo`, que é onde a regra ganha
+   *  dente: a permissão sozinha não abre nada fora do modelo. */
+  | 'modelo.editar';
 
 /** Um conjunto de telas que anda junto em matéria de acesso.
  *
@@ -72,7 +84,7 @@ const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 
 
 const ACESSO: Record<Papel, Permissao[]> = {
   // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
-  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver'],
+  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar'],
   // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica.
   direcao: ['sgq.ver', 'os.ver'],
   // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
@@ -127,6 +139,18 @@ export function motivoDoBloqueio(papel: Papel, setor: Setor): string | null {
   return setor === 'os'
     ? motivoDaLeituraApenas(papel)
     : `Seu papel (${PAPEL_ROTULO[papel]}) tem acesso de consulta a estes registros.`;
+}
+
+/** Verdadeiro quando este papel pode escrever o texto dos documentos DESTA empresa.
+ *
+ *  Duas condições, e a segunda é a que importa: ter a permissão, E a empresa ser o modelo. Sem a
+ *  segunda, a permissão da coordenação viraria uma porta para dentro do sistema do cliente —
+ *  exatamente o que a regra de independência proíbe.
+ *
+ *  Por isso a checagem mora aqui, numa função só, e não espalhada por cada tela que resolver
+ *  oferecer um botão de editar. Tela esquece; função não. */
+export function podeEditarOModelo(papel: Papel, empresaEhModelo: boolean): boolean {
+  return empresaEhModelo && pode(papel, 'modelo.editar');
 }
 
 export { ACESSO };

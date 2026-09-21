@@ -47,3 +47,7 @@ export {
   listarRegistros, listarRegistrosInput,
   lerAnexo, lerAnexoInput,
 } from './app-local/registros.js';
+export {
+  listarTextos, listarTextosInput,
+  salvarTexto, salvarTextoInput,
+} from './app-local/documentoTextos.js';
