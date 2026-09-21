@@ -28,7 +28,7 @@ export const TIPO_MEDIDA = ['faixa', 'tolerancia', 'categorico'] as const;
 export type TipoMedida = (typeof TIPO_MEDIDA)[number];
 
 /** A tolerância NÃO mora aqui: é número combinado com cada empresa, e vive no perfil dela
- *  (`plataforma/empresa.ts`). A Minasjato usa -10% / +40%; o próximo cliente usará o dele.
+ *  (`plataforma/empresa.ts`). Cada empresa atendida tem a sua, e ela sai do perfil.
  *
  *  A assimetria é de propósito e vem da física: camada fina demais não protege, e por isso o
  *  limite de baixo é apertado; camada grossa protege, e só vira problema bem mais longe.

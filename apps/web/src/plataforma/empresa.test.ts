@@ -13,7 +13,7 @@ import { definirEmpresaAtiva, empresaAtiva, empresas, toleranciaAtiva } from './
 import { acharConflitos, acharDoc, proximoCodigoLivre, significadoDoPrefixo } from './documentos';
 import { avaliarMedicao } from '@/modules/tratamento-superficie/regras';
 import { faixaTolerada } from '@/modules/tratamento-superficie/vocabulario';
-import { carimbo, carimboDoPapel, codigoDoPapel, conflitos, doc, listaMestraMeta } from '@/documentos/listaMestra';
+import { carimbo, carimboDoPapel, codigoDoPapel, conflitos, doc, listaMestraMeta } from '@/modules/sgq-documentos/listaMestra';
 
 afterEach(() => definirEmpresaAtiva('minasjato'));
 
@@ -155,16 +155,41 @@ describe('as mesmas sete verificações, resultados diferentes', () => {
 /* ══ 4. A trava: o motor não pode citar empresa nenhuma ══════════════════════════════════════ */
 
 describe('a separação é real, não só intenção', () => {
-  it('nenhum arquivo da plataforma menciona uma empresa', () => {
-    const dir = join(__dirname);
-    const vazamentos: string[] = [];
-    for (const nome of readdirSync(dir)) {
-      if (!nome.endsWith('.ts') || nome.endsWith('.test.ts')) continue;
-      const texto = readFileSync(join(dir, nome), 'utf8').toLowerCase();
-      for (const proibido of ['minasjato', 'weir', 'interseal', 'jotun', 'lm-sgq']) {
-        if (texto.includes(proibido)) vazamentos.push(`${nome} cita "${proibido}"`);
-      }
+  // Os termos que denunciam vazamento: o nome da empresa atendida, os clientes dela, as marcas de
+  // tinta que ela usa e a codificação dela. Qualquer um num arquivo de motor ou de módulo
+  // significa que aquele pedaço não serve para o cliente seguinte.
+  const PROIBIDOS = ['minasjato', 'weir', 'interseal', 'jotun', 'lm-sgq'];
+
+  /** Percorre a pasta e as de dentro; testes ficam de fora — eles podem citar a empresa. */
+  function arquivosDe(dir: string, achados: string[] = []): string[] {
+    for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+      const caminho = join(dir, entrada.name);
+      if (entrada.isDirectory()) arquivosDe(caminho, achados);
+      else if (/\.tsx?$/.test(entrada.name) && !/\.test\.tsx?$/.test(entrada.name)) achados.push(caminho);
     }
+    return achados;
+  }
+
+  const cita = (caminho: string) => {
+    const texto = readFileSync(caminho, 'utf8').toLowerCase();
+    return PROIBIDOS.filter((p) => texto.includes(p));
+  };
+
+  it('nenhum arquivo da plataforma menciona uma empresa', () => {
+    const vazamentos = arquivosDe(__dirname)
+      .flatMap((f) => cita(f).map((p) => `${f.split(/[\\/]/).pop()} cita "${p}"`));
+    expect(vazamentos).toEqual([]);
+  });
+
+  it('nenhum MÓDULO menciona uma empresa — senão não serve para o cliente seguinte', () => {
+    // É a mesma regra do motor, e vale pelo mesmo motivo. Desde 21/09/2026 cada módulo mora na
+    // própria pasta para poder ser instalado sozinho no próximo cliente; um módulo que sabe o
+    // nome da empresa de hoje não pode ser instalado em lugar nenhum.
+    //
+    // O que é de empresa vive em `empresas/<nome>.ts`, e chega ao módulo só pelo perfil ativo.
+    const raiz = join(__dirname, '..', 'modules');
+    const vazamentos = arquivosDe(raiz)
+      .flatMap((f) => cita(f).map((p) => `${f.slice(raiz.length + 1)} cita "${p}"`));
     expect(vazamentos).toEqual([]);
   });
 

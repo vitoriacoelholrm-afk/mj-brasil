@@ -8,7 +8,7 @@
 // ativo, é porque nada de nenhum cliente vazou para dentro das regras.
 import { registrar, type PerfilDaEmpresa } from '@/plataforma/empresa';
 import type { DocumentoMestre, ListaMestraMeta } from '@/plataforma/documentos';
-import { LEGENDA_PADRAO, catalogoPara } from '@/plataforma/catalogoPadrao';
+import { LEGENDA_PADRAO, catalogoPara } from '@/modules/sgq-documentos/catalogoPadrao';
 
 const MODULOS = ['tratamento-superficie'];
 const EMISSAO = '2026-09-01';

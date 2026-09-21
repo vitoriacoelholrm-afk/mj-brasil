@@ -8,8 +8,8 @@
 // buraco em vez de esconder.
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
-import { Diagnostico } from '@/telas/Diagnostico';
-import { ListaMestra } from '@/telas/ListaMestra';
+import { Diagnostico } from '@/modules/sgq-documentos/ui/Diagnostico';
+import { ListaMestra } from '@/modules/sgq-documentos/ui/ListaMestra';
 
 export const sgqDocumentos: Modulo = {
   chave: 'sgq-documentos',

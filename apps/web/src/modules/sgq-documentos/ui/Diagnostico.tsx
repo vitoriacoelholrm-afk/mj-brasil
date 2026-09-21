@@ -6,9 +6,9 @@
 // AINDA SEM BANCO: o que você mudar aqui vive só nesta aba. Persistir depende de migrar as
 // tabelas do diagnóstico para o app.
 import { useMemo, useState } from 'react';
-import { aderencia, gerarGaps, type ItemParaGap } from '@/diagnostico/regras';
-import { AVALIACAO_ROTULO, type Avaliacao, type Severidade } from '@/diagnostico/vocabulario';
-import { ITENS_MINASJATO } from '@/diagnostico/minasjato';
+import { aderencia, gerarGaps, type ItemParaGap } from '@/modules/sgq-documentos/diagnostico/regras';
+import { AVALIACAO_ROTULO, type Avaliacao, type Severidade } from '@/modules/sgq-documentos/diagnostico/vocabulario';
+import { diagnosticoDaEmpresa } from '../diagnostico/itens';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from '@/ui/Cabecalho';
 
@@ -27,7 +27,7 @@ const COR_AVALIACAO: Record<string, string> = {
 };
 
 export function Diagnostico() {
-  const [itens, setItens] = useState<ItemParaGap[]>(ITENS_MINASJATO);
+  const [itens, setItens] = useState<ItemParaGap[]>(diagnosticoDaEmpresa);
   const [soGaps, setSoGaps] = useState(false);
 
   const a = useMemo(() => aderencia(itens), [itens]);

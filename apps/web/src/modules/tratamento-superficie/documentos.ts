@@ -61,7 +61,7 @@ export type { Anexo };
 export interface PerfilRelatorio {
   normas: string[];
   ressalvas: string[];
-  /** Prefixo da numeração: WEIR-04, CAR-01-2026. */
+  /** Prefixo da numeração da ordem: costuma ser o cliente ou a obra, mais o número. */
   prefixoNumero: string;
 }
 

@@ -5,8 +5,9 @@
 import { useMemo, useState } from 'react';
 import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '../regras';
 import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '../vocabulario';
-import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '../exemplos';
-import { carimboDoPapel } from '@/documentos/listaMestra';
+import { compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '../documentos';
+ import { ordensDaEmpresa } from '../ordens';
+import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
 import { PainelRelatorio } from './Relatorio';
 import { motivoDaLeituraApenas, pode, somenteLeitura, type Papel } from '@/plataforma/acesso';
 import { papelAtual } from '@/lib/session';
@@ -14,7 +15,7 @@ import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from '@/ui/Cabecalho';
 
 export function PlanoServico() {
-  const [ordens, setOrdens] = useState<OrdemServico[]>(ORDENS);
+  const [ordens, setOrdens] = useState<OrdemServico[]>(ordensDaEmpresa);
   const [aberta, setAberta] = useState<string | null>(null);
   const papel = papelAtual();
   const os = aberta ? ordens.find((o) => o.id === aberta) ?? null : null;

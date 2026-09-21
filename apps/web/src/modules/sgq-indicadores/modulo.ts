@@ -10,7 +10,7 @@
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
 import { MONITORAMENTO_SGQ } from './formularios';
-import { Indicadores } from '@/telas/Indicadores';
+import { Indicadores } from '@/modules/sgq-indicadores/ui/Indicadores';
 
 export const sgqIndicadores: Modulo = {
   chave: 'sgq-indicadores',

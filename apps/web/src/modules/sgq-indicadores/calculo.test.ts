@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   atingiu, comoTexto, divergencia, nomeDoPeriodo, problemas, resultado, seriesIguais, situacao,
   ultimaApuracao, type Apuracao, type Indicador,
-} from './indicadores';
+} from './calculo';
 import { APURACOES, INDICADORES } from '@/empresas/minasjato.indicadores';
 import { MINASJATO } from '@/empresas/minasjato';
 import { MODELO } from '@/empresas/modelo';

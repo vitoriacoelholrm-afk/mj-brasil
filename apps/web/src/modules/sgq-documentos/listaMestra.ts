@@ -2,13 +2,8 @@
 //
 // As telas não querem saber de qual empresa está ativa — chamam `doc('FM-001')` e pronto. Este
 // arquivo amarra o motor (`plataforma/documentos.ts`, que não sabe de empresa nenhuma) ao perfil
-// ativo (`plataforma/empresa.ts`).
-//
-// Importar as empresas aqui é o que as coloca no registro. Quando o próximo cliente entrar,
-// acrescenta-se uma linha de import — e nada mais.
-import '@/empresas/minasjato';
-import '@/empresas/modelo';
-
+// ativo (`plataforma/empresa.ts`). Quem põe as empresas no registro é `empresas/index.ts` —
+// aqui dentro não se sabe o nome de nenhuma.
 import { empresaAtiva, type PapelDeFormulario } from '@/plataforma/empresa';
 import {
   acharConflitos, acharDoc, montarCarimbo, porCategoria as agruparPorCategoria,

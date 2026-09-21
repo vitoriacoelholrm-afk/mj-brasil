@@ -7,9 +7,9 @@
 // Não se desinstala: um sistema sem home e sem cadastro de cliente não é um sistema.
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
-import { Clientes } from '@/telas/Clientes';
-import { Instrumentos } from '@/telas/Instrumentos';
-import { Vencimentos } from '@/telas/Vencimentos';
+import { Clientes } from '@/modules/nucleo/ui/Clientes';
+import { Instrumentos } from '@/modules/nucleo/ui/Instrumentos';
+import { Vencimentos } from '@/modules/nucleo/ui/Vencimentos';
 
 /** A home fica fora da lista de telas comuns: ela é o destino padrão, e quem a desenha precisa
  *  saber navegar para as outras. O registro a trata à parte. */

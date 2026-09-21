@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { avaliarMedicao, resumirOs, lerFaixa, lerNumero, normalizar, validarMedicao } from './regras';
 import { faixaTolerada } from './vocabulario';
 import { toleranciaAtiva } from '@/plataforma/empresa';
-import { ORDENS } from './exemplos';
+import { ORDENS } from '@/empresas/minasjato.ordens';
 
 const os748 = ORDENS.find((o) => o.folio === '748')!;  // completo
 const os784 = ORDENS.find((o) => o.folio === '784')!;  // só evidência fotográfica

@@ -8,14 +8,14 @@ import {
   CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
   conflitos, listaMestra, listaMestraMeta, porCategoria, significadoDoPrefixo,
   type Conflito, type DocumentoMestre, type TipoConflito,
-} from '@/documentos/listaMestra';
+} from '@/modules/sgq-documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
 import {
   EXIGENCIA_ROTULO, cobertura, faltasDeNorma, percentualCoberto, type DocumentoPadrao,
-} from '@/plataforma/catalogoPadrao';
+} from '@/modules/sgq-documentos/catalogoPadrao';
 import {
   PROPOSTA_ROTULO, planoDeUnificacao, resumoDoPlano, type PlanoDeUnificacao, type Proposta,
-} from '@/plataforma/unificacao';
+} from '@/modules/sgq-documentos/unificacao';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Cabecalho } from '@/ui/Cabecalho';
 
@@ -142,7 +142,7 @@ export function ListaMestra() {
       </div>
 
       <div style={S.rodape}>
-        Importado da planilha LM-SGQ-001 rev. 3: os 47 documentos com tipo, categoria, responsável,
+        Importado da planilha de lista mestra da empresa: os documentos com tipo, categoria, responsável,
         cláusula da ISO 9001:2015, local de armazenamento e nível de acesso. Mais o que circula sem
         entrada própria.
       </div>

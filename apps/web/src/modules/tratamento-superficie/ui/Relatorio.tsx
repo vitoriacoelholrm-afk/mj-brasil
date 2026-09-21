@@ -13,8 +13,8 @@ import { useState } from 'react';
 import {
   gerarRelatorio, impedimentosDoRelatorio,
   type Anexo, type OrdemServico, type Relatorio,
-} from '../exemplos';
-import { carimboDoPapel } from '@/documentos/listaMestra';
+} from '../documentos';
+import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
 import { pode, type Papel } from '@/plataforma/acesso';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { Anexos } from '@/ui/Anexos';

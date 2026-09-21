@@ -12,7 +12,7 @@
 import {
   SEM_CODIGO, proximoCodigoLivre,
   type Documentacao, type DocumentoMestre, type Natureza,
-} from './documentos';
+} from '@/plataforma/documentos';
 import { cobertura, type DocumentoPadrao } from './catalogoPadrao';
 
 export type TipoProposta =

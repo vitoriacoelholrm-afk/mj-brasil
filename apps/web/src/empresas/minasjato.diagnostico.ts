@@ -3,7 +3,8 @@
 // LIMITE: montado lendo documentos, sem visita e sem entrevista. 19 das 37 cláusulas entram como
 // NÃO AVALIADAS (avaliacao: null) em vez de "parcial" — uma cláusula pode estar plenamente
 // atendida na prática com documentação fraca, e o contrário também.
-import type { ItemParaGap } from './regras';
+import type { ItemParaGap } from '@/modules/sgq-documentos/diagnostico/regras';
+import { registrarDiagnostico } from '@/modules/sgq-documentos/diagnostico/itens';
 
 export const ITENS_MINASJATO: ItemParaGap[] = [
   // ── 4. Contexto ────────────────────────────────────────────────────────────────────────────
@@ -58,3 +59,7 @@ export const ITENS_MINASJATO: ItemParaGap[] = [
   { clausulaRef: '10.2', clausulaTitulo: 'Não conformidade e ação corretiva', avaliacao: null },
   { clausulaRef: '10.3', clausulaTitulo: 'Melhoria contínua', avaliacao: null },
 ];
+
+
+// Entrega o levantamento desta empresa ao módulo do diagnóstico.
+registrarDiagnostico('minasjato', ITENS_MINASJATO);

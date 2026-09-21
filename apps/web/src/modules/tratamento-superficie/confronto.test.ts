@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { avaliarMedicao, resumirOs } from './regras';
 import { faixaTolerada } from './vocabulario';
-import { ORDENS, compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from './exemplos';
+import { ORDENS, compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from '@/empresas/minasjato.ordens';
 
 const os898 = ORDENS.find((o) => o.folio === '898')!;
 const os913 = ORDENS.find((o) => o.folio === '913')!;

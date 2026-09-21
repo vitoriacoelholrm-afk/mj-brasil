@@ -16,11 +16,11 @@
 //
 // São obras diferentes, de clientes diferentes, em datas diferentes. Não se juntam.
 import '@/empresas/minasjato';   // os dados abaixo são dela; carregar o perfil é o que dá tolerância ao motor
-import type { EtapaPreenchida } from './regras';
-import type { OrdemServico, PerfilRelatorio, Relatorio, Tinta } from './documentos';
+import type { EtapaPreenchida } from '@/modules/tratamento-superficie/regras';
+import type { OrdemServico, PerfilRelatorio, Relatorio, Tinta } from '@/modules/tratamento-superficie/documentos';
 
-export type { Tinta, ItemOs, OrdemServico, Relatorio, DemaoRelatorio, Divergencia, Anexo, PerfilRelatorio } from './documentos';
-export { compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from './documentos';
+export type { Tinta, ItemOs, OrdemServico, Relatorio, DemaoRelatorio, Divergencia, Anexo, PerfilRelatorio } from '@/modules/tratamento-superficie/documentos';
+export { compararComRelatorio, gerarRelatorio, impedimentosDoRelatorio } from '@/modules/tratamento-superficie/documentos';
 
 const EXEC = 'Gustavo Moreira';
 const INSP = 'Emerson William de Faria';
@@ -461,3 +461,9 @@ const OS_913: OrdemServico = {
 };
 
 export const ORDENS: OrdemServico[] = [OS_748, OS_784, OS_898, OS_913];
+
+
+// Entrega as ordens desta empresa ao módulo. É assim que dado de empresa chega a um módulo sem
+// que o módulo saiba o nome de empresa nenhuma — a seta aponta daqui para lá, nunca ao contrário.
+import { registrarOrdens } from '@/modules/tratamento-superficie/ordens';
+registrarOrdens('minasjato', ORDENS);

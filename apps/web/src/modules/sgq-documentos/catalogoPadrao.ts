@@ -22,8 +22,8 @@
 //
 // E o catálogo é MODULAR: o núcleo vale para qualquer empresa certificada; o resto vem do módulo
 // setorial que ela usa. Quem não jateia não recebe procedimento de jateamento.
-import type { DocumentoMestre, Natureza } from './documentos';
-import type { PapelDeFormulario } from './empresa';
+import type { DocumentoMestre, Natureza } from '@/plataforma/documentos';
+import type { PapelDeFormulario } from '@/plataforma/empresa';
 
 /** A codificação sugerida. Quatro prefixos, de propósito.
  *

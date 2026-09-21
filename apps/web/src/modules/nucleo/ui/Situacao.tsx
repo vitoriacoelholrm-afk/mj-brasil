@@ -7,10 +7,10 @@ import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { listarRegistros } from '@/lib/registrosApi';
 import { resumoDasNcs } from '@/modules/sgq-registros/naoConformidade';
-import { ORDENS } from '@/modules/tratamento-superficie/exemplos';
+import { ordensDaEmpresa } from '@/modules/tratamento-superficie/ordens';
 import { resumirOs } from '@/modules/tratamento-superficie/regras';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
-import { catalogados, conflitos, listaMestraMeta } from '@/documentos/listaMestra';
+import { catalogados, conflitos, listaMestraMeta } from '@/modules/sgq-documentos/listaMestra';
 
 interface Credencial {
   id: string; holder_label: string; kind: string;
@@ -185,7 +185,8 @@ const IconeCerto = () => (
  *  trás dela — as ordens são as de exemplo. O cartão diz isso, porque "a construir" dizia que a
  *  tela não existia, e isso deixou de ser verdade. */
 function CartaoOrdens({ irPara }: { irPara: (r: 'plano') => void }) {
-  const resumos = ORDENS.map((o) => resumirOs(o.etapas));
+  const ordens = ordensDaEmpresa();
+  const resumos = ordens.map((o) => resumirOs(o.etapas));
   const comDivergencia = resumos.filter((r) => r.naoConformes > 0).length;
   const porMedir = resumos.reduce((n, r) => n + r.pendentes, 0);
 
@@ -201,7 +202,7 @@ function CartaoOrdens({ irPara }: { irPara: (r: 'plano') => void }) {
     <div onClick={() => irPara('plano')} style={{ cursor: 'pointer' }}>
       <Cartao
         titulo="Ordens de Serviço"
-        numero={String(ORDENS.length)}
+        numero={String(ordens.length)}
         nota="ordens de exemplo — esta tela ainda não grava no banco"
         selo={selo}
         icone={<IconeOS />}

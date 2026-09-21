@@ -12,7 +12,7 @@ import {
 } from '@/plataforma/formularios';
 import type { Anexo } from '@/plataforma/anexos';
 import { Anexos } from '@/ui/Anexos';
-import { carimboDoPapel } from '@/documentos/listaMestra';
+import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
 import { conteudoDoAnexo, criarRegistro, listarRegistros } from '@/lib/registrosApi';

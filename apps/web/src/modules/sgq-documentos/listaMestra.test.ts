@@ -1,6 +1,9 @@
 // A Lista Mestra é a única fonte de código de documento. Estes testes são a trava: se alguém
 // carimbar um código que não está catalogado, o app quebra aqui e não na auditoria.
 import { describe, it, expect } from 'vitest';
+// Registrar as empresas é do app, não deste módulo — por isso o teste faz explicitamente o que
+// o `main` faz. Sem perfil ativo não há lista mestra: a ponte não inventa empresa nenhuma.
+import '@/empresas';
 import {
   carimbo, catalogados, conflitos, doc, legenda, listaMestra, listaMestraMeta,
   porCategoria, porClausula, proximoCodigoLivre, significadoDoPrefixo,

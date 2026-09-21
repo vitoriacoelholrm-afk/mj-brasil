@@ -3,6 +3,7 @@
 // correção de catálogo (montava 1 de 5 Functions).
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
+import { empresaAtiva } from '@/plataforma/empresa';
 import { usarDados } from '@/lib/usarDados';
 import { c, pastilha, s } from '@/ui/estilo';
 import { Aviso, Cabecalho } from '@/ui/Cabecalho';
@@ -31,7 +32,7 @@ export function Clientes() {
     <div>
       <Cabecalho
         titulo="Clientes"
-        sub="Quem a Minasjato atende e fatura."
+        sub={`Quem a ${empresaAtiva().identidade.nome} atende e fatura.`}
         acao={<button style={s.botaoPrimario} onClick={() => setNovo(true)}>Novo cliente</button>}
       />
 
@@ -107,7 +108,7 @@ function FormNovo({ aoFechar, aoSalvar }: { aoFechar: () => void; aoSalvar: () =
       <div style={S.grade}>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={s.rotulo}>Razão social</label>
-          <input style={s.campo} value={name} onChange={(e) => setName(e.target.value)} placeholder="WEIR do Brasil" required />
+          <input style={s.campo} value={name} onChange={(e) => setName(e.target.value)} placeholder="Razão social do cliente" required />
         </div>
         <div>
           <label style={s.rotulo}>CNPJ</label>

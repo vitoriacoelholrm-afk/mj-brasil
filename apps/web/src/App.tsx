@@ -6,15 +6,15 @@
 import { useState } from 'react';
 import appInfo from './app-info.json';
 import { papelAtual, pessoaAtual, sair } from '@/lib/session';
-import { Entrar } from '@/telas/Entrar';
-import { Situacao } from '@/telas/Situacao';
+import { Entrar } from '@/ui/Entrar';
+import { Situacao } from '@/modules/nucleo/ui/Situacao';
 import { MODULOS, modulosDe } from '@/modules';
 import { modulosVisiveis, telaDaRota, type Modulo, type Rota } from '@/plataforma/modulo';
 import { pode, type Papel } from '@/plataforma/acesso';
 import { c, fonte } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
-import '@/documentos/listaMestra';   // registra as empresas
+import '@/empresas';   // põe as empresas atendidas no registro
 
 export type { Rota };
 

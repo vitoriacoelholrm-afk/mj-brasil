@@ -14,9 +14,9 @@ import { Fragment, useMemo, useState } from 'react';
 import {
   ROTULO_SITUACAO, comoTexto, nomeDoPeriodo, problemas, resultado, seriesIguais, situacao,
   type Apuracao, type Indicador, type Problema, type Situacao,
-} from '@/plataforma/indicadores';
+} from '../calculo';
 import { empresaAtiva } from '@/plataforma/empresa';
-import { carimboDoPapel } from '@/documentos/listaMestra';
+import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
 import { Cabecalho } from '@/ui/Cabecalho';
