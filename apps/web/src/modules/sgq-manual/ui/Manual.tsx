@@ -15,6 +15,7 @@ import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
 import { quantosEspecificos, relacionadosDa } from '../relacionados';
 import { clausulasEscritas, manualDaEmpresa } from '../texto';
 import { TextoDaClausula, resumoDoManual } from './TextoDaClausula';
+import { ModelosDeFormulario } from './ModeloDeFormulario';
 import { Cabecalho } from '@/ui/Cabecalho';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
@@ -160,6 +161,10 @@ function Clausula({ ref_, modulos, irPara, aoVoltar }: {
           </div>
         ))}
       </Bloco>
+
+      {/* O modelo em branco antes das telas: o auditor pede para VER o formulário muito mais vezes
+          do que pede para abrir um registro preenchido. */}
+      <ModelosDeFormulario defs={r.formularios} />
 
       <Bloco
         titulo="Onde se registra"

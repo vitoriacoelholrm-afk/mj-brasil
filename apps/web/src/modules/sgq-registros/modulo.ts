@@ -13,6 +13,7 @@ import {
   COMUNICACAO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, POS_ENTREGA, PROPRIEDADE_CLIENTE,
   REGISTRO_TREINAMENTO,
 } from './formularios';
+import { PESQUISA_SATISFACAO, PLANO_ACAO, PLANO_AUDITORIA } from './formularios.gestao';
 import { Registros } from '@/ui/Registros';
 
 export const sgqRegistros: Modulo = {
@@ -20,13 +21,13 @@ export const sgqRegistros: Modulo = {
   nome: 'Registros do SGQ',
   descricao:
     'Os registros que a norma exige de qualquer empresa certificada: propriedade do cliente, mudança na produção, saída não conforme e competência.',
-  clausulas: ['7.2', '7.4', '8.5.3', '8.5.5', '8.5.6', '8.7.2', '10.2.2'],
+  clausulas: ['7.2', '7.4', '8.5.3', '8.5.5', '8.5.6', '8.7.2', '9.1.2', '9.2', '10.2', '10.2.2'],
   dominio: 'Qualidade',
   exige: 'sgq.ver',
   essencial: true,
   formularios: [
     PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, REGISTRO_TREINAMENTO, COMUNICACAO_SGQ,
-    POS_ENTREGA,
+    POS_ENTREGA, PLANO_ACAO, PLANO_AUDITORIA, PESQUISA_SATISFACAO,
   ],
   telas: [
     {
@@ -63,6 +64,28 @@ export const sgqRegistros: Modulo = {
       rota: 'pos-entrega',
       formulario: 'pos_entrega',
       render: () => createElement(Registros, { def: POS_ENTREGA }),
+    },
+    // O plano de ação é do mesmo setor da não conformidade de onde ele nasce. Separar os dois
+    // faria o tratamento parar no meio, esperando outra pessoa entrar noutro setor.
+    {
+      rotulo: 'Planos de Ação',
+      rota: 'plano-acao',
+      formulario: 'plano_acao',
+      render: () => createElement(Registros, { def: PLANO_ACAO }),
+    },
+    // Estas duas são da gestão do sistema, e por isso do setor da direção: o programa de auditoria
+    // e a percepção do cliente são o que a empresa mede sobre SI MESMA.
+    {
+      rotulo: 'Auditoria Interna',
+      rota: 'plano-auditoria',
+      formulario: 'plano_auditoria',
+      render: () => createElement(Registros, { def: PLANO_AUDITORIA }),
+    },
+    {
+      rotulo: 'Satisfação do Cliente',
+      rota: 'satisfacao',
+      formulario: 'pesquisa_satisfacao',
+      render: () => createElement(Registros, { def: PESQUISA_SATISFACAO }),
     },
   ],
 };

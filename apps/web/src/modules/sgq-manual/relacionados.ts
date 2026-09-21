@@ -8,6 +8,7 @@
 // se ele guardasse, seria mais um lugar para divergir dos outros quatro.
 import type { Modulo, TelaDeModulo } from '@/plataforma/modulo';
 import type { DocumentoMestre } from '@/plataforma/documentos';
+import type { FormularioDef } from '@/plataforma/formularios';
 import { catalogados } from '@/modules/sgq-documentos/listaMestra';
 import { catalogoPara, cobertura, type DocumentoPadrao } from '@/modules/sgq-documentos/catalogoPadrao';
 import { diagnosticoDaEmpresa } from '@/modules/sgq-documentos/diagnostico/itens';
@@ -27,6 +28,12 @@ export interface Relacionados {
   documentos: DocumentoMestre[];
   /** As telas onde se registra o que a cláusula pede. */
   telas: TelaRelacionada[];
+  /** Os formulários EM BRANCO que respondem por esta cláusula — o modelo, não o preenchido.
+   *
+   *  É o que o auditor pede primeiro: "me mostra o formulário que vocês usam". Mostrar o modelo
+   *  não expõe registro de ninguém, e é o manual que o exibe porque o manual é o documento de
+   *  apresentação. O preenchido vive no sistema do cliente, sob o login dele. */
+  formularios: FormularioDef[];
   /** O que a norma exige para esta cláusula e a empresa ainda não tem. */
   faltando: DocumentoPadrao[];
   /** Os módulos instalados que declaram atender esta cláusula. */
@@ -71,10 +78,17 @@ export function relacionadosDa(ref: string, modulos: Modulo[]): Relacionados | n
 
   const item = diagnosticoDaEmpresa().find((i) => i.clausulaRef === ref);
 
+  // Os formulários vêm do mesmo mapa das telas, e por cláusula: um formulário pode existir sem
+  // tela no menu de quem está olhando, e ainda assim é o modelo que responde pela cláusula.
+  const formularios = [...porPapel.values()]
+    .filter((f) => tocaClausula(f.clausula, ref))
+    .sort((a, b) => a.titulo.localeCompare(b.titulo));
+
   return {
     clausula,
     documentos,
     telas,
+    formularios,
     faltando,
     modulos: modulos.filter((m) => m.clausulas.some((c) => tocaClausula(c, ref))),
     avaliacao: item?.avaliacao ?? null,

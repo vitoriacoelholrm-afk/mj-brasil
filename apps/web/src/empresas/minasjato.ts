@@ -203,8 +203,8 @@ export const CATALOGADOS: DocumentoMestre[] = [
     codigosParalelos: ['MJ-FORM-NC-01', 'MJ-FORM-RNC'],
     nota: 'Dois arquivos diferentes se declaram este mesmo formulário. Atende duas cláusulas: a 8.7.2 quer saber o que se fez com a PEÇA, a 10.2.2 o que se fez com a CAUSA.',
   }),
-  catalogado('FM-004', 'Formulário — Pesquisa de Satisfação do Cliente', 'formulario', 'Comercial', 'Ger. Comercial', ['9.1.2'], 'irrestrito', { padroes: ['satisfacao_cliente'] }),
-  catalogado('FM-005', 'Formulário — Plano de Ação (5W2H)', 'formulario', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padroes: ['plano_acao'] }),
+  catalogado('FM-004', 'Formulário — Pesquisa de Satisfação do Cliente', 'formulario', 'Comercial', 'Ger. Comercial', ['9.1.2'], 'irrestrito', { padroes: ['satisfacao_cliente'], tela: 'satisfacao' }),
+  catalogado('FM-005', 'Formulário — Plano de Ação (5W2H)', 'formulario', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padroes: ['plano_acao'], tela: 'plano-acao' }),
   catalogado('FM-006', 'Formulário — Controle de Recebimento de Peças', 'formulario', 'Logística', 'Logística', ['8.4.3'], 'irrestrito', { padroes: ['recebimento'], codigosParalelos: ['MJ-REC-01'] }),
   catalogado('FM-007', 'Formulário — Romaneio de Expedição', 'formulario', 'Logística', 'Logística', ['8.5.4'], 'irrestrito', { padroes: ['expedicao'], codigosParalelos: ['MJ-ROM-01'] }),
   catalogado('FM-008', 'Formulário — Avaliação de Fornecedores', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'] }),
@@ -217,7 +217,7 @@ export const CATALOGADOS: DocumentoMestre[] = [
     tela: 'treinamento',
     nota: 'Absorveu a Lista de Presença (TR-001) em 21/09/2026. O campo Tipo cobre a integração, o treinamento interno, o externo, o no posto e a reciclagem — um registro por pessoa, em vez de uma folha por turma.',
   }),
-  catalogado('FM-010', 'Formulário — Plano de Auditoria Interna', 'formulario', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito', { padroes: ['auditoria_interna'] }),
+  catalogado('FM-010', 'Formulário — Plano de Auditoria Interna', 'formulario', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito', { padroes: ['auditoria_interna'], tela: 'plano-auditoria' }),
   // Os dois que faltavam à norma, criados em 16/09/2026. Entram em FM-020 e FM-021 — a numeração
   // segue do maior, nunca preenche buraco. Buraco pode ser código aposentado, e reaproveitar
   // código aposentado faz o arquivo antigo virar armadilha: dois documentos diferentes com o

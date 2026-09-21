@@ -108,9 +108,30 @@ describe('o que a cláusula tem', () => {
   });
 
   it('cláusula sem tela diz isso, e continua mostrando os documentos', () => {
-    const r = relacionadosDa('9.2', MODULOS)!;
+    // A 10.3 (melhoria contínua) não é formulário: é o que sai da análise crítica e dos
+    // indicadores. Era a 9.2 que servia de exemplo aqui, até o plano de auditoria interna ganhar
+    // tela em 21/09/2026.
+    const r = relacionadosDa('10.3', MODULOS)!;
     expect(r.telas).toEqual([]);
     expect(r.documentos.length).toBeGreaterThan(0);
+  });
+
+  it('a cláusula mostra o formulário EM BRANCO — é o que o auditor pede antes do preenchido', () => {
+    // O modelo não expõe registro de ninguém: são os campos, não o conteúdo. Quem quiser ver um
+    // caso concreto entra no sistema da empresa, na tela, com o login dela.
+    const r = relacionadosDa('9.2', MODULOS)!;
+    expect(r.formularios.map((f) => f.papel)).toEqual(['plano_auditoria']);
+    expect(r.telas.map((t) => t.tela.rota)).toContain('plano-auditoria');
+
+    // E cada campo diz o que exige, que é o que faz o modelo valer como apresentação.
+    const def = r.formularios[0];
+    expect(def.campos.find((x) => x.chave === 'independencia')!.obrigatorio).toBe(true);
+    expect(def.campos.find((x) => x.chave === 'comoGarantida')!.dependeDe)
+      .toEqual({ campo: 'independencia', valor: 'Sim' });
+  });
+
+  it('cláusula sem formulário nenhum devolve lista vazia, e a tela não desenha o bloco', () => {
+    expect(relacionadosDa('5.1', MODULOS)!.formularios).toEqual([]);
   });
 
   it('referência que não é cláusula devolve null em vez de uma tela vazia', () => {
