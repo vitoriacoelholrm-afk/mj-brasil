@@ -9,6 +9,7 @@
 // A regra do corte: se dois clientes da consultoria podem ter valores diferentes, o dado mora
 // aqui. Se o valor é o mesmo para todo mundo que jateia e pinta, mora no módulo setorial
 // (`src/os`). Se é o mesmo para qualquer setor, mora na plataforma (`src/plataforma`).
+import type { ExclusaoDeRequisito } from './aplicabilidade';
 import type { Documentacao } from './documentos';
 import type { Apuracao, Indicador } from './indicadores';
 
@@ -52,6 +53,13 @@ export interface PerfilDaEmpresa {
   apuracoes?: Apuracao[];
   /** Os módulos setoriais que esta empresa usa. Quem não jateia não recebe tratamento-superficie. */
   modulos: string[];
+  /** Os requisitos da norma que ESTA empresa determinou não serem aplicáveis, com justificativa —
+   *  a não aplicabilidade da ISO 9001:2015 §4.3.
+   *
+   *  Ausente ou vazio quer dizer que a norma inteira se aplica, que é o estado certo de todo
+   *  cliente novo: o requisito vale até alguém dizer, por escrito, que não vale. A regra de leitura
+   *  está em `aplicabilidade.ts`; aqui só mora o dado. */
+  exclusoes?: ExclusaoDeRequisito[];
   /** Verdadeiro para o perfil em branco que serve de ponto de partida ao próximo cliente. */
   modelo?: boolean;
 }
@@ -81,6 +89,12 @@ export function definirEmpresaAtiva(id: string): PerfilDaEmpresa {
   if (!REGISTRO.has(id)) throw new Error(`Empresa "${id}" não está registrada.`);
   ativa = id;
   return empresaAtiva();
+}
+
+/** Os requisitos que a empresa ativa declarou não aplicáveis. Vazio é o padrão, e é o que faz o
+ *  app cobrar a norma inteira de quem não declarou nada. */
+export function exclusoesAtivas(): readonly ExclusaoDeRequisito[] {
+  return empresaAtiva().exclusoes ?? [];
 }
 
 /** A tolerância da empresa ativa. As funções puras aceitam uma tolerância explícita; esta é

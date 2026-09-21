@@ -67,6 +67,11 @@ export const MODELO: PerfilDaEmpresa = registrar({
   documentacao: { meta: META, legenda: LEGENDA_PADRAO, documentos: DOCUMENTOS },
   formularios: FORMULARIOS,
   modulos: MODULOS,
+  // A norma INTEIRA se aplica, porque ninguém declarou o contrário ainda. É o estado certo de um
+  // cliente novo: as 37 cláusulas são cobradas até a empresa determinar, por escrito e com
+  // justificativa, qual requisito não cabe no negócio dela. Quando couber uma exclusão, ela entra
+  // aqui — `{ clausula, justificativa, declaradaEm }` — e some das cobranças sem sumir da tela.
+  exclusoes: [],
   modelo: true,
 });
 

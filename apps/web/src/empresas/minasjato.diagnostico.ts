@@ -5,6 +5,15 @@
 // atendida na prática com documentação fraca, e o contrário também.
 import type { ItemParaGap } from '@/modules/sgq-documentos/diagnostico/regras';
 import { registrarDiagnostico } from '@/modules/sgq-documentos/diagnostico/itens';
+import { EXCLUSOES } from './minasjato';
+
+/** O "não aplicável" do diagnóstico e a exclusão do perfil são a MESMA decisão vista de dois
+ *  ângulos — e o auditor confere os dois. O texto vem de `minasjato.ts` para não haver duas
+ *  redações da mesma justificativa. */
+const naoAplicavel = (clausula: string) => {
+  const x = EXCLUSOES.find((e) => e.clausula === clausula)!;
+  return { avaliacao: 'nao_aplicavel' as const, justificativaNa: `${x.justificativa} Exclusão declarada em ${x.declaradaEm}.` };
+};
 
 export const ITENS_MINASJATO: ItemParaGap[] = [
   // ── 4. Contexto ────────────────────────────────────────────────────────────────────────────
@@ -35,8 +44,7 @@ export const ITENS_MINASJATO: ItemParaGap[] = [
   // ── 8. Operação ────────────────────────────────────────────────────────────────────────────
   { clausulaRef: '8.1', clausulaTitulo: 'Planejamento e controle operacionais', avaliacao: null },
   { clausulaRef: '8.2', clausulaTitulo: 'Requisitos para produtos e serviços', avaliacao: null },
-  { clausulaRef: '8.3', clausulaTitulo: 'Projeto e desenvolvimento', avaliacao: 'nao_aplicavel',
-    justificativaNa: 'A Minasjato não desenvolve especificações de pintura; executa conforme requisitos definidos pelo contratante. Exclusão declarada no Manual do SGQ §8.3.' },
+  { clausulaRef: '8.3', clausulaTitulo: 'Projeto e desenvolvimento', ...naoAplicavel('8.3') },
   { clausulaRef: '8.4', clausulaTitulo: 'Controle de processos e provedores externos', avaliacao: null },
   { clausulaRef: '8.5.1', clausulaTitulo: 'Controle de produção e provisão de serviço', avaliacao: 'atende' },
   { clausulaRef: '8.5.2', clausulaTitulo: 'Identificação e rastreabilidade', avaliacao: 'atende_parcial', peso: 'alto' },

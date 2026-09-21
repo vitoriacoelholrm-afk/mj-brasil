@@ -11,6 +11,8 @@ import { useState } from 'react';
 import type { ContextoDeTela } from '@/plataforma/modulo';
 import { AVALIACAO_ROTULO, type Avaliacao } from '@/modules/sgq-documentos/diagnostico/vocabulario';
 import { NATUREZA_ROTULO } from '@/plataforma/documentos';
+import { exclusoesAtivas } from '@/plataforma/empresa';
+import { exclusaoDe, seAplica } from '@/plataforma/aplicabilidade';
 import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
 import { quantosEspecificos, relacionadosDa } from '../relacionados';
 import { clausulasEscritas, manualDaEmpresa } from '../texto';
@@ -40,7 +42,13 @@ export function Manual({ irPara, modulos, instalados }: ContextoDeTela) {
     );
   }
 
-  const soNoManual = CLAUSULAS.filter((x) => quantosEspecificos(x.ref, modulos) === 0).length;
+  // A norma é a mesma para todo cliente; o ESCOPO não é. O que a empresa declarou não aplicável
+  // (§4.3) sai das contagens — cobrar documento próprio de um requisito que ela já excluiu por
+  // escrito é inventar uma pendência. Da TELA ele não sai: a exclusão é informação documentada, e
+  // é justamente o que o auditor pede para ler.
+  const exclusoes = exclusoesAtivas();
+  const doEscopo = CLAUSULAS.filter((x) => seAplica(x.ref, exclusoes));
+  const soNoManual = doEscopo.filter((x) => quantosEspecificos(x.ref, modulos) === 0).length;
   const manual = manualDaEmpresa();
   const escritas = new Set(clausulasEscritas());
   const semTexto = CLAUSULAS.filter((x) => !escritas.has(x.ref)).length;
@@ -65,12 +73,28 @@ export function Manual({ irPara, modulos, instalados }: ContextoDeTela) {
             ? `${soNoManual} sem documento próprio`
             : 'todas com documento próprio'}
         </span>
+        {exclusoes.length > 0 && (
+          <span style={pastilha('neutro')}>
+            {exclusoes.length === 1
+              ? `${exclusoes[0].clausula} não se aplica`
+              : `${exclusoes.length} cláusulas não se aplicam`}
+          </span>
+        )}
         <span style={{ ...s.prosa, fontSize: 13, color: c.suave }}>
           São duas perguntas diferentes, e o auditor faz as duas. A primeira é o que a empresa DIZ
           que faz — está no manual, e agora se lê aqui, em cada cláusula. A segunda é QUAL
           procedimento, QUAL formulário, QUAL registro sustenta o que o manual diz. Nas marcadas
           com "sem documento próprio", a segunda resposta ainda é o manual de novo.
         </span>
+        {exclusoes.length > 0 && (
+          <span style={{ ...s.prosa, fontSize: 13, color: c.suave }}>
+            {exclusoes.length === 1 ? 'Uma cláusula está' : `${exclusoes.length} cláusulas estão`} fora
+            do escopo por decisão da empresa, com justificativa declarada — a não aplicabilidade da
+            §4.3. {exclusoes.length === 1 ? 'Ela continua' : 'Elas continuam'} na lista, porque é
+            documentado que se apresenta ao auditor, mas {exclusoes.length === 1 ? 'não entra' : 'não entram'} nas
+            contagens acima. As contas são sobre as {doEscopo.length} que a empresa precisa atender.
+          </span>
+        )}
       </div>
 
       {SECOES.map((secao) => (
@@ -83,6 +107,7 @@ export function Manual({ irPara, modulos, instalados }: ContextoDeTela) {
           <div>
             {clausulasDaSecao(secao.numero).map((x, i) => {
               const quantos = quantosEspecificos(x.ref, modulos);
+              const excluida = exclusaoDe(x.ref, exclusoes);
               return (
                 <button
                   key={x.ref}
@@ -108,9 +133,13 @@ export function Manual({ irPara, modulos, instalados }: ContextoDeTela) {
                     )}
                   </span>
                   {!celular && (
-                    <span style={quantos ? pastilha('neutro') : pastilha('alerta')}>
-                      {quantos === 0 ? 'só pelo manual' : `${quantos} ${quantos === 1 ? 'documento' : 'documentos'}`}
-                    </span>
+                    excluida
+                      ? <span style={pastilha('neutro')}>não se aplica</span>
+                      : (
+                        <span style={quantos ? pastilha('neutro') : pastilha('alerta')}>
+                          {quantos === 0 ? 'só pelo manual' : `${quantos} ${quantos === 1 ? 'documento' : 'documentos'}`}
+                        </span>
+                      )
                   )}
                   {!celular && <span style={S.seta} aria-hidden>›</span>}
                 </button>
@@ -130,6 +159,7 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
   irPara: ContextoDeTela['irPara']; aoVoltar: () => void;
 }) {
   const r = relacionadosDa(ref_, modulos, instalados);
+  const excluida = exclusaoDe(ref_, exclusoesAtivas());
   if (!r) return <div style={S.vazio}>Cláusula não encontrada.</div>;
 
   return (
@@ -139,18 +169,46 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
       <Cabecalho
         titulo={`${r.clausula.ref} — ${r.clausula.titulo}`}
         sub={`ISO 9001:2015 · seção ${r.clausula.secao}${r.modulos.length ? ` · atendida por ${r.modulos.map((m) => m.nome).join(', ')}` : ''}`}
-        acao={r.avaliacao
-          ? <span style={pastilha(TOM_DA_AVALIACAO[r.avaliacao])}>{AVALIACAO_ROTULO[r.avaliacao]}</span>
-          : <span style={pastilha('neutro')}>não avaliada</span>}
+        acao={excluida
+          ? <span style={pastilha('neutro')}>não se aplica</span>
+          : r.avaliacao
+            ? <span style={pastilha(TOM_DA_AVALIACAO[r.avaliacao])}>{AVALIACAO_ROTULO[r.avaliacao]}</span>
+            : <span style={pastilha('neutro')}>não avaliada</span>}
       />
+
+      {/* Antes de tudo, quando é o caso: esta cláusula não é requisito desta empresa. Sem isto, a
+          tela mostraria "nenhum documento declara esta cláusula" e pareceria falta — quando é
+          decisão de escopo, tomada e assinada. */}
+      {excluida && (
+        <div style={{ ...s.cartao, overflow: 'hidden' }}>
+          <div style={S.faixa}>Requisito não aplicável a esta empresa</div>
+          <div style={S.exclusao}>
+            <span style={{ ...s.prosa, fontSize: 14, color: c.tinta }}>{excluida.justificativa}</span>
+            <span style={S.itemNota}>
+              Declarada em {excluida.declaradaEm}
+              {excluida.desde ? ` · desde ${dataBR(excluida.desde)}` : ''} · ISO 9001:2015 §4.3
+            </span>
+            <span style={{ ...S.itemNota, ...s.prosa }}>
+              A cláusula continua à vista de propósito: a norma admite não aplicar um requisito, mas
+              exige que a decisão esteja documentada e justificada — é este texto que o auditor pede
+              para ler. O que ela deixa de ser é cobrança: não entra na conta das que precisam de
+              documento próprio, e o sistema não pede registro por ela.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Primeiro o que a empresa DIZ que faz — é a pergunta que o auditor faz antes de qualquer
           outra. A lista de documentos vem depois, que é a prova. */}
       <TextoDaClausula ref_={r.clausula.ref} />
 
+      {/* Numa cláusula excluída, os blocos vazios só aparecem se tiverem o que mostrar. O texto de
+          "nenhum documento declara" e "ainda não tem tela" descreve uma falta — e aqui não há
+          falta nenhuma: há um requisito que a empresa não precisa atender. */}
       <Bloco
         titulo="Documentos da empresa"
         vazio="Nenhum documento da lista mestra declara esta cláusula. Pode haver um que a atenda sem dizer — e, para a auditoria, documento que não declara a cláusula não conta."
+        ocultarSeVazio={!!excluida}
       >
         {r.documentos.map((d) => (
           <div key={d.codigo} style={S.item}>
@@ -175,6 +233,7 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
       <Bloco
         titulo="Onde se registra"
         vazio="Esta cláusula ainda não tem tela no sistema. O que ela pede, se acontece, é registrado fora daqui."
+        ocultarSeVazio={!!excluida}
       >
         {r.telas.map(({ tela, modulo }) => (
           <button key={tela.rota} style={{ ...S.item, ...S.itemClicavel }} onClick={() => irPara(tela.rota)}>
@@ -188,7 +247,7 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
         ))}
       </Bloco>
 
-      {r.faltando.length > 0 && (
+      {!excluida && r.faltando.length > 0 && (
         <div style={{ ...s.cartao, borderColor: c.alerta, background: c.alertaFraco, overflow: 'hidden' }}>
           <div style={{ ...S.faixa, background: 'transparent', color: c.alerta, borderBottom: `1px solid ${c.alerta}` }}>
             O que a norma pede e ainda não existe
@@ -213,10 +272,11 @@ function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
   );
 }
 
-function Bloco({ titulo, vazio, children }: {
-  titulo: string; vazio: string; children: React.ReactNode;
+function Bloco({ titulo, vazio, children, ocultarSeVazio }: {
+  titulo: string; vazio: string; children: React.ReactNode; ocultarSeVazio?: boolean;
 }) {
   const temAlgo = Array.isArray(children) ? children.length > 0 : !!children;
+  if (!temAlgo && ocultarSeVazio) return null;
   return (
     <div style={{ ...s.cartao, overflow: 'hidden' }}>
       <div style={S.faixa}>{titulo}</div>
@@ -257,6 +317,7 @@ const S: Record<string, React.CSSProperties> = {
   } as React.CSSProperties,
   seta: { color: c.suave, fontSize: 20, lineHeight: 1 },
   vazio: { fontSize: 13.5, color: c.suave, lineHeight: 1.6, padding: '16px 18px' },
+  exclusao: { display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 18px 16px' },
   item: {
     display: 'flex', alignItems: 'flex-start', gap: 14, width: '100%', textAlign: 'left',
     padding: '10px 0', borderBottom: `1px solid ${c.linha}`,

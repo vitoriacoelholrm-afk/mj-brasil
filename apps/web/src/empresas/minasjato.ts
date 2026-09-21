@@ -4,11 +4,28 @@
 // As regras que leem estes dados estão em `plataforma/documentos.ts` e não sabem que a Minasjato
 // existe — trocar de empresa é trocar este arquivo por outro.
 import { registrar, type PerfilDaEmpresa } from '@/plataforma/empresa';
+import type { ExclusaoDeRequisito } from '@/plataforma/aplicabilidade';
 import { APURACOES, INDICADORES } from './minasjato.indicadores';
 import {
   SEM_CODIGO,
   type Acesso, type DocumentoMestre, type Legenda, type ListaMestraMeta, type Natureza,
 } from '@/plataforma/documentos';
+
+/** O QUE DA NORMA NÃO SE APLICA A ELA — e é só isto, uma cláusula em 37.
+ *
+ *  A Minasjato executa; não projeta. A 8.3 é a única exclusão declarada, e está no manual dela
+ *  §8.3, com a justificativa por extenso. Não é uma falta: é uma decisão de escopo, que a
+ *  ISO 9001:2015 §4.3 admite desde que esteja escrita e justificada.
+ *
+ *  O texto mora AQUI e só aqui. Ele é citado em três lugares — o campo `exclusoes` do MQ-001 na
+ *  lista mestra, a justificativa do "não aplicável" no diagnóstico, e a tela do manual — e três
+ *  cópias digitadas à mão seriam três lugares para divergir. */
+export const EXCLUSOES: ExclusaoDeRequisito[] = [{
+  clausula: '8.3',
+  justificativa: 'A Minasjato não desenvolve especificações de pintura; executa conforme os requisitos definidos pelo contratante.',
+  declaradaEm: 'MQ-001 §8.3',
+  desde: '2026-03-05',
+}];
 
 /** O que cada prefixo significa — está na aba Legenda da planilha. */
 const LEGENDA: Legenda = {
@@ -116,10 +133,7 @@ export const CATALOGADOS: DocumentoMestre[] = [
     emissao: '2026-03-05',
     divergenciaNaLista: { revisao: '01', emissao: '2025-06-03' },
     nota: 'A Lista Mestra traz rev. 01 de 03/06/2025 — data anterior à existência do manual. O arquivo é que está certo: rev. 00 de 05/03/2026, emissão inicial, elaborado por Vitória Coelho, verificado por Gustavo Moreira e aprovado por Leandro Santos. Quem precisa ser corrigida é a lista.',
-    exclusoes: [{
-      requisito: '8.3 Projeto e Desenvolvimento',
-      justificativa: 'A Minasjato não desenvolve especificações de pintura; executa conforme os requisitos definidos pelo contratante.',
-    }],
+    exclusoes: EXCLUSOES.map((x) => ({ requisito: `${x.clausula} Projeto e Desenvolvimento`, justificativa: x.justificativa })),
   }),
 
   catalogado('PG-001', 'Controle de Documentos e Registros', 'procedimento', 'Gestão da Qualidade', 'RQ', ['7.5'], 'irrestrito', { padroes: ['controle_documentos'], codigosParalelos: ['MJ-CDT-01'], tela: 'lista-mestra' }),
@@ -382,6 +396,7 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
   indicadores: INDICADORES,
   apuracoes: APURACOES,
   modulos: ['tratamento-superficie', 'ssma', 'portaria'],
+  exclusoes: EXCLUSOES,
 });
 
 export { META, LEGENDA };
