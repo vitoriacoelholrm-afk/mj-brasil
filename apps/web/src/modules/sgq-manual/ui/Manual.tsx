@@ -27,12 +27,17 @@ const TOM_DA_AVALIACAO: Record<Avaliacao, 'ok' | 'alerta' | 'critico' | 'neutro'
   nao_aplicavel: 'neutro',
 };
 
-export function Manual({ irPara, modulos }: ContextoDeTela) {
+export function Manual({ irPara, modulos, instalados }: ContextoDeTela) {
   const [aberta, setAberta] = useState<string | null>(null);
   const celular = useEhCelular();
 
   if (aberta) {
-    return <Clausula ref_={aberta} modulos={modulos} irPara={irPara} aoVoltar={() => setAberta(null)} />;
+    return (
+      <Clausula
+        ref_={aberta} modulos={modulos} instalados={instalados}
+        irPara={irPara} aoVoltar={() => setAberta(null)}
+      />
+    );
   }
 
   const soNoManual = CLAUSULAS.filter((x) => quantosEspecificos(x.ref, modulos) === 0).length;
@@ -120,10 +125,11 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
 
 /* ── A cláusula aberta ────────────────────────────────────────────────────────────────────── */
 
-function Clausula({ ref_, modulos, irPara, aoVoltar }: {
-  ref_: string; modulos: ContextoDeTela['modulos']; irPara: ContextoDeTela['irPara']; aoVoltar: () => void;
+function Clausula({ ref_, modulos, instalados, irPara, aoVoltar }: {
+  ref_: string; modulos: ContextoDeTela['modulos']; instalados: ContextoDeTela['instalados'];
+  irPara: ContextoDeTela['irPara']; aoVoltar: () => void;
 }) {
-  const r = relacionadosDa(ref_, modulos);
+  const r = relacionadosDa(ref_, modulos, instalados);
   if (!r) return <div style={S.vazio}>Cláusula não encontrada.</div>;
 
   return (

@@ -25,6 +25,33 @@ const faltando = (def: FormularioDef, valores: Valores) =>
 
 /* ══ 1. Coerência — vale para qualquer definição, inclusive as que ainda não existem ═════════ */
 
+describe('dinheiro pode entrar, e nunca trava o registro', () => {
+  // Decisão dela em 21/09/2026, sobre o valor no pedido de compra: "pode ter a opção de preço mas
+  // ela não vai ser obrigatória". A regra vale para a plataforma inteira, e não só para o campo
+  // que a originou.
+  //
+  // O motivo é da norma, não de gosto: nenhuma cláusula da ISO 9001 pede valor. Um registro com o
+  // campo em branco continua provando o que a norma manda provar. Se o campo travasse, a empresa
+  // deixaria de registrar o fato enquanto o preço não estivesse fechado — e o fato é o que
+  // importa. É a mesma régua que manteve o faturamento em reais fora dos indicadores.
+  const dinheiro = /^(valor|preco|preço|custo|total|unitario|unitário)/i;
+
+  it.each(FORMULARIOS.map((d) => [d.titulo, d] as const))('%s', (_titulo, def) => {
+    for (const campo of def.campos) {
+      if (!dinheiro.test(campo.chave)) continue;
+      expect(campo.obrigatorio ?? false, `${def.papel}.${campo.chave}`).toBe(false);
+    }
+  });
+
+  it('e o pedido de compra tem o campo, opcional, sem impedir o registro de fechar', () => {
+    const pedido = formularioDoPapel('pedido_compra')!;
+    const valor = pedido.campos.find((c) => c.chave === 'valor')!;
+    expect(valor.obrigatorio).toBeUndefined();
+    expect(valor.ajuda).toContain('Opcional');
+    expect(obrigatorios(pedido)).not.toContain('valor');
+  });
+});
+
 describe('toda definição se sustenta sozinha', () => {
   it.each(FORMULARIOS.map((d) => [d.titulo, d] as const))('%s', (_titulo, def) => {
     const chaves = def.campos.map((c) => c.chave);

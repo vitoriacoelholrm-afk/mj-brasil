@@ -67,6 +67,9 @@ export function App() {
 
   const papel = papelAtual();
   const meus = menuDe(papel);
+  // Tudo que a empresa tem, sem filtro de permissão. Vai junto para a tela porque o manual mostra
+  // o MODELO em branco de qualquer formulário instalado — modelo é documento, não registro.
+  const instalados = modulosDe(empresaAtiva().modulos);
   const grupos = dominios(meus);
   const verSituacao = pode(papel, 'sgq.ver');
 
@@ -149,7 +152,7 @@ export function App() {
           // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
           // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
           // tela em branco.
-          : tela?.render({ irPara: setRota, modulos: meus }) ?? <Situacao irPara={setRota} />}
+          : tela?.render({ irPara: setRota, modulos: meus, instalados }) ?? <Situacao irPara={setRota} />}
       </main>
 
       <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>

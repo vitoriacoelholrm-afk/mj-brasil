@@ -175,15 +175,9 @@ describe('o setor de suprimentos é do administrativo', () => {
     expect(PAPEIS.filter((p) => podeEditar(p, 'suprimentos'))).toEqual(['apoio']);
   });
 
-  it('os quatro formulários declaram o setor novo, e nenhum pede preço', () => {
-    // A 8.4 manda controlar o REQUISITO comunicado ao fornecedor, não o valor. Valor comercial
-    // dentro do sistema da qualidade obriga a restringir o acesso de quem precisa auditar — é a
-    // mesma régua que manteve o faturamento em reais fora dos indicadores.
-    const dinheiro = /preco|preço|valor|custo|unitario|unitário|total|reais/i;
+  it('os quatro declaram o setor novo', () => {
     for (const def of [PEDIDO_COMPRA, RECEBIMENTO, AVALIACAO_FORNECEDOR, ROMANEIO]) {
       expect(def.setor, def.papel).toBe('suprimentos');
-      const campos = def.campos.map((c) => `${c.chave} ${c.rotulo}`).join(' | ');
-      expect(dinheiro.test(campos), `${def.papel}: ${campos}`).toBe(false);
     }
   });
 });

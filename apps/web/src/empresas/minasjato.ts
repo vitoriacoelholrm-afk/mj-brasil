@@ -302,7 +302,7 @@ export const CATALOGADOS: DocumentoMestre[] = [
 
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
     tela: 'pedido-compra',
-    nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código. A tela não pede preço: o que a 8.4 manda controlar é o requisito comunicado ao fornecedor, e valor comercial dentro do sistema da qualidade obriga a restringir quem precisa auditar o processo.',
+    nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código. O valor é campo opcional, por decisão dela: a 8.4 cobra o requisito comunicado ao fornecedor, não o preço — exigi-lo faria o sistema recusar um pedido que, para a norma, está completo.',
   }),
 ];
 

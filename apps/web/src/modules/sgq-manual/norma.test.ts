@@ -134,6 +134,23 @@ describe('o que a cláusula tem', () => {
     expect(relacionadosDa('5.1', MODULOS)!.formularios).toEqual([]);
   });
 
+  it('o MODELO não segue a permissão do setor; a TELA segue', () => {
+    // Quem apresenta ao auditor é a coordenação da qualidade, que não escreve pedido de compra.
+    // Se o modelo seguisse a regra do setor, o FM-011 sumiria justamente para quem vai mostrá-lo —
+    // e modelo em branco não é dado de ninguém: são os campos, não o conteúdo.
+    const semSuprimentos = MODULOS.filter((m) => m.chave !== 'suprimentos');
+
+    const r = relacionadosDa('8.4', semSuprimentos, MODULOS)!;
+    expect(r.formularios.map((f) => f.papel)).toContain('pedido_compra');
+    // A tela, essa, não aparece: ela não está no menu de quem não tem o setor, e mandar clicar
+    // numa tela que não abre é pior do que não oferecer.
+    expect(r.telas.map((t) => t.tela.rota)).not.toContain('pedido-compra');
+
+    // E quem tem o setor vê as duas coisas.
+    const comTudo = relacionadosDa('8.4', MODULOS)!;
+    expect(comTudo.telas.map((t) => t.tela.rota)).toContain('pedido-compra');
+  });
+
   it('referência que não é cláusula devolve null em vez de uma tela vazia', () => {
     expect(relacionadosDa('8.7.2', MODULOS)).toBe(null);
   });

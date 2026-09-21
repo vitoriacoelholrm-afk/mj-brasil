@@ -42,7 +42,12 @@ export interface Relacionados {
   avaliacao: Avaliacao | null;
 }
 
-export function relacionadosDa(ref: string, modulos: Modulo[]): Relacionados | null {
+/** `modulos` são os que o usuário enxerga — decidem as TELAS, que ele vai abrir. `instalados` são
+ *  todos os da empresa e decidem os MODELOS de formulário, que ele só olha. Quando não vem, vale a
+ *  mesma lista: fora do app é como se todo mundo enxergasse tudo. */
+export function relacionadosDa(
+  ref: string, modulos: Modulo[], instalados: Modulo[] = modulos,
+): Relacionados | null {
   const clausula = clausulaPorRef(ref);
   if (!clausula) return null;
 
@@ -78,9 +83,12 @@ export function relacionadosDa(ref: string, modulos: Modulo[]): Relacionados | n
 
   const item = diagnosticoDaEmpresa().find((i) => i.clausulaRef === ref);
 
-  // Os formulários vêm do mesmo mapa das telas, e por cláusula: um formulário pode existir sem
-  // tela no menu de quem está olhando, e ainda assim é o modelo que responde pela cláusula.
-  const formularios = [...porPapel.values()]
+  // Os modelos vêm de TODOS os instalados, e não só dos que este usuário enxerga: o modelo é o
+  // formulário em branco, e branco não é dado de ninguém. Quem apresenta ao auditor é a
+  // coordenação da qualidade, que não preenche pedido de compra — se o modelo seguisse a regra do
+  // setor, sumiria justamente para quem precisa mostrá-lo.
+  const formularios = instalados
+    .flatMap((m) => m.formularios ?? [])
     .filter((f) => tocaClausula(f.clausula, ref))
     .sort((a, b) => a.titulo.localeCompare(b.titulo));
 

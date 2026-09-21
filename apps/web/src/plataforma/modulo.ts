@@ -21,7 +21,17 @@ export type Rota = string;
  *  volta circular — o registro conhece os módulos, os módulos não conhecem o registro. */
 export interface ContextoDeTela {
   irPara: (rota: Rota) => void;
+  /** Os módulos que ESTE usuário enxerga. É o que monta menu e navegação. */
   modulos: Modulo[];
+  /** Todos os módulos que a EMPRESA tem, antes do filtro de permissão.
+   *
+   *  Existe por causa do manual. O que ele mostra de um formulário é o MODELO em branco — os
+   *  campos, não o conteúdo —, e modelo em branco é documento de apresentação, não registro.
+   *  Esconder o modelo de quem não preenche esconderia justamente de quem apresenta: a coordenação
+   *  da qualidade não escreve pedido de compra, e é ela quem mostra o FM-011 ao auditor.
+   *
+   *  O registro PREENCHIDO continua atrás da regra do setor, que é onde a regra importa. */
+  instalados: Modulo[];
 }
 
 export interface TelaDeModulo {

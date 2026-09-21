@@ -4,13 +4,18 @@
 // ao fornecedor (8.4.3), o recebimento verifica se o que chegou atende (8.4.3 de novo), a avaliação
 // mede o fornecedor ao longo do tempo (8.4.1) e o romaneio prova a entrega (8.5.4).
 //
-// UMA AUSÊNCIA DE PROPÓSITO: não há campo de preço em lugar nenhum.
+// SOBRE O PREÇO: existe no pedido, e NUNCA é obrigatório. Decisão dela em 21/09/2026.
 //
 // O que a 8.4 manda controlar é o REQUISITO — o que se pede, a aprovação de produto e método, a
-// competência exigida, o desempenho do fornecedor. Preço é dado comercial, e dado comercial dentro
-// do sistema da qualidade faz duas coisas ruins: obriga a restringir o acesso de quem precisa
-// auditar o processo, e transforma um registro da qualidade em documento de negociação. A mesma
-// régua que manteve o faturamento em reais fora dos indicadores vale aqui.
+// competência exigida, o desempenho do fornecedor. O valor não entra nessa lista, e é por isso que
+// ele não pode travar o registro: um pedido sem preço continua sendo um pedido completo aos olhos
+// da norma, e obrigar o campo faria a empresa parar de registrar compra quando o valor ainda não
+// estiver fechado — que é justamente quando o requisito precisa ser comunicado.
+//
+// Opcional resolve os dois lados: quem quiser acompanhar o gasto no mesmo lugar acompanha, e a
+// auditoria continua encontrando o que ela vem buscar mesmo nos registros em que o campo está em
+// branco. A regra vale para a plataforma inteira e tem teste: campo de dinheiro não é obrigatório
+// em formulário nenhum.
 import type { FormularioDef } from '@/plataforma/formularios';
 
 /** O pedido de compra — a 8.4.3 manda comunicar o requisito ANTES, e assegurar a suficiência dele. */
@@ -20,7 +25,7 @@ export const PEDIDO_COMPRA: FormularioDef = {
   titulo: 'Pedido de Compra',
   clausula: '8.4',
   explicacao:
-    'O que se compra e com qual requisito. A norma não se interessa pelo preço: interessa-se por o requisito ter sido comunicado ao fornecedor antes, e por ele ser suficiente para quem vai receber conferir.',
+    'O que se compra e com qual requisito. O que a norma cobra é o requisito ter sido comunicado ao fornecedor ANTES, e ser suficiente para quem vai receber conferir — o valor entra se a empresa quiser acompanhá-lo aqui, e nunca trava o registro.',
   campos: [
     { chave: 'numero', rotulo: 'Número do pedido', tipo: 'texto', obrigatorio: true },
     { chave: 'fornecedor', rotulo: 'Fornecedor', tipo: 'texto', obrigatorio: true },
@@ -48,6 +53,10 @@ export const PEDIDO_COMPRA: FormularioDef = {
 
     { chave: 'prazo', rotulo: 'Prazo de entrega combinado', tipo: 'data', obrigatorio: true,
       ajuda: 'É contra ele que o atraso do fornecedor se mede na avaliação.' },
+    // Opcional de propósito, e é a única razão pela qual ele pode estar aqui: a norma não pede
+    // valor, então exigi-lo faria o sistema recusar um pedido que, para ela, está completo.
+    { chave: 'valor', rotulo: 'Valor', tipo: 'texto',
+      ajuda: 'Opcional. A norma não pede o valor — o campo existe para quem quiser acompanhar o gasto no mesmo lugar, e deixá-lo em branco não impede nada.' },
     { chave: 'solicitadoEm', rotulo: 'Solicitado em', tipo: 'data', obrigatorio: true, preenchidoCom: 'hoje' },
     { chave: 'solicitadoPor', rotulo: 'Solicitado por', tipo: 'pessoa', obrigatorio: true, preenchidoCom: 'quem_registra' },
     { chave: 'aprovadoPor', rotulo: 'Aprovado por', tipo: 'pessoa', obrigatorio: true,
