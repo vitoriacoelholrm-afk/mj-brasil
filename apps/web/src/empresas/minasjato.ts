@@ -205,9 +205,9 @@ export const CATALOGADOS: DocumentoMestre[] = [
   }),
   catalogado('FM-004', 'Formulário — Pesquisa de Satisfação do Cliente', 'formulario', 'Comercial', 'Ger. Comercial', ['9.1.2'], 'irrestrito', { padroes: ['satisfacao_cliente'], tela: 'satisfacao' }),
   catalogado('FM-005', 'Formulário — Plano de Ação (5W2H)', 'formulario', 'Gestão da Qualidade', 'RQ', ['10.2'], 'irrestrito', { padroes: ['plano_acao'], tela: 'plano-acao' }),
-  catalogado('FM-006', 'Formulário — Controle de Recebimento de Peças', 'formulario', 'Logística', 'Logística', ['8.4.3'], 'irrestrito', { padroes: ['recebimento'], codigosParalelos: ['MJ-REC-01'] }),
-  catalogado('FM-007', 'Formulário — Romaneio de Expedição', 'formulario', 'Logística', 'Logística', ['8.5.4'], 'irrestrito', { padroes: ['expedicao'], codigosParalelos: ['MJ-ROM-01'] }),
-  catalogado('FM-008', 'Formulário — Avaliação de Fornecedores', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'] }),
+  catalogado('FM-006', 'Formulário — Controle de Recebimento de Peças', 'formulario', 'Logística', 'Logística', ['8.4.3'], 'irrestrito', { padroes: ['recebimento'], codigosParalelos: ['MJ-REC-01'], tela: 'recebimento' }),
+  catalogado('FM-007', 'Formulário — Romaneio de Expedição', 'formulario', 'Logística', 'Logística', ['8.5.4'], 'irrestrito', { padroes: ['expedicao'], codigosParalelos: ['MJ-ROM-01'], tela: 'romaneio' }),
+  catalogado('FM-008', 'Formulário — Avaliação de Fornecedores', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'], tela: 'avaliacao-fornecedor' }),
   // Um registro por pessoa por treinamento, com a avaliação da eficácia junto — que é o que a 7.2
   // pede reter. Absorveu a Lista de Presença em 21/09/2026: a folha assinada prova que a pessoa
   // esteve na sala; este registro prova que ela ficou competente, que é outra coisa e é a que a
@@ -301,7 +301,8 @@ export const CATALOGADOS: DocumentoMestre[] = [
   }),
 
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
-    nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código.',
+    tela: 'pedido-compra',
+    nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código. A tela não pede preço: o que a 8.4 manda controlar é o requisito comunicado ao fornecedor, e valor comercial dentro do sistema da qualidade obriga a restringir quem precisa auditar o processo.',
   }),
 ];
 

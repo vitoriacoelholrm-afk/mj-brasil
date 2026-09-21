@@ -18,6 +18,7 @@ import { sgqCompetencia, sgqRegistros } from './sgq-registros/modulo';
 import { sgqDocumentos } from './sgq-documentos/modulo';
 import { sgqManual } from './sgq-manual/modulo';
 import { sgqIndicadores } from './sgq-indicadores/modulo';
+import { suprimentos } from './suprimentos/modulo';
 import { tratamentoSuperficie } from './tratamento-superficie/modulo';
 
 export const MODULOS: Modulo[] = [
@@ -28,6 +29,7 @@ export const MODULOS: Modulo[] = [
   sgqIndicadores,
   nucleo,
   sgqCompetencia,
+  suprimentos,
   portaria,
   cadastros,
 ];

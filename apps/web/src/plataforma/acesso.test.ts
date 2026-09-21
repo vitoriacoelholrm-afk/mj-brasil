@@ -5,6 +5,9 @@ import {
   podeEditarOModelo, podeVer, somenteLeitura, type Papel,
 } from './acesso';
 import { NAO_CONFORMIDADE, REGISTRO_TREINAMENTO } from '@/modules/sgq-registros/formularios';
+import {
+  AVALIACAO_FORNECEDOR, PEDIDO_COMPRA, RECEBIMENTO, ROMANEIO,
+} from '@/modules/suprimentos/formularios';
 import { EQUIPE, papelAtual } from '@/lib/session';
 
 const PAPEIS = Object.keys(ACESSO) as Papel[];
@@ -136,6 +139,52 @@ describe('o setor de pessoas é do RH, e de mais ninguém', () => {
     expect(NAO_CONFORMIDADE.setor).toBe('os');
     expect(podeEditar('inspecao', 'rh')).toBe(false);
     expect(podeEditar('apoio', 'rh')).toBe(true);
+  });
+});
+
+describe('o setor de suprimentos é do administrativo', () => {
+  // Criado em 21/09/2026 por decisão dela. Os quatro formulários — pedido, recebimento, avaliação
+  // de fornecedor e romaneio — já estavam na lista mestra com código, e não tinham tela porque
+  // faltava responder quem preenche: nenhum dos setores existentes era compras.
+
+  it('o apoio preenche, porque é quem responde por compras na lista mestra da empresa', () => {
+    expect(podeVer('apoio', 'suprimentos')).toBe(true);
+    expect(podeEditar('apoio', 'suprimentos')).toBe(true);
+  });
+
+  it('a direção acompanha e não digita', () => {
+    // Aprovar fornecedor é decisão da direção; lançar o recebimento da nota não é.
+    expect(podeVer('direcao', 'suprimentos')).toBe(true);
+    expect(podeEditar('direcao', 'suprimentos')).toBe(false);
+  });
+
+  it('a consultoria NÃO entra — e isso tem consequência, como no setor de pessoas', () => {
+    // Mesma regra do RH, e a mesma contrapartida: quem audita a 8.4 não enxerga a avaliação de
+    // fornecedor por dentro do app. É decisão dela, e fica registrada para poder ser revista.
+    expect(podeVer('coordenacao_qualidade', 'suprimentos')).toBe(false);
+    expect(podeEditar('coordenacao_qualidade', 'suprimentos')).toBe(false);
+  });
+
+  it('quem toca a ordem de serviço e quem fica no portão também não', () => {
+    for (const papel of ['execucao', 'inspecao', 'portaria'] as const) {
+      expect(podeEditar(papel, 'suprimentos'), papel).toBe(false);
+    }
+  });
+
+  it('só um papel escreve em suprimentos', () => {
+    expect(PAPEIS.filter((p) => podeEditar(p, 'suprimentos'))).toEqual(['apoio']);
+  });
+
+  it('os quatro formulários declaram o setor novo, e nenhum pede preço', () => {
+    // A 8.4 manda controlar o REQUISITO comunicado ao fornecedor, não o valor. Valor comercial
+    // dentro do sistema da qualidade obriga a restringir o acesso de quem precisa auditar — é a
+    // mesma régua que manteve o faturamento em reais fora dos indicadores.
+    const dinheiro = /preco|preço|valor|custo|unitario|unitário|total|reais/i;
+    for (const def of [PEDIDO_COMPRA, RECEBIMENTO, AVALIACAO_FORNECEDOR, ROMANEIO]) {
+      expect(def.setor, def.papel).toBe('suprimentos');
+      const campos = def.campos.map((c) => `${c.chave} ${c.rotulo}`).join(' | ');
+      expect(dinheiro.test(campos), `${def.papel}: ${campos}`).toBe(false);
+    }
   });
 });
 

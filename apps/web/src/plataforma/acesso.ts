@@ -45,6 +45,10 @@ export type Permissao =
   | 'portaria.ver'
   /** Registrar uma passagem pelo portão. */
   | 'portaria.editar'
+  /** Abrir o que a empresa compra e o que ela recebe e expede. */
+  | 'suprimentos.ver'
+  /** Preencher esses registros: pedido, recebimento, romaneio, avaliação de fornecedor. */
+  | 'suprimentos.editar'
   /** Enxergar o sistema da qualidade: situação, lista mestra, diagnóstico, indicadores.
    *  Quem tem um posto de uso único — um terminal de portão, por exemplo — não tem. */
   | 'sgq.ver'
@@ -77,13 +81,14 @@ export type Permissao =
  *  Existe porque acesso não é uma régua só. Quem preenche a ordem de serviço não é quem preenche
  *  a ficha de treinamento, e nenhum dos dois precisa do que é do outro. Sem setor, a única saída
  *  seria dar tudo a todo mundo ou inventar um papel novo a cada tela. */
-export type Setor = 'os' | 'rh' | 'portaria' | 'sgq';
+export type Setor = 'os' | 'rh' | 'portaria' | 'sgq' | 'suprimentos';
 
 export const SETOR_ROTULO: Record<Setor, string> = {
   os: 'ordem de serviço',
   rh: 'registros de pessoas',
   portaria: 'entrada e saída de cargas',
   sgq: 'gestão do sistema da qualidade',
+  suprimentos: 'compras, recebimento e expedição',
 };
 
 const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
@@ -91,6 +96,7 @@ const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
   rh: { ver: 'rh.ver', editar: 'rh.editar' },
   portaria: { ver: 'portaria.ver', editar: 'portaria.editar' },
   sgq: { ver: 'sgq.ver', editar: 'sgq.editar' },
+  suprimentos: { ver: 'suprimentos.ver', editar: 'suprimentos.editar' },
 };
 
 const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 'relatorio.emitir'];
@@ -101,7 +107,9 @@ const ACESSO: Record<Papel, Permissao[]> = {
   // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica. Mas o que a
   // NORMA manda a organização determinar sobre o próprio sistema é dela: a 7.4 pede determinar o
   // que se comunica e por quem, e determinar é ato de liderança (§5.1, §5.3).
-  direcao: ['sgq.ver', 'os.ver', 'sgq.editar'],
+  // A direção acompanha o que a empresa compra sem preencher pedido: aprovar fornecedor é decisão
+  // dela, digitar o recebimento não é.
+  direcao: ['sgq.ver', 'os.ver', 'sgq.editar', 'suprimentos.ver'],
   // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
   execucao: ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar'],
   // Quem registra a medição e assina o relatório que vai ao cliente. Pode ser mais de uma
@@ -110,7 +118,12 @@ const ACESSO: Record<Papel, Permissao[]> = {
   inspecao: TUDO_NA_OS,
   // Administrativo. A ordem de serviço não é assunto dele; os registros de pessoas são — e são
   // só dele. Decisão dela: o RH preenche, e ninguém mais entra nesse setor.
-  apoio: ['sgq.ver', 'rh.ver', 'rh.editar'],
+  //
+  // Suprimentos entrou em 21/09/2026, pela mesma lógica e por decisão dela: na lista mestra da
+  // empresa 01, quem responde pelo pedido de compra e pela avaliação de fornecedor é a gerência
+  // administrativa, que é este papel. Compras, recebimento e expedição andam juntos porque são o
+  // mesmo caminho — o que se pede, o que chega e o que sai.
+  apoio: ['sgq.ver', 'rh.ver', 'rh.editar', 'suprimentos.ver', 'suprimentos.editar'],
   // Posto de uso único: um terminal no portão. Não é console do sistema da qualidade, e por
   // isso não recebe `sgq.ver` — a tela abre já no que ele tem a fazer, e nada mais aparece.
   portaria: ['portaria.ver', 'portaria.editar'],

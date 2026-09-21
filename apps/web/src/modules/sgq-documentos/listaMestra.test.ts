@@ -100,7 +100,8 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
 
   it('toda tela declarada aponta para uma tela que existe', () => {
     const telas = new Set(['plano', 'instrumentos', 'lista-mestra', 'clientes', 'diagnostico', 'vencimentos', 'situacao', 'propriedade-cliente', 'mudanca-producao', 'nao-conformidade', 'indicadores', 'treinamento', 'comunicacao', 'pos-entrega',
-      'cargas', 'plano-acao', 'plano-auditoria', 'satisfacao']);
+      'cargas', 'plano-acao', 'plano-auditoria', 'satisfacao',
+      'pedido-compra', 'recebimento', 'avaliacao-fornecedor', 'romaneio']);
     for (const d of LISTA_MESTRA) {
       if (d.tela) expect(telas, `${d.codigo} aponta para "${d.tela}"`).toContain(d.tela);
     }
