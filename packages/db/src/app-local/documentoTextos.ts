@@ -28,10 +28,10 @@ export async function listarTextos(db: DbOrTx, ctx: Context, input: z.infer<type
   if (!can(ctx, 'registro.read')) throw new ForbiddenError('registro.read');
 
   const rows = (await db.execute(sql`
-    select codigo, texto, atualizado_por_nome, updated_at
+    select codigo, secao, texto, atualizado_por_nome, updated_at
     from documento_textos
     where org_id = ${ctx.orgId}::uuid and perfil = ${i.perfil}
-    order by codigo`)) as unknown as Array<Record<string, unknown>>;
+    order by codigo, secao`)) as unknown as Array<Record<string, unknown>>;
 
   return { rows };
 }
@@ -39,27 +39,30 @@ export async function listarTextos(db: DbOrTx, ctx: Context, input: z.infer<type
 export const salvarTextoInput = z.object({
   perfil: z.string().min(1).max(80),
   codigo: z.string().min(1).max(40),
+  /** O endereço dentro do documento. No manual é a cláusula da norma; vazio é o documento
+   *  inteiro, que é como todo o resto do sistema o usa. */
+  secao: z.string().max(20).optional(),
   texto: z.string().max(LIMITE),
   atualizadoPorNome: z.string().max(200).nullable().optional(),
 });
 
-/** Grava o texto de um documento. Upsert pela tripla (empresa, perfil, código): escrever duas
- *  vezes o mesmo documento atualiza, não duplica — duas versões do mesmo código na mesma lista é
- *  exatamente o conflito que o sistema existe para evitar. */
+/** Grava o texto de um documento. Upsert pela quádrupla (empresa, perfil, código, seção):
+ *  escrever duas vezes o mesmo trecho atualiza, não duplica — duas versões do mesmo código na
+ *  mesma lista é exatamente o conflito que o sistema existe para evitar. */
 export async function salvarTexto(db: DbOrTx, ctx: Context, input: z.infer<typeof salvarTextoInput>) {
   const i = salvarTextoInput.parse(input);
   if (!can(ctx, 'registro.write')) throw new ForbiddenError('registro.write');
 
   const rows = (await db.execute(sql`
-    insert into documento_textos (org_id, perfil, codigo, texto, atualizado_por_nome, created_by, updated_by)
-    values (${ctx.orgId}::uuid, ${i.perfil}, ${i.codigo}, ${i.texto},
+    insert into documento_textos (org_id, perfil, codigo, secao, texto, atualizado_por_nome, created_by, updated_by)
+    values (${ctx.orgId}::uuid, ${i.perfil}, ${i.codigo}, ${i.secao ?? ''}, ${i.texto},
             ${i.atualizadoPorNome ?? null}, ${ctx.membershipId}, ${ctx.membershipId})
-    on conflict (org_id, perfil, codigo) do update
+    on conflict (org_id, perfil, codigo, secao) do update
       set texto = excluded.texto,
           atualizado_por_nome = excluded.atualizado_por_nome,
           updated_by = excluded.updated_by,
           updated_at = now()
-    returning codigo, texto, atualizado_por_nome, updated_at`)) as unknown as Array<Record<string, unknown>>;
+    returning codigo, secao, texto, atualizado_por_nome, updated_at`)) as unknown as Array<Record<string, unknown>>;
 
   return rows[0];
 }

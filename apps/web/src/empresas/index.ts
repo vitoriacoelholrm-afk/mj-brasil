@@ -13,3 +13,8 @@ import '@/empresas/minasjato.ordens';
 
 // E o levantamento do diagnóstico dela, entregue ao módulo dos documentos.
 import '@/empresas/minasjato.diagnostico';
+
+// O texto dos manuais da qualidade, entregue ao módulo do manual. O da empresa 01 é a letra do
+// documento que ela emitiu; o do modelo é exemplo, e é o único que se escreve pela tela.
+import '@/empresas/minasjato.manual';
+import '@/empresas/modelo.manual';

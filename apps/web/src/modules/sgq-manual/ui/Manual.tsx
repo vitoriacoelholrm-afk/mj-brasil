@@ -13,6 +13,8 @@ import { AVALIACAO_ROTULO, type Avaliacao } from '@/modules/sgq-documentos/diagn
 import { NATUREZA_ROTULO } from '@/plataforma/documentos';
 import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
 import { quantosEspecificos, relacionadosDa } from '../relacionados';
+import { clausulasEscritas, manualDaEmpresa } from '../texto';
+import { TextoDaClausula, resumoDoManual } from './TextoDaClausula';
 import { Cabecalho } from '@/ui/Cabecalho';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
@@ -33,25 +35,35 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
   }
 
   const soNoManual = CLAUSULAS.filter((x) => quantosEspecificos(x.ref, modulos) === 0).length;
+  const manual = manualDaEmpresa();
+  const escritas = new Set(clausulasEscritas());
+  const semTexto = CLAUSULAS.filter((x) => !escritas.has(x.ref)).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Cabecalho
         titulo="Manual"
-        sub="A ISO 9001:2015 inteira, cláusula por cláusula. Clique numa delas para ver o que a empresa tem: documento, onde se registra, e o que a norma ainda pede."
+        sub="A ISO 9001:2015 inteira, cláusula por cláusula. Clique numa delas para ler o que a empresa escreveu no manual e ver o que responde por ela: documento, onde se registra, e o que a norma ainda pede."
       />
 
       <div style={S.resumo}>
+        {manual && (
+          <span style={pastilha(semTexto ? 'alerta' : 'ok')}>
+            {semTexto
+              ? `${CLAUSULAS.length - semTexto} de ${CLAUSULAS.length} descritas no ${manual.codigo}`
+              : `as ${CLAUSULAS.length} cláusulas descritas no ${manual.codigo}`}
+          </span>
+        )}
         <span style={pastilha(soNoManual ? 'alerta' : 'ok')}>
           {soNoManual
-            ? `${soNoManual} de ${CLAUSULAS.length} só no manual`
-            : `as ${CLAUSULAS.length} cláusulas têm documento próprio`}
+            ? `${soNoManual} sem documento próprio`
+            : 'todas com documento próprio'}
         </span>
         <span style={{ ...s.prosa, fontSize: 13, color: c.suave }}>
-          Todas estão cobertas no papel: o Manual da Qualidade percorre a norma inteira, que é o
-          que um manual faz. Mas o auditor não pergunta onde a cláusula está coberta — pergunta
-          QUAL procedimento, QUAL formulário, QUAL registro responde por ela. Nas marcadas, a
-          única resposta é o manual.
+          São duas perguntas diferentes, e o auditor faz as duas. A primeira é o que a empresa DIZ
+          que faz — está no manual, e agora se lê aqui, em cada cláusula. A segunda é QUAL
+          procedimento, QUAL formulário, QUAL registro sustenta o que o manual diz. Nas marcadas
+          com "sem documento próprio", a segunda resposta ainda é o manual de novo.
         </span>
       </div>
 
@@ -77,7 +89,18 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
                   }}
                 >
                   <span style={S.ref}>{x.ref}</span>
-                  <span style={S.titulo}>{x.titulo}</span>
+                  <span style={S.titulo}>
+                    {x.titulo}
+                    {/* O resumo do que o manual diz, na própria lista: quem procura a cláusula
+                        reconhece o texto antes de abrir. */}
+                    {manual && (
+                      <span style={S.resumoClausula}>
+                        {escritas.has(x.ref)
+                          ? resumoDoManual(x.ref, celular ? 80 : 150)
+                          : `sem texto no ${manual.codigo}`}
+                      </span>
+                    )}
+                  </span>
                   {!celular && (
                     <span style={quantos ? pastilha('neutro') : pastilha('alerta')}>
                       {quantos === 0 ? 'só pelo manual' : `${quantos} ${quantos === 1 ? 'documento' : 'documentos'}`}
@@ -113,6 +136,10 @@ function Clausula({ ref_, modulos, irPara, aoVoltar }: {
           ? <span style={pastilha(TOM_DA_AVALIACAO[r.avaliacao])}>{AVALIACAO_ROTULO[r.avaliacao]}</span>
           : <span style={pastilha('neutro')}>não avaliada</span>}
       />
+
+      {/* Primeiro o que a empresa DIZ que faz — é a pergunta que o auditor faz antes de qualquer
+          outra. A lista de documentos vem depois, que é a prova. */}
+      <TextoDaClausula ref_={r.clausula.ref} />
 
       <Bloco
         titulo="Documentos da empresa"
@@ -212,7 +239,11 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: fonte.texto,
   },
   ref: { fontFamily: fonte.mono, fontSize: 12.5, fontWeight: 700, color: c.tinta2, minWidth: 42 },
-  titulo: { fontSize: 14, color: c.tinta, minWidth: 0 },
+  titulo: { fontSize: 14, color: c.tinta, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 },
+  resumoClausula: {
+    fontSize: 12, color: c.suave, lineHeight: 1.5,
+    overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+  } as React.CSSProperties,
   seta: { color: c.suave, fontSize: 20, lineHeight: 1 },
   vazio: { fontSize: 13.5, color: c.suave, lineHeight: 1.6, padding: '16px 18px' },
   item: {

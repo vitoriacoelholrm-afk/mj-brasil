@@ -69,7 +69,7 @@ export function Documento({ doc, aoVoltar }: { doc: DocumentoMestre; aoVoltar: (
       await salvarTexto(empresa.id, doc.codigo, texto, quem);
       // Só considera gravado depois que o banco confirmou. Marcar antes daria "salvo" numa tela
       // onde a pessoa acabou de escrever três páginas que não foram a lugar nenhum.
-      setGravado({ codigo: doc.codigo, texto, atualizadoPorNome: quem, atualizadoEm: new Date().toISOString() });
+      setGravado({ codigo: doc.codigo, secao: '', texto, atualizadoPorNome: quem, atualizadoEm: new Date().toISOString() });
     } catch (e) {
       setErro((e as Error)?.message ?? 'não foi possível gravar');
     } finally {
