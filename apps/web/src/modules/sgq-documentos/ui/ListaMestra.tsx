@@ -536,17 +536,22 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
   },
   busca: { ...s.campo, flex: '1 1 240px', minWidth: 180 },
+  // A borda vem inteira nos dois estados, e não `border` num e `borderColor` no outro: misturar
+  // atalho com propriedade solta faz o React largar um aviso a cada redesenho — e, pior, deixa a
+  // borda num estado que depende da ordem em que os dois objetos foram mesclados.
   seletor: {
     ...s.campo, width: 'auto', flex: '0 0 auto', maxWidth: 220,
-    cursor: 'pointer', color: c.tinta2,
+    cursor: 'pointer', color: c.tinta2, border: `1px solid ${c.linhaForte}`,
   },
-  seletorAtivo: { borderColor: c.acentoMarca, background: c.acentoFraco, color: c.acento, fontWeight: 600 },
+  seletorAtivo: {
+    border: `1px solid ${c.acentoMarca}`, background: c.acentoFraco, color: c.acento, fontWeight: 600,
+  },
   alternar: {
     ...s.botao, padding: '9px 13px', fontSize: 13.5, textTransform: 'none', letterSpacing: 0,
-    color: c.tinta2, whiteSpace: 'nowrap',
+    color: c.tinta2, whiteSpace: 'nowrap', border: `1px solid ${c.linhaForte}`,
   },
   alternarAtivo: {
-    borderColor: c.critico, background: c.criticoFraco, color: c.critico, fontWeight: 700,
+    border: `1px solid ${c.critico}`, background: c.criticoFraco, color: c.critico, fontWeight: 700,
   },
   limpar: {
     border: 'none', background: 'none', padding: 0, marginLeft: 8, cursor: 'pointer',
