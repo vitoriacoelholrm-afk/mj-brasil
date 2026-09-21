@@ -19,7 +19,7 @@ interface AnexoDoBanco {
   etapa: string | null; adicionadoPorNome: string | null; criadoEm: string | null;
 }
 interface LinhaDoBanco {
-  id: string; papel: string; valores: Valores | null;
+  id: string; papel: string; numero: number | null; ano: number | null; valores: Valores | null;
   registrado_por_nome: string | null; created_at: string; anexos: AnexoDoBanco[] | null;
 }
 
@@ -64,6 +64,8 @@ function registroDaLinha(r: LinhaDoBanco): Registro {
   return {
     id: r.id,
     papel: r.papel as PapelDeFormulario,
+    numero: r.numero ?? null,
+    ano: r.ano ?? null,
     valores: r.valores ?? {},
     anexos: (r.anexos ?? []).map(anexoDaLinha),
     criadoEm: dataLocal(r.created_at),

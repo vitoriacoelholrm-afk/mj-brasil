@@ -50,11 +50,32 @@ export async function criarRegistro(db: DbOrTx, ctx: Context, input: z.infer<typ
   const i = criarRegistroInput.parse(input);
   if (!can(ctx, 'registro.write')) throw new ForbiddenError('registro.write');
 
+  // O NÚMERO sai daqui, e não da tela. Quem conta é o banco, dentro do mesmo insert, lendo o
+  // último número daquele formulário naquele ano — duas pessoas registrando ao mesmo tempo
+  // pegariam o mesmo número se quem contasse fosse o app, e dois registros com o mesmo número é o
+  // conflito de identificação que este sistema existe para evitar. O índice único da 0023 é a
+  // trava: se ainda assim duas transações chegarem juntas, uma falha em vez de duplicar.
+  //
+  // O ano vem do fuso de São Paulo, e não de UTC: registro feito às 21h30 de 31 de dezembro sairia
+  // numerado como do ano seguinte se a conta fosse em UTC.
   const linhas = (await db.execute(sql`
-    insert into registros (org_id, papel, valores, registrado_por_nome, created_by, updated_by)
-    values (${ctx.orgId}::uuid, ${i.papel}, ${JSON.stringify(i.valores)}::jsonb,
-            ${i.registradoPorNome ?? null}, ${ctx.membershipId}, ${ctx.membershipId})
-    returning id, created_at`)) as unknown as Array<{ id: string; created_at: unknown }>;
+    with agora as (
+      select (now() at time zone 'America/Sao_Paulo')::date as hoje
+    ), proximo as (
+      select extract(year from (select hoje from agora))::int as ano,
+             coalesce(max(r.numero), 0) + 1 as numero
+        from registros r
+       where r.org_id = ${ctx.orgId}::uuid
+         and r.papel = ${i.papel}
+         and r.ano = extract(year from (select hoje from agora))::int
+    )
+    insert into registros
+      (org_id, papel, ano, numero, valores, registrado_por_nome, created_by, updated_by)
+    select ${ctx.orgId}::uuid, ${i.papel}, p.ano, p.numero, ${JSON.stringify(i.valores)}::jsonb,
+           ${i.registradoPorNome ?? null}, ${ctx.membershipId}, ${ctx.membershipId}
+      from proximo p
+    returning id, numero, ano, created_at`)) as unknown as
+      Array<{ id: string; numero: number; ano: number; created_at: unknown }>;
   const registro = linhas[0];
 
   for (const a of i.anexos) {
@@ -70,7 +91,9 @@ export async function criarRegistro(db: DbOrTx, ctx: Context, input: z.infer<typ
               ${bytes}, ${i.registradoPorNome ?? null}, ${ctx.membershipId}, ${ctx.membershipId})`);
   }
 
-  return { id: registro.id, criadoEm: registro.created_at };
+  return {
+    id: registro.id, numero: registro.numero, ano: registro.ano, criadoEm: registro.created_at,
+  };
 }
 
 export const listarRegistrosInput = z.object({
@@ -86,7 +109,7 @@ export async function listarRegistros(db: DbOrTx, ctx: Context, input: z.infer<t
   if (!can(ctx, 'registro.read')) throw new ForbiddenError('registro.read');
 
   const rows = (await db.execute(sql`
-    select r.id, r.papel, r.valores, r.registrado_por_nome, r.created_at,
+    select r.id, r.papel, r.numero, r.ano, r.valores, r.registrado_por_nome, r.created_at,
            coalesce(
              (select json_agg(json_build_object(
                 'id', a.id, 'tipo', a.tipo, 'nome', a.nome, 'mime', a.mime,
@@ -98,7 +121,7 @@ export async function listarRegistros(db: DbOrTx, ctx: Context, input: z.infer<t
              '[]'::json) as anexos
     from registros r
     where r.org_id = ${ctx.orgId}::uuid and r.papel = ${i.papel}
-    order by r.created_at desc, r.id desc
+    order by r.ano desc nulls last, r.numero desc nulls last, r.created_at desc, r.id desc
     limit ${i.limite}`)) as unknown as Array<Record<string, unknown>>;
 
   return { rows };

@@ -73,6 +73,65 @@ describe.skipIf(!HAS_DB)('registros do SGQ (Postgres real)', () => {
     expect(lido.created_at).toBeTruthy();
   });
 
+  /* ══ A numeração ═══════════════════════════════════════════════════════════════════════════ */
+
+  describe('o registro recebe NÚMERO, e quem numera é o banco', () => {
+    // O auditor não pergunta pelo uuid: pergunta "me mostra o RNC 05". A 7.5.2 pede identificação,
+    // e é o número que faz o registro ser citável num plano de ação, numa ata ou num e-mail.
+    const PAPEL = 'test_numeracao';
+    // Marca própria: estes registros nascem em DUAS empresas, e a suíte de isolamento conta os
+    // dela pela marca. Dividir a marca faria um teste sujar a contagem do outro.
+    const MARCA_NUM = 'test.numeracao.vitest';
+    let db: typeof import('../src/index');
+    const base = {
+      membershipId: '00000000-0000-4000-9000-000000000001',
+      actor: 'member:00000000-0000-4000-9000-000000000001',
+      rbacRole: 'admin' as const, permissions: new Set(['*']),
+    };
+
+    const criar = (org: string, papel = PAPEL) =>
+      withTenant(org, (tx) => db.criarRegistro(
+        tx as any, { ...base, orgId: org } as any,
+        { papel, valores: { x: '1', marca: MARCA_NUM } } as any,
+      )) as any;
+
+    beforeAll(async () => {
+      db = await import('../src/index');
+      await admin`delete from registros where valores->>'marca' = ${MARCA_NUM}`;
+    });
+    afterAll(async () => {
+      if (admin) await admin`delete from registros where valores->>'marca' = ${MARCA_NUM}`;
+    });
+
+    it('numera 1, 2, 3 dentro do mesmo formulário', async () => {
+      const a = await criar(UMA);
+      const b = await criar(UMA);
+      const c = await criar(UMA);
+      expect(b.numero).toBe(a.numero + 1);
+      expect(c.numero).toBe(b.numero + 1);
+      expect(a.ano).toBe(new Date().getFullYear());
+    });
+
+    it('cada formulário tem a sua sequência — o RNC 001 e o plano de ação 001 convivem', async () => {
+      expect((await criar(UMA, 'test_numeracao_2')).numero).toBe(1);
+    });
+
+    it('e a sequência de uma empresa não conta a da outra', async () => {
+      // Se a numeração ignorasse o org_id, o primeiro registro da empresa vizinha começaria no
+      // número seguinte ao desta — e o número diria quantos registros o VIZINHO tem.
+      expect((await criar(OUTRA, 'test_numeracao_3')).numero).toBe(1);
+    });
+
+    it('dois registros nunca dividem o mesmo número — o índice único é a trava', async () => {
+      await expect(withTenant(UMA, (tx) => tx.execute(sql`
+        insert into registros (papel, ano, numero, valores)
+        select papel, ano, numero, ${JSON.stringify({ x: 'clone', marca: MARCA_NUM })}::jsonb
+          from registros
+         where papel = ${PAPEL} and org_id = ${UMA}::uuid
+         limit 1`))).rejects.toThrow();
+    });
+  });
+
   it('uma tabela serve qualquer formulário — é o que faz formulário novo não pedir migração', async () => {
     // Se cada formulário exigisse tabela própria, digitalizar o próximo voltaria a ser código,
     // revisão e deploy. A definição em `plataforma/formularios.ts` é que descreve os campos.

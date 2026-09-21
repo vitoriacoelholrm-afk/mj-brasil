@@ -84,6 +84,8 @@ describe('a folha do registro preenchido', () => {
 
   const registro: RegistroParaFolha = {
     id: 'reg-teste-01',
+    numero: 3,
+    ano: 2026,
     criadoEm: '2026-09-18T14:20:00.000Z',
     criadoPor: 'Emerson William de Faria',
     valores: {
@@ -132,6 +134,19 @@ describe('a folha do registro preenchido', () => {
     expect(html()).toContain('data:image/png;base64,AAA');
     expect(html()).toContain('Reunião de abertura');
     expect(html()).toContain('relatorio-03-2026.pdf');
+  });
+
+  it('sai identificado pelo NÚMERO, e o uuid não vai para o papel', () => {
+    // "Me mostra o RNC 05" tem resposta; "me mostra o 9f3a-…" não tem. O uuid identifica a linha
+    // no banco e não serve para citar num plano de ação nem para conferir numa pasta.
+    expect(html()).toContain('nº 003/2026');
+    expect(html()).not.toContain('reg-teste-01');
+  });
+
+  it('registro antigo sem número diz que não tem, em vez de fingir um', () => {
+    const semNumero = { ...registro, numero: null, ano: null };
+    const f = folhaDoFormulario(formularioDoPapel('plano_auditoria')!, semNumero);
+    expect(f).toContain('sem número');
   });
 
   it('quem preencheu já vem assinado; quem verifica, não', () => {

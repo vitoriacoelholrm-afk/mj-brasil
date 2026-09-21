@@ -29,6 +29,9 @@ import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
  *  A tela passa os anexos como ela os tem — com imagem, se já carregou; sem, se ainda não. */
 export interface RegistroParaFolha {
   id: string;
+  /** O sequencial do formulário no ano. É o que sai no papel — o uuid não sai. */
+  numero: number | null;
+  ano: number | null;
   valores: Valores;
   anexos: Anexo[];
   criadoEm: string;
@@ -41,6 +44,13 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const dataDeHoje = () => new Date().toLocaleDateString('pt-BR');
+
+/** O número do registro no papel: "nº 003/2026". O uuid não sai daqui — ninguém cita um uuid, e
+ *  ninguém o confere numa pasta. Registro antigo sem número diz que não tem, em vez de fingir. */
+const numeroDo = (r: RegistroParaFolha) =>
+  (r.numero === null || r.ano === null
+    ? 'sem número'
+    : `nº ${String(r.numero).padStart(3, '0')}/${r.ano}`);
 
 /** 'AAAA-MM-DD' vira 'DD/MM/AAAA'. O que não for data volta como veio. */
 const br = (v: string) =>
@@ -133,7 +143,7 @@ function folha(
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>${esc(carimbo ?? def.titulo)} — ${esc(def.titulo)}${registro ? ` — ${esc(br(registro.criadoEm))}` : ''}</title>
+<title>${esc(carimbo ?? def.titulo)} — ${esc(def.titulo)}${registro ? ` — ${esc(numeroDo(registro))}` : ''}</title>
 <style>
   @page { size: A4; margin: 14mm 12mm 16mm; }
   * { box-sizing: border-box; }
@@ -213,9 +223,9 @@ function folha(
 
   ${registro ? `
   <div class="registro">
+    <span>Registro <b>${esc(numeroDo(registro))}</b></span>
     <span>Registrado em <b>${esc(br(registro.criadoEm))}</b></span>
     <span>Por <b>${esc(registro.criadoPor ?? '—')}</b></span>
-    <span>Identificação interna <b>${esc(registro.id)}</b></span>
   </div>`
   : `<p class="explicacao">${esc(def.explicacao)}</p>`}
 

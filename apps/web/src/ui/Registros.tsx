@@ -7,12 +7,12 @@
 // Vale a mesma regra de acesso do resto: quem confere não preenche.
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  campoVisivel, faltaFoto, pendencias, resumoDoRegistro, valoresIniciais,
+  campoVisivel, faltaFoto, identificacaoDo, pendencias, resumoDoRegistro, valoresIniciais,
   type CampoDef, type FormularioDef, type Registro, type Valores,
 } from '@/plataforma/formularios';
 import type { Anexo } from '@/plataforma/anexos';
 import { Anexos } from '@/ui/Anexos';
-import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
+import { carimboDoPapel, codigoDoPapel } from '@/modules/sgq-documentos/listaMestra';
 import { abrirFormularioEmJanela, folhaDoFormulario } from '@/ui/folhaImpressa';
 import { FolhaNaTela } from '@/ui/FolhaNaTela';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
@@ -183,7 +183,13 @@ function Lista({
             ...(celular ? { display: 'grid', gridTemplateColumns: 'auto 1fr auto', rowGap: 3 } : null),
           }}
         >
-          <span style={S.linhaData}>{dataBR(r.criadoEm)}</span>
+          {/* O NÚMERO na frente, e não a data: é por ele que o registro é pedido. "Me mostra o
+              RNC 05" tem resposta nesta coluna; "me mostra o de 18/09" não tem, porque num dia
+              cheio há três. A data vem logo abaixo, que é onde ela ajuda a achar. */}
+          <span style={S.linhaNumero}>
+            {identificacaoDo(r)}
+            <span style={S.linhaData}>{dataBR(r.criadoEm)}</span>
+          </span>
           {celular
             ? <>
                 <span style={{ ...S.linhaAutor, textAlign: 'right' }}>{r.criadoPor}</span>
@@ -374,7 +380,8 @@ function Visualizacao({
 
       <div style={{ ...s.cartao, overflow: 'hidden' }}>
         <div style={S.faixa}>
-          <span>Registro de {dataBR(registro.criadoEm)}</span>
+          {/* A identificação, e não a data: é ela que se cita num plano de ação ou num e-mail. */}
+          <span>{identificacaoDo(registro, codigoDoPapel(def.papel))} · {dataBR(registro.criadoEm)}</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11.5, color: c.suave, fontWeight: 400 }}>
               por {registro.criadoPor ?? '—'}
@@ -456,7 +463,11 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
     padding: '13px 18px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: fonte.texto,
   },
-  linhaData: { fontFamily: fonte.mono, fontSize: 12.5, color: c.suave, flexShrink: 0 },
+  linhaNumero: {
+    display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: 92,
+    fontFamily: fonte.mono, fontSize: 12.5, fontWeight: 700, color: c.tinta2,
+  },
+  linhaData: { fontFamily: fonte.mono, fontSize: 11.5, fontWeight: 400, color: c.suave, flexShrink: 0 },
   linhaResumo: { fontSize: 14, color: c.tinta, flex: 1, minWidth: 0 },
   linhaAutor: { fontSize: 12, color: c.suave, flexShrink: 0 },
   seta: { color: c.suave, fontSize: 20, flexShrink: 0, lineHeight: 1 },

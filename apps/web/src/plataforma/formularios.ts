@@ -57,10 +57,28 @@ export type Valores = Record<string, string>;
 export interface Registro {
   id: string;
   papel: PapelDeFormulario;
+  /** O sequencial dentro do formulário e do ano, atribuído pelo banco na gravação. Null só em
+   *  registro antigo que nunca foi numerado — a tela mostra assim em vez de inventar um número. */
+  numero: number | null;
+  ano: number | null;
   valores: Valores;
   anexos: Anexo[];
   criadoEm: string;
   criadoPor: string | null;
+}
+
+/** A identificação citável de um registro: "FM-010 nº 003/2026".
+ *
+ *  É o que o auditor pede — "me mostra o RNC 05" — e é o que se escreve num plano de ação, numa
+ *  ata de análise crítica ou num e-mail ao cliente. O uuid identifica a linha no banco e não serve
+ *  para nada disso: ninguém cita um uuid, e ninguém o confere numa pasta.
+ *
+ *  O código é da EMPRESA e entra por fora: a plataforma não sabe qual código cada cliente deu ao
+ *  formulário, e não pode saber. Sem código, devolve só o número, que continua identificando. */
+export function identificacaoDo(registro: Registro, codigo?: string | null): string {
+  if (registro.numero === null || registro.ano === null) return codigo ?? 'sem número';
+  const n = `nº ${String(registro.numero).padStart(3, '0')}/${registro.ano}`;
+  return codigo ? `${codigo} ${n}` : n;
 }
 
 /** A data de hoje pelo relógio de quem está usando, no formato que o campo de data entende. */
