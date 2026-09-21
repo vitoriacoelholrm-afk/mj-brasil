@@ -92,11 +92,17 @@ describe('depois do alinhamento', () => {
     expect(c.atendidos.length).toBe(48);
   });
 
-  it('não falta mais nada contra o catálogo padrão', () => {
+  it('das seis faltas de 16/09 nenhuma voltou — as duas de agora são perguntas novas', () => {
     const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
     // Eram 6 em 16/09 de manhã. Fecharam em três rodadas: o manual, os dois formulários da
     // 8.5.3/8.5.6, e por último a 8.7.2 (no RNC que já existia) e a 9.1.1 (documento novo).
-    expect(c.faltando).toEqual([]);
+    for (const antiga of ['manual_qualidade', 'escopo_sgq', 'politica_qualidade',
+      'propriedade_cliente', 'mudanca_producao', 'saida_nao_conforme', 'monitoramento_medicao']) {
+      expect(c.faltando.map((x) => x.chave), antiga).not.toContain(antiga);
+    }
+    // As duas de 21/09 são da comunicação (7.4) e do pós-entrega (8.5.5), que o catálogo passou
+    // a perguntar. Documento nenhum foi perdido: a pergunta é que é nova.
+    expect(c.faltando.map((x) => x.chave).sort()).toEqual(['comunicacao_sgq', 'pos_entrega']);
   });
 
   it('a Minasjato usa dois módulos: o do setor e o de segurança', () => {

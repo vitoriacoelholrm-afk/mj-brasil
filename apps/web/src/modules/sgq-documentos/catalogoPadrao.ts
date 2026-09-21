@@ -65,6 +65,13 @@ export interface DocumentoPadrao {
   /** O que fazer para atender, em uma frase. É a diferença entre saber que falta e saber o que
    *  criar. */
   comoAtender?: string;
+  /** O ESQUELETO: os pontos que a cláusula obriga o documento a cobrir, na ordem em que fazem
+   *  sentido no papel.
+   *
+   *  Não é o texto — o texto é de quem conhece a empresa. É a estrutura, que é da norma e vale
+   *  para qualquer cliente. Serve para escrever contra uma lista em vez de contra uma página em
+   *  branco, e para o auditor não achar o parágrafo que ninguém lembrou de escrever. */
+  roteiro?: string[];
   origem: string;
   /** O código que a empresa recebe se adotar a codificação padrão. */
   codigoSugerido: string;
@@ -149,6 +156,44 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
   d('controle_cargas', 'Controle de Entrada e Saída de Cargas', 'formulario', 'Logística', ['8.5.4'], 'pratica', 'FR-020',
     { papel: 'controle_cargas',
       nota: 'O livro da portaria. Não substitui o recebimento nem o romaneio: aqueles inspecionam a carga, este registra o veículo passando pelo portão.' }),
+
+  // ── Duas que faltavam ao próprio catálogo, acrescentadas em 21/09/2026 ──────────────────────
+  //
+  // Não estavam aqui, e por isso nenhuma empresa aparecia devendo — a cobertura dava 100% sem a
+  // pergunta ter sido feita. Catálogo que não pergunta não acha: o buraco era do catálogo, não
+  // das empresas.
+  //
+  // As duas entram como 'pratica' e não como 'norma', e a diferença é real: a ISO 9001:2015 não
+  // manda RETER informação documentada em nenhuma das duas. O que ela manda é DETERMINAR (7.4) e
+  // ATENDER (8.5.5) — e não há como demonstrar que se determinou sem ter escrito em algum lugar.
+  // Por isso a falta é achado de auditoria mesmo sem ser exigência literal de documento.
+
+  d('comunicacao_sgq', 'Comunicação do Sistema da Qualidade', 'procedimento', 'Gestão da Qualidade', ['7.4'], 'pratica', 'PR-009', {
+    comoAtender: 'Uma matriz de uma página basta. A cláusula lista cinco perguntas e o documento responde as cinco, linha por linha de comunicação.',
+    nota: 'Não confundir com a comunicação COM O CLIENTE (8.2.1), que é outra cláusula e costuma ter procedimento próprio. Esta cobre as duas pontas: o que circula dentro da empresa e o que sai dela.',
+    roteiro: [
+      'SOBRE O QUE se comunica — os assuntos do sistema da qualidade que precisam circular: política, objetivos, resultado de indicador, não conformidade, mudança de processo, resultado de auditoria.',
+      'QUANDO se comunica — a periodicidade ou o gatilho de cada assunto: mensal, a cada ocorrência, antes de iniciar o serviço.',
+      'COM QUEM se comunica — o público de cada assunto: a produção, a direção, o cliente, o fornecedor, o organismo certificador.',
+      'COMO se comunica — o meio: reunião de turno, quadro de gestão à vista, e-mail, o próprio sistema.',
+      'QUEM comunica — o responsável por cada linha. É o que a cláusula chama de "quem comunica", e é o campo que mais falta.',
+      'COMO SE SABE QUE CHEGOU — evidência de que a comunicação aconteceu: lista de presença, registro no sistema, e-mail arquivado.',
+    ],
+  }),
+
+  d('pos_entrega', 'Atividades Pós-Entrega', 'procedimento', 'Operações', ['8.5.5'], 'pratica', 'PR-010', {
+    comoAtender: 'Descrever o que a empresa faz DEPOIS que o serviço saiu: garantia, retoque em campo, assistência e o que fazer quando o cliente reclama do que já entregou.',
+    nota: 'A cláusula manda considerar cinco coisas para dimensionar o pós-entrega — e as cinco estão no roteiro. Empresa que não tem o documento costuma ter a prática: faz o retoque, atende o chamado, e não registra.',
+    roteiro: [
+      'O QUE A EMPRESA OFERECE depois da entrega — garantia, retoque, assistência técnica, reposição. Se não oferece nada além do que a lei obriga, dizer isso também é resposta.',
+      'PRAZO E CONDIÇÕES da garantia — por quanto tempo, cobrindo o quê, e o que a anula.',
+      'REQUISITO LEGAL aplicável — o que a lei ou a norma do setor obriga, independentemente do que foi contratado.',
+      'CONSEQUÊNCIA INDESEJÁVEL de falhar — o que acontece se o serviço falhar em campo. É o que dimensiona o resto: revestimento que protege estrutura tem consequência diferente de pintura decorativa.',
+      'NATUREZA, USO E VIDA ÚTIL do que foi entregue — quanto tempo se espera que dure e em que ambiente.',
+      'COMO O CLIENTE ACIONA e como se registra — por onde entra o chamado, quem responde, em que prazo, e onde fica a evidência do atendimento.',
+      'O QUE VOLTA PARA O SISTEMA — como o que se aprende em campo vira entrada de melhoria (10.1) ou não conformidade (10.2).',
+    ],
+  }),
 ];
 
 /* ══ MÓDULO tratamento-superficie — só para quem jateia e pinta ══════════════════════════════════ */

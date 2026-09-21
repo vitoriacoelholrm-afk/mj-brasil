@@ -13,11 +13,28 @@ import { podeEditarOModelo } from '@/plataforma/acesso';
 import { empresaAtiva } from '@/plataforma/empresa';
 import { papelAtual, pessoaAtual } from '@/lib/session';
 import { listarTextos, salvarTexto, type TextoDeDocumento } from '../textos';
+import { catalogoPara } from '../catalogoPadrao';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
+
+/** O roteiro do padrão que este documento cumpre — os pontos que a cláusula obriga a cobrir.
+ *  Vem do catálogo, é da norma, e vale para qualquer empresa. Null quando o documento não cumpre
+ *  padrão nenhum, que é o caso de tudo que a empresa criou por conta. */
+function roteiroDe(doc: DocumentoMestre, modulos: string[]): string[] | null {
+  const chaves = doc.padroes ?? [];
+  if (chaves.length === 0) return null;
+  const padrao = catalogoPara(modulos).find((p) => chaves.includes(p.chave) && p.roteiro?.length);
+  return padrao?.roteiro ?? null;
+}
+
+/** Transforma o roteiro no começo do documento: cada ponto vira um título, com espaço embaixo.
+ *  É esqueleto, não conteúdo — o que vai debaixo de cada título é de quem conhece a empresa. */
+const esqueleto = (roteiro: string[]) =>
+  roteiro.map((ponto) => `${ponto.split(' — ')[0]}\n\n`).join('\n');
 
 export function Documento({ doc, aoVoltar }: { doc: DocumentoMestre; aoVoltar: () => void }) {
   const empresa = empresaAtiva();
   const podeEscrever = podeEditarOModelo(papelAtual(), empresa.modelo === true);
+  const roteiro = roteiroDe(doc, empresa.modulos);
 
   const [texto, setTexto] = useState('');
   const [gravado, setGravado] = useState<TextoDeDocumento | null>(null);
@@ -80,6 +97,30 @@ export function Documento({ doc, aoVoltar }: { doc: DocumentoMestre; aoVoltar: (
         </div>
       </div>
 
+      {roteiro && (
+        <div style={{ ...s.cartao, overflow: 'hidden' }}>
+          <div style={S.faixa}>
+            <span style={{ flex: 1 }}>O que a cláusula obriga este documento a cobrir</span>
+            <span style={pastilha('neutro')}>{roteiro.length} pontos</span>
+          </div>
+          <div style={{ ...S.aviso, ...s.prosa, paddingBottom: 6 }}>
+            Isto é da norma, não da empresa — vale para qualquer cliente. O texto de cada ponto é
+            que é de quem conhece a casa.
+          </div>
+          <ol style={S.roteiro}>
+            {roteiro.map((ponto) => {
+              const [titulo, ...resto] = ponto.split(' — ');
+              return (
+                <li key={titulo} style={S.pontoDoRoteiro}>
+                  <span style={S.pontoTitulo}>{titulo}</span>
+                  {resto.length > 0 && <span style={{ ...S.pontoNota, ...s.prosa }}>{resto.join(' — ')}</span>}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+
       <div style={{ ...s.cartao, overflow: 'hidden' }}>
         <div style={S.faixa}>
           <span style={{ flex: 1 }}>O documento</span>
@@ -127,6 +168,13 @@ export function Documento({ doc, aoVoltar }: { doc: DocumentoMestre; aoVoltar: (
               {salvando ? 'Gravando…' : 'Gravar documento'}
             </button>
           )}
+          {/* Só quando está em branco: despejar o esqueleto em cima de texto escrito seria
+              apagar trabalho. */}
+          {podeEscrever && roteiro && texto.trim() === '' && (
+            <button style={s.botao} onClick={() => setTexto(esqueleto(roteiro))}>
+              Começar pelo roteiro
+            </button>
+          )}
           {gravado?.atualizadoEm && (
             <span style={S.rodape}>
               Última gravação em {dataBR(gravado.atualizadoEm.slice(0, 10))}
@@ -170,6 +218,10 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 3, border: `1px solid ${c.linhaForte}`, background: c.superficie, color: c.tinta,
   },
   leitura: { fontSize: 14, color: c.tinta, lineHeight: 1.7, whiteSpace: 'pre-wrap' },
+  roteiro: { margin: 0, padding: '0 18px 18px 40px', display: 'flex', flexDirection: 'column', gap: 12 },
+  pontoDoRoteiro: { display: 'flex', flexDirection: 'column', gap: 3 },
+  pontoTitulo: { fontSize: 13.5, fontWeight: 600, color: c.tinta },
+  pontoNota: { fontSize: 12.5, color: c.suave, lineHeight: 1.55 },
   acoes: {
     display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
     padding: '14px 18px', borderTop: `1px solid ${c.linha}`, background: c.superficie2,
