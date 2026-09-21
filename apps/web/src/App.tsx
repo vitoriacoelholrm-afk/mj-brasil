@@ -127,9 +127,16 @@ export function App() {
           >
             {menuAberto ? '✕' : '☰'}
           </button>
-          {/* Aqui vai o ÍCONE, e não a assinatura inteira: a 36px de altura o subtítulo da
-              assinatura seria um borrão, e borrão não identifica nada. */}
-          <img src="/marca/BraMex_icone_app.svg" alt="BraMex" style={S.iconeCelular} />
+          {/* O símbolo vai numa PLACA BRANCA, e não solto sobre o azul. Ele é desenhado com
+              contorno azul escuro para fundo claro: solto aqui, o contorno some dentro da barra e
+              a silhueta se desmancha. A placa é o que deixa a barra continuar azul com o símbolo
+              certo em cima dela.
+
+              E é o símbolo, não a assinatura: a 36px de altura o subtítulo viraria borrão, e
+              borrão não identifica nada. */}
+          <span style={S.placa}>
+            <img src="/marca/BraMex_simbolo_exata.png" alt="BraMex" style={S.iconeCelular} />
+          </span>
           <div style={{ minWidth: 0 }}>
             <div style={S.marcaNomeCelular}>BraMex</div>
             <div style={S.clienteCelular}>{empresa.identidade.nome}</div>
@@ -156,10 +163,11 @@ export function App() {
         {/* A marca fica na gaveta também: aberta, ela cobre a barra do celular, e sem isto o menu
             aberto seria a única tela do sistema que não diz que sistema é. */}
         <div style={S.marca}>
-          {/* A assinatura escolhida é vertical e feita para fundo BRANCO: a borda dela é branca e
-              o "Bra" é azul quase preto. Sobre escuro, a borda vira auréola e o "Bra" some. Por
-              isso a coluna é clara — é o fundo que o arquivo pede. */}
-          <img src="/marca/BraMex_logo_exata.png" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
+          {/* A assinatura HORIZONTAL, montada do material escolhido nas medidas da prancha: o
+              símbolo como unidade, respiro de 0,162 e o texto com 2,27 de largura. É a forma que
+              uma coluna pede — a vertical custava 172px de altura contra 74 desta, e a diferença
+              saía do menu. */}
+          <img src="/marca/BraMex_logo_horizontal_exata.png" alt="BraMex — Sistema de Qualidade e Gestão" style={S.marcaImg} />
         </div>
 
         <nav style={S.nav}>
@@ -312,7 +320,7 @@ const S: Record<string, React.CSSProperties> = {
   marca: {
     padding: '16px 16px 12px', borderBottom: `1px solid ${c.linha}`, flexShrink: 0,
   },
-  marcaImg: { display: 'block', width: 140, maxWidth: '100%', height: 'auto', margin: '0 auto' },
+  marcaImg: { display: 'block', width: 196, maxWidth: '100%', height: 'auto' },
   nav: { flex: 1, overflowY: 'auto', padding: '8px 0 16px', minHeight: 0 },
   secao: {
     fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
@@ -356,7 +364,11 @@ const S: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
     color: marca.emFundoEscuroForte, fontSize: 15, lineHeight: 1,
   },
-  iconeCelular: { width: 30, height: 30, borderRadius: 7, display: 'block', flexShrink: 0 },
+  placa: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    width: 36, height: 36, borderRadius: 9, background: c.superficie,
+  },
+  iconeCelular: { width: 26, height: 'auto', display: 'block' },
   marcaNomeCelular: { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em' },
   clienteCelular: {
     fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
