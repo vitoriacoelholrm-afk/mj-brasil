@@ -8,7 +8,7 @@ import {
   CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
   conflitos, filtrarDocumentos, listaMestra, listaMestraMeta, porCategoria, responsavelDeFora,
   significadoDoPrefixo, temFiltro,
-  type Conflito, type CriteriosDeBusca, type DocumentoMestre, type TipoConflito,
+  type Conflito, type CriteriosDeBusca, type DocumentoMestre, type Natureza, type TipoConflito,
 } from '@/modules/sgq-documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
 import {
@@ -31,7 +31,8 @@ export function ListaMestra() {
   // pergunta legítima, e com um filtro só ela não tinha como ser feita.
   const [busca, setBusca] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
-  const [filtro, setFiltro] = useState<'todos' | 'formulario' | 'problema'>('todos');
+  const [natureza, setNatureza] = useState<Natureza | null>(null);
+  const [soProblema, setSoProblema] = useState(false);
   // O documento aberto. Clicar numa linha deixou de ser enfeite: é onde se lê e, no modelo, onde
   // se escreve o texto dele.
   const [aberto, setAberto] = useState<DocumentoMestre | null>(null);
@@ -47,16 +48,21 @@ export function ListaMestra() {
 
   const comProblema = useMemo(
     () => new Set(cs.map((x) => x.codigo).filter((x): x is string => Boolean(x))), [cs]);
-  const criterios: CriteriosDeBusca = {
-    texto: busca,
-    categoria,
-    natureza: filtro === 'formulario' ? 'formulario' : null,
-    soProblema: filtro === 'problema',
-  };
+  const criterios: CriteriosDeBusca = { texto: busca, categoria, natureza, soProblema };
   const docs = filtrarDocumentos(LISTA_MESTRA, criterios, comProblema);
   const filtrando = temFiltro(criterios);
   const foraDaLista = LISTA_MESTRA.filter((d) => d.foraDaLista).length;
-  const limpar = () => { setBusca(''); setCategoria(null); setFiltro('todos'); };
+  const limpar = () => {
+    setBusca(''); setCategoria(null); setNatureza(null); setSoProblema(false);
+  };
+
+  // Só as naturezas que esta empresa tem. Oferecer "Instrução" a quem não tem nenhuma é oferecer
+  // um caminho para a tabela vazia.
+  const naturezas = useMemo(() => {
+    const conta = new Map<Natureza, number>();
+    for (const d of LISTA_MESTRA) conta.set(d.natureza, (conta.get(d.natureza) ?? 0) + 1);
+    return [...conta].sort((a, b) => b[1] - a[1]);
+  }, [empresa.id]);
 
   const porTipo = ORDEM_CONFLITO
     .map((tipo) => [tipo, cs.filter((x) => x.tipo === tipo)] as const)
@@ -121,52 +127,69 @@ export function ListaMestra() {
       <div style={{ ...s.cartao, overflow: 'hidden' }}>
         <div style={S.faixa}>
           <span>O catálogo</span>
-          {/* Sem filtro, os dois números vêm NOMEADOS. A tela já mostra outros dois — os 47 que a
-              planilha da empresa declara no cabeçalho e os catalogados do painel —, e um "62"
-              solto aqui pareceria um terceiro em desacordo com eles. São recortes diferentes da
-              mesma lista, e dizer qual é qual custa duas palavras. */}
           <div style={S.contaMostrando}>
+            {/* Sem filtro, os dois números vêm NOMEADOS. A tela já mostra outros dois — os que a
+                planilha declara no cabeçalho e os do painel de cobertura —, e um total solto aqui
+                pareceria um terceiro em desacordo com eles. */}
             {filtrando
-              ? <>mostrando <strong style={{ fontFamily: fonte.mono, color: c.acento }}>{docs.length}</strong> de {LISTA_MESTRA.length}</>
+              ? <>
+                  mostrando{' '}
+                  <strong style={{ fontFamily: fonte.mono, color: c.acento }}>{docs.length}</strong>
+                  {' '}de {LISTA_MESTRA.length}
+                  <button onClick={limpar} style={S.limpar}>limpar</button>
+                </>
               : <>{LISTA_MESTRA.length - foraDaLista} catalogados · {foraDaLista} fora da lista</>}
           </div>
         </div>
 
+        {/* UMA linha. A versão anterior empilhava três fileiras de pastilha — oito áreas, três
+            tipos e a busca — e o filtro pesava mais na tela que a tabela que ele filtra. Lista
+            fechada mostra a opção escolhida sem ocupar espaço com as que não foram, e o número de
+            cada uma continua à vista dentro dela: o filtro promete o tamanho antes do clique. */}
         <div style={S.filtros}>
-          <div style={S.linhaFiltro}>
-            <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Código, título, posto responsável ou cláusula — ex.: PG-001, aderência, Ger. RH, 8.5.3"
-              aria-label="Buscar na lista mestra"
-              style={S.busca}
-            />
-            {filtrando && (
-              <button onClick={limpar} style={S.limpar}>Limpar filtros</button>
-            )}
-          </div>
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por código, título, posto responsável ou cláusula"
+            aria-label="Buscar na lista mestra"
+            style={S.busca}
+          />
 
-          <div style={S.linhaFiltro}>
-            <span style={S.rotuloFiltro}>Tipo</span>
-            {([['todos', 'Todos'], ['formulario', 'Só formulários'], ['problema', 'Só com problema']] as const).map(([v, r]) => (
-              <Chip key={v} rotulo={r} ativo={filtro === v} aoClicar={() => setFiltro(v)} />
-            ))}
-          </div>
-
-          {/* As categorias eram um resumo com cara de botão, no alto da página, que não fazia nada.
-              Aqui elas fazem: o número diz quantos vêm, e clicar traz. O resumo não se perdeu —
-              é o próprio filtro que o mostra, e no lugar onde ele serve para alguma coisa. */}
-          <div style={S.linhaFiltro}>
-            <span style={S.rotuloFiltro}>Área</span>
-            <Chip rotulo="Todas" ativo={categoria === null} aoClicar={() => setCategoria(null)} />
+          <select
+            value={categoria ?? ''}
+            onChange={(e) => setCategoria(e.target.value || null)}
+            aria-label="Filtrar por área"
+            style={{ ...S.seletor, ...(categoria ? S.seletorAtivo : null) }}
+          >
+            <option value="">Todas as áreas</option>
             {porCategoria().map(({ categoria: nome, total }) => (
-              <Chip
-                key={nome} rotulo={nome} n={total} ativo={categoria === nome}
-                aoClicar={() => setCategoria(categoria === nome ? null : nome)}
-              />
+              <option key={nome} value={nome}>{nome} ({total})</option>
             ))}
-          </div>
+          </select>
+
+          <select
+            value={natureza ?? ''}
+            onChange={(e) => setNatureza((e.target.value || null) as Natureza | null)}
+            aria-label="Filtrar por tipo de documento"
+            style={{ ...S.seletor, ...(natureza ? S.seletorAtivo : null) }}
+          >
+            <option value="">Todos os tipos</option>
+            {naturezas.map(([n, total]) => (
+              <option key={n} value={n}>{NATUREZA_ROTULO[n]} ({total})</option>
+            ))}
+          </select>
+
+          {/* Este não é um tipo de documento, é um estado — por isso continua sendo um botão que
+              liga e desliga, e não mais uma opção dentro das listas. */}
+          <button
+            onClick={() => setSoProblema((v) => !v)}
+            aria-pressed={soProblema}
+            style={{ ...S.alternar, ...(soProblema ? S.alternarAtivo : null) }}
+          >
+            Só com problema
+          </button>
         </div>
+
         <div className="rolagem-lateral" style={{ maxWidth: '100%' }}>
           <table style={s.tabela}>
             <thead>
@@ -202,31 +225,6 @@ export function ListaMestra() {
         entrada própria.
       </div>
     </div>
-  );
-}
-
-/** A pastilha de filtro. Com número quando ele informa o tamanho do que vem — a categoria diz
- *  quantos documentos tem, e saber isso antes de clicar poupa o clique. */
-function Chip({ rotulo, n, ativo, aoClicar }: {
-  rotulo: string; n?: number; ativo: boolean; aoClicar: () => void;
-}) {
-  return (
-    <button
-      onClick={aoClicar}
-      aria-pressed={ativo}
-      style={{
-        ...s.botao, padding: '5px 11px', fontSize: 12.5, textTransform: 'none', letterSpacing: 0,
-        fontWeight: ativo ? 700 : 500,
-        background: ativo ? c.acentoFraco : c.superficie,
-        borderColor: ativo ? c.acentoMarca : c.linhaForte,
-        color: ativo ? c.acento : c.tinta2,
-      }}
-    >
-      {n !== undefined && (
-        <strong style={{ fontFamily: fonte.mono, marginRight: 5 }}>{n}</strong>
-      )}
-      {rotulo}
-    </button>
   );
 }
 
@@ -531,20 +529,29 @@ const S: Record<string, React.CSSProperties> = {
   categorias: { display: 'flex', flexWrap: 'wrap', gap: 8 },
   contaMostrando: {
     fontSize: 11.5, fontWeight: 600, letterSpacing: 0, textTransform: 'none', color: c.suave,
+    display: 'flex', alignItems: 'center', gap: 4,
   },
   filtros: {
-    padding: '12px 18px', borderBottom: `1px solid ${c.linhaForte}`, background: c.superficie,
-    display: 'flex', flexDirection: 'column', gap: 9,
+    padding: '10px 18px', borderBottom: `1px solid ${c.linhaForte}`, background: c.superficie,
+    display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
   },
-  linhaFiltro: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  rotuloFiltro: {
-    fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
-    color: c.suave, width: 42, flexShrink: 0,
+  busca: { ...s.campo, flex: '1 1 240px', minWidth: 180 },
+  seletor: {
+    ...s.campo, width: 'auto', flex: '0 0 auto', maxWidth: 220,
+    cursor: 'pointer', color: c.tinta2,
   },
-  busca: { ...s.campo, flex: 1, minWidth: 220 },
+  seletorAtivo: { borderColor: c.acentoMarca, background: c.acentoFraco, color: c.acento, fontWeight: 600 },
+  alternar: {
+    ...s.botao, padding: '9px 13px', fontSize: 13.5, textTransform: 'none', letterSpacing: 0,
+    color: c.tinta2, whiteSpace: 'nowrap',
+  },
+  alternarAtivo: {
+    borderColor: c.critico, background: c.criticoFraco, color: c.critico, fontWeight: 700,
+  },
   limpar: {
-    ...s.botao, padding: '8px 13px', fontSize: 12.5,
-    color: c.acento, borderColor: c.acentoMarca, background: c.acentoFraco,
+    border: 'none', background: 'none', padding: 0, marginLeft: 8, cursor: 'pointer',
+    fontFamily: fonte.texto, fontSize: 11.5, fontWeight: 600, color: c.acento,
+    textDecoration: 'underline', textUnderlineOffset: 2,
   },
   vazio: {
     ...s.td, padding: '26px 18px', textAlign: 'center', color: c.suave, fontSize: 13.5,
