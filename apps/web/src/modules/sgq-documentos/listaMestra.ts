@@ -15,8 +15,8 @@ import {
 
 export type { PapelDeFormulario } from '@/plataforma/empresa';
 export {
-  CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
-  type Acesso, type Conflito, type DocumentoMestre, type Legenda,
+  CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO, filtrarDocumentos, temFiltro,
+  type Acesso, type Conflito, type CriteriosDeBusca, type DocumentoMestre, type Legenda,
   type ListaMestraMeta, type Natureza, type ResponsavelExterno, type SituacaoDoc, type TipoConflito,
 } from '@/plataforma/documentos';
 

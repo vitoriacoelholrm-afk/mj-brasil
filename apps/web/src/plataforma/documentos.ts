@@ -179,6 +179,65 @@ export function porClausula(docs: DocumentoMestre[], clausula: string): Document
   return docs.filter((d) => d.clausulas.some((c) => c === clausula || c.startsWith(`${clausula}.`)));
 }
 
+/* ── Busca na lista ────────────────────────────────────────────────────────────────────────── */
+
+/** Sem acento e sem caixa. Quem procura "acao" tem de achar "Ação": ninguém digita acento no meio
+ *  de uma busca com pressa, e a lista mestra é cheia deles. */
+const semAcento = (texto: string) =>
+  texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Só letras e números. É o que faz "fm10", "FM 10" e "fm-010" acharem o FM-010: o hífen do
+ *  código é convenção da empresa, não parte do que a pessoa tem na cabeça. */
+const soAlfanumerico = (texto: string) => semAcento(texto).replace(/[^a-z0-9]/g, '');
+
+/** O que restringe a lista na tela. Tudo é opcional, e o que vier combina por E — dois critérios
+ *  estreitam, nunca alargam. */
+export interface CriteriosDeBusca {
+  /** Bate em código, título, responsável, cláusula e código paralelo. */
+  texto?: string;
+  categoria?: string | null;
+  natureza?: Natureza | null;
+  /** Só os que aparecem em algum conflito, ou circulam fora da lista, ou carregam outro código. */
+  soProblema?: boolean;
+}
+
+/** A lista mestra filtrada.
+ *
+ *  A busca inclui o CÓDIGO PARALELO de propósito: o arquivo na pasta da empresa às vezes carrega
+ *  outro código, e quem procura por ele está procurando com o que tem na mão. Achar só pelo
+ *  código oficial obrigaria a pessoa a já saber a resposta.
+ *
+ *  Inclui a CLÁUSULA porque é como o auditor pergunta — "me mostra o da 8.5.3" — e "8.5" tem de
+ *  trazer 8.5.1 e 8.5.3 junto, que é o que ele quis dizer. */
+export function filtrarDocumentos(
+  docs: DocumentoMestre[],
+  criterios: CriteriosDeBusca = {},
+  comProblema: ReadonlySet<string> = new Set(),
+): DocumentoMestre[] {
+  const alvo = criterios.texto?.trim() ? semAcento(criterios.texto.trim()) : null;
+  const alvoCodigo = alvo ? soAlfanumerico(alvo) : null;
+
+  return docs.filter((d) => {
+    if (criterios.categoria && d.categoria !== criterios.categoria) return false;
+    if (criterios.natureza && d.natureza !== criterios.natureza) return false;
+    if (criterios.soProblema
+      && !comProblema.has(d.codigo) && !d.foraDaLista && !d.codigosParalelos?.length) return false;
+    if (!alvo) return true;
+
+    const campos = [d.codigo, d.titulo, d.responsavel ?? '', ...(d.codigosParalelos ?? [])];
+    if (campos.some((x) => semAcento(x).includes(alvo))) return true;
+    if (alvoCodigo && campos.some((x) => soAlfanumerico(x).includes(alvoCodigo))) return true;
+    return d.clausulas.some((x) => x.startsWith(alvo));
+  });
+}
+
+/** Verdadeiro quando algum critério está restringindo de fato. Texto só de espaço não conta:
+ *  a tela não deve anunciar filtro que não filtra. */
+export function temFiltro(criterios: CriteriosDeBusca): boolean {
+  return Boolean(criterios.texto?.trim() || criterios.categoria || criterios.natureza
+    || criterios.soProblema);
+}
+
 /* ── Conflitos ─────────────────────────────────────────────────────────────────────────────── */
 
 export type TipoConflito =

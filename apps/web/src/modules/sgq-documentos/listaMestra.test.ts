@@ -5,8 +5,9 @@ import { describe, it, expect } from 'vitest';
 // o `main` faz. Sem perfil ativo não há lista mestra: a ponte não inventa empresa nenhuma.
 import '@/empresas';
 import {
-  carimbo, catalogados, conflitos, doc, legenda, listaMestra, listaMestraMeta,
+  carimbo, catalogados, conflitos, doc, filtrarDocumentos, legenda, listaMestra, listaMestraMeta,
   porCategoria, porClausula, proximoCodigoLivre, responsavelDeFora, significadoDoPrefixo,
+  temFiltro,
 } from './listaMestra';
 
 const CATALOGADOS = catalogados();
@@ -270,5 +271,106 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const resto = LISTA_MESTRA.filter(
       (d) => d.situacao !== 'em_elaboracao' && d.situacao !== 'obsoleto');
     expect(resto.every((d) => d.situacao === 'vigente')).toBe(true);
+  });
+});
+
+/* ══ A busca na lista ════════════════════════════════════════════════════════════════════════ */
+
+describe('quem procura um documento acha', () => {
+  const codigos = (texto: string) =>
+    filtrarDocumentos(LISTA_MESTRA, { texto }).map((d) => d.codigo).sort();
+
+  it('pelo código, com ou sem o hífen que a empresa usa', () => {
+    // O hífen é convenção da lista, não do que a pessoa tem na cabeça. Quem digita "pg001" com
+    // pressa está procurando o PG-001 — obrigá-la a acertar a pontuação é fazer a busca exigir
+    // que ela já saiba a resposta.
+    expect(codigos('PG-001')).toEqual(['PG-001']);
+    expect(codigos('pg001')).toEqual(['PG-001']);
+    expect(codigos('pg 001')).toEqual(['PG-001']);
+  });
+
+  it('pelo título, sem acento e sem caixa', () => {
+    // "Aderência" tem acento e ninguém o digita no meio de uma busca.
+    expect(codigos('aderencia')).toEqual(['PQ-004']);
+    expect(codigos('ADERÊNCIA')).toEqual(['PQ-004']);
+  });
+
+  it('pela cláusula, do jeito que o auditor pergunta', () => {
+    // "me mostra o da 8.5" tem de trazer 8.5.1, 8.5.3 e as outras — é o que ele quis dizer.
+    const oito5 = filtrarDocumentos(LISTA_MESTRA, { texto: '8.5' });
+    expect(oito5.length).toBeGreaterThan(5);
+    expect(oito5.every((d) => d.clausulas.some((x) => x.startsWith('8.5')))).toBe(true);
+    // E a cláusula exata estreita — mas o MANUAL aparece em toda busca por cláusula, porque ele
+    // percorre a norma inteira. Não é ruído: é a resposta fraca que a tela do manual já marca
+    // como "sem documento próprio".
+    const oito56 = codigos('8.5.6');
+    expect(oito56).toContain('FM-021');
+    expect(oito56).toContain('MQ-001');
+  });
+
+  it('pelo POSTO responsável, que é o que a lista guarda — não pelo nome da pessoa', () => {
+    // A coluna "Responsável" tem "Ger. RH", "RQ", "Dir. Geral": posto, e não gente. É de
+    // propósito — quem ocupa o posto muda e o documento não tem de ser reemitido por isso. Quem
+    // procurar pelo nome da pessoa não acha, e está certo não achar.
+    const doRh = filtrarDocumentos(LISTA_MESTRA, { texto: 'Ger. RH' });
+    expect(doRh.length).toBeGreaterThan(0);
+    expect(doRh.every((d) => (d.responsavel ?? '') === 'Ger. RH')).toBe(true);
+  });
+
+  it('e pelo código PARALELO, que é o que está escrito no arquivo da pasta', () => {
+    // Quem procura com o código do arquivo está procurando com o que tem na mão. Achar só pelo
+    // código oficial obrigaria a pessoa a já saber qual é.
+    const comParalelo = LISTA_MESTRA.find((d) => d.codigosParalelos?.length);
+    expect(comParalelo).toBeDefined();
+    const paralelo = comParalelo!.codigosParalelos![0];
+    expect(codigos(paralelo)).toContain(comParalelo!.codigo);
+  });
+
+  it('texto que não é de ninguém não traz nada — em vez de trazer tudo', () => {
+    expect(codigos('zzzz')).toEqual([]);
+  });
+});
+
+describe('os critérios se combinam por E, e nunca alargam', () => {
+  it('área e tipo juntos estreitam', () => {
+    const area = porCategoria()[0].categoria;
+    const soArea = filtrarDocumentos(LISTA_MESTRA, { categoria: area });
+    const areaEFormulario = filtrarDocumentos(
+      LISTA_MESTRA, { categoria: area, natureza: 'formulario' });
+    expect(areaEFormulario.length).toBeLessThanOrEqual(soArea.length);
+    expect(areaEFormulario.every((d) => d.categoria === area && d.natureza === 'formulario'))
+      .toBe(true);
+  });
+
+  it('a área confere com o número que a pastilha mostra', () => {
+    // O número no filtro promete quantos vêm. Se prometer errado, o filtro mente antes do clique.
+    for (const { categoria, total } of porCategoria()) {
+      expect(filtrarDocumentos(CATALOGADOS, { categoria })).toHaveLength(total);
+    }
+  });
+
+  it('sem critério nenhum, devolve a lista inteira', () => {
+    expect(filtrarDocumentos(LISTA_MESTRA, {})).toHaveLength(LISTA_MESTRA.length);
+    expect(filtrarDocumentos(LISTA_MESTRA)).toHaveLength(LISTA_MESTRA.length);
+  });
+
+  it('"só com problema" pega conflito, fora da lista e código paralelo', () => {
+    const cs = conflitos(EM);
+    const comProblema = new Set(cs.map((x) => x.codigo).filter((x): x is string => Boolean(x)));
+    const achados = filtrarDocumentos(LISTA_MESTRA, { soProblema: true }, comProblema);
+    expect(achados.length).toBeGreaterThan(0);
+    expect(achados.every((d) =>
+      comProblema.has(d.codigo) || d.foraDaLista || Boolean(d.codigosParalelos?.length))).toBe(true);
+  });
+});
+
+describe('a tela só anuncia filtro quando há filtro', () => {
+  it('espaço em branco não é busca', () => {
+    // Senão a barra diria "mostrando 56 de 56" e ofereceria limpar o que não foi filtrado.
+    expect(temFiltro({ texto: '   ' })).toBe(false);
+    expect(temFiltro({})).toBe(false);
+    expect(temFiltro({ texto: 'pg' })).toBe(true);
+    expect(temFiltro({ categoria: 'Operações' })).toBe(true);
+    expect(temFiltro({ soProblema: true })).toBe(true);
   });
 });

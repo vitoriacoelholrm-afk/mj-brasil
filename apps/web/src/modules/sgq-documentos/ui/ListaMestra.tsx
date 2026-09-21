@@ -6,8 +6,9 @@
 import { useMemo, useState } from 'react';
 import {
   CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
-  conflitos, listaMestra, listaMestraMeta, porCategoria, responsavelDeFora, significadoDoPrefixo,
-  type Conflito, type DocumentoMestre, type TipoConflito,
+  conflitos, filtrarDocumentos, listaMestra, listaMestraMeta, porCategoria, responsavelDeFora,
+  significadoDoPrefixo, temFiltro,
+  type Conflito, type CriteriosDeBusca, type DocumentoMestre, type TipoConflito,
 } from '@/modules/sgq-documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
 import {
@@ -26,6 +27,10 @@ const ORDEM_CONFLITO: TipoConflito[] = [
 ];
 
 export function ListaMestra() {
+  // Três critérios, e não um: eles se combinam. "Formulários de Operações com problema" é uma
+  // pergunta legítima, e com um filtro só ela não tinha como ser feita.
+  const [busca, setBusca] = useState('');
+  const [categoria, setCategoria] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<'todos' | 'formulario' | 'problema'>('todos');
   // O documento aberto. Clicar numa linha deixou de ser enfeite: é onde se lê e, no modelo, onde
   // se escreve o texto dele.
@@ -40,11 +45,18 @@ export function ListaMestra() {
   const deFora = useMemo(
     () => LISTA_MESTRA.filter((d) => responsavelDeFora(d.responsavel)).length, [empresa.id]);
 
-  const comProblema = useMemo(() => new Set(cs.map((x) => x.codigo).filter(Boolean)), [cs]);
-  const docs = LISTA_MESTRA.filter((d) =>
-    filtro === 'todos' ? true
-    : filtro === 'formulario' ? d.natureza === 'formulario'
-    : comProblema.has(d.codigo) || d.foraDaLista || Boolean(d.codigosParalelos?.length));
+  const comProblema = useMemo(
+    () => new Set(cs.map((x) => x.codigo).filter((x): x is string => Boolean(x))), [cs]);
+  const criterios: CriteriosDeBusca = {
+    texto: busca,
+    categoria,
+    natureza: filtro === 'formulario' ? 'formulario' : null,
+    soProblema: filtro === 'problema',
+  };
+  const docs = filtrarDocumentos(LISTA_MESTRA, criterios, comProblema);
+  const filtrando = temFiltro(criterios);
+  const foraDaLista = LISTA_MESTRA.filter((d) => d.foraDaLista).length;
+  const limpar = () => { setBusca(''); setCategoria(null); setFiltro('todos'); };
 
   const porTipo = ORDEM_CONFLITO
     .map((tipo) => [tipo, cs.filter((x) => x.tipo === tipo)] as const)
@@ -88,14 +100,6 @@ export function ListaMestra() {
         <Contador n={deFora} rot="com responsável de fora" cor={c.alerta} fim />
       </div>
 
-      <div style={S.categorias}>
-        {porCategoria().map(({ categoria, total }) => (
-          <span key={categoria} style={S.categoria}>
-            <strong style={{ fontFamily: fonte.mono }}>{total}</strong> {categoria}
-          </span>
-        ))}
-      </div>
-
       <Cobertura cob={cob} />
 
       <Unificacao plano={plano} />
@@ -117,16 +121,49 @@ export function ListaMestra() {
       <div style={{ ...s.cartao, overflow: 'hidden' }}>
         <div style={S.faixa}>
           <span>O catálogo</span>
-          <div style={{ display: 'flex', gap: 6 }}>
+          {/* Sem filtro, os dois números vêm NOMEADOS. A tela já mostra outros dois — os 47 que a
+              planilha da empresa declara no cabeçalho e os catalogados do painel —, e um "62"
+              solto aqui pareceria um terceiro em desacordo com eles. São recortes diferentes da
+              mesma lista, e dizer qual é qual custa duas palavras. */}
+          <div style={S.contaMostrando}>
+            {filtrando
+              ? <>mostrando <strong style={{ fontFamily: fonte.mono, color: c.acento }}>{docs.length}</strong> de {LISTA_MESTRA.length}</>
+              : <>{LISTA_MESTRA.length - foraDaLista} catalogados · {foraDaLista} fora da lista</>}
+          </div>
+        </div>
+
+        <div style={S.filtros}>
+          <div style={S.linhaFiltro}>
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Código, título, posto responsável ou cláusula — ex.: PG-001, aderência, Ger. RH, 8.5.3"
+              aria-label="Buscar na lista mestra"
+              style={S.busca}
+            />
+            {filtrando && (
+              <button onClick={limpar} style={S.limpar}>Limpar filtros</button>
+            )}
+          </div>
+
+          <div style={S.linhaFiltro}>
+            <span style={S.rotuloFiltro}>Tipo</span>
             {([['todos', 'Todos'], ['formulario', 'Só formulários'], ['problema', 'Só com problema']] as const).map(([v, r]) => (
-              <button
-                key={v} onClick={() => setFiltro(v)}
-                style={{ ...s.botao, padding: '5px 11px', fontSize: 12, textTransform: 'none', letterSpacing: 0,
-                  background: filtro === v ? c.acentoFraco : c.superficie,
-                  borderColor: filtro === v ? c.acentoMarca : c.linhaForte }}
-              >
-                {r}
-              </button>
+              <Chip key={v} rotulo={r} ativo={filtro === v} aoClicar={() => setFiltro(v)} />
+            ))}
+          </div>
+
+          {/* As categorias eram um resumo com cara de botão, no alto da página, que não fazia nada.
+              Aqui elas fazem: o número diz quantos vêm, e clicar traz. O resumo não se perdeu —
+              é o próprio filtro que o mostra, e no lugar onde ele serve para alguma coisa. */}
+          <div style={S.linhaFiltro}>
+            <span style={S.rotuloFiltro}>Área</span>
+            <Chip rotulo="Todas" ativo={categoria === null} aoClicar={() => setCategoria(null)} />
+            {porCategoria().map(({ categoria: nome, total }) => (
+              <Chip
+                key={nome} rotulo={nome} n={total} ativo={categoria === nome}
+                aoClicar={() => setCategoria(categoria === nome ? null : nome)}
+              />
             ))}
           </div>
         </div>
@@ -144,7 +181,16 @@ export function ListaMestra() {
               </tr>
             </thead>
             <tbody>
-              {docs.map((d, i) => <LinhaDoc key={`${d.codigo}-${i}`} d={d} aoAbrir={setAberto} />)}
+              {docs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={S.vazio}>
+                    Nenhum documento com esses filtros.{' '}
+                    <button onClick={limpar} style={S.linkLimpar}>Limpar e ver os {LISTA_MESTRA.length}</button>
+                  </td>
+                </tr>
+              ) : (
+                docs.map((d, i) => <LinhaDoc key={`${d.codigo}-${i}`} d={d} aoAbrir={setAberto} />)
+              )}
             </tbody>
           </table>
         </div>
@@ -156,6 +202,31 @@ export function ListaMestra() {
         entrada própria.
       </div>
     </div>
+  );
+}
+
+/** A pastilha de filtro. Com número quando ele informa o tamanho do que vem — a categoria diz
+ *  quantos documentos tem, e saber isso antes de clicar poupa o clique. */
+function Chip({ rotulo, n, ativo, aoClicar }: {
+  rotulo: string; n?: number; ativo: boolean; aoClicar: () => void;
+}) {
+  return (
+    <button
+      onClick={aoClicar}
+      aria-pressed={ativo}
+      style={{
+        ...s.botao, padding: '5px 11px', fontSize: 12.5, textTransform: 'none', letterSpacing: 0,
+        fontWeight: ativo ? 700 : 500,
+        background: ativo ? c.acentoFraco : c.superficie,
+        borderColor: ativo ? c.acentoMarca : c.linhaForte,
+        color: ativo ? c.acento : c.tinta2,
+      }}
+    >
+      {n !== undefined && (
+        <strong style={{ fontFamily: fonte.mono, marginRight: 5 }}>{n}</strong>
+      )}
+      {rotulo}
+    </button>
   );
 }
 
@@ -458,9 +529,30 @@ const S: Record<string, React.CSSProperties> = {
   },
   subLinha: { fontSize: 11.5, color: c.suave, marginTop: 3 },
   categorias: { display: 'flex', flexWrap: 'wrap', gap: 8 },
-  categoria: {
-    fontSize: 13, padding: '5px 11px', borderRadius: 3,
-    border: `1px solid ${c.linhaForte}`, background: c.superficie, color: c.tinta2,
+  contaMostrando: {
+    fontSize: 11.5, fontWeight: 600, letterSpacing: 0, textTransform: 'none', color: c.suave,
+  },
+  filtros: {
+    padding: '12px 18px', borderBottom: `1px solid ${c.linhaForte}`, background: c.superficie,
+    display: 'flex', flexDirection: 'column', gap: 9,
+  },
+  linhaFiltro: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  rotuloFiltro: {
+    fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
+    color: c.suave, width: 42, flexShrink: 0,
+  },
+  busca: { ...s.campo, flex: 1, minWidth: 220 },
+  limpar: {
+    ...s.botao, padding: '8px 13px', fontSize: 12.5,
+    color: c.acento, borderColor: c.acentoMarca, background: c.acentoFraco,
+  },
+  vazio: {
+    ...s.td, padding: '26px 18px', textAlign: 'center', color: c.suave, fontSize: 13.5,
+  },
+  linkLimpar: {
+    border: 'none', background: 'none', padding: 0, cursor: 'pointer',
+    fontFamily: fonte.texto, fontSize: 13.5, color: c.acento, fontWeight: 600,
+    textDecoration: 'underline', textUnderlineOffset: 2,
   },
   rodape: { fontFamily: fonte.mono, fontSize: 11.5, color: c.suave, lineHeight: 1.6 },
 };
