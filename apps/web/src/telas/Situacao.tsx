@@ -5,6 +5,10 @@
 // construído aparece como tal, em vez de sumir.
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
+import { listarRegistros } from '@/lib/registrosApi';
+import { resumoDasNcs } from '@/plataforma/naoConformidade';
+import { ORDENS } from '@/os/exemplos';
+import { resumirOs } from '@/os/regras';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { catalogados, conflitos, listaMestraMeta } from '@/documentos/listaMestra';
 
@@ -17,7 +21,8 @@ interface Painel {
   counts: Record<string, number>;
 }
 
-type Rota = 'situacao' | 'vencimentos' | 'instrumentos' | 'clientes';
+type Rota = 'situacao' | 'vencimentos' | 'instrumentos' | 'clientes' | 'lista-mestra'
+  | 'plano' | 'nao-conformidade';
 
 export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
   const { dados, carregando, erro } = usarDados<Painel>(
@@ -78,20 +83,8 @@ export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
           aoClicar={() => irPara('vencimentos')}
           icone={<IconeRelogio />}
         />
-        <Cartao
-          titulo="Ordens de Serviço"
-          numero="—"
-          nota="módulo ainda não instalado"
-          selo={{ texto: 'a construir', tom: 'neutro' }}
-          icone={<IconeOS />}
-        />
-        <Cartao
-          titulo="Não conformidades"
-          numero="—"
-          nota="módulo ainda não instalado"
-          selo={{ texto: 'a construir', tom: 'neutro' }}
-          icone={<IconeAlerta cor={c.suave} />}
-        />
+        <CartaoOrdens irPara={irPara} />
+        <CartaoNaoConformidades irPara={irPara} />
         <CartaoListaMestra irPara={irPara} />
       </div>
 
@@ -187,6 +180,62 @@ const IconeAlerta = ({ cor }: { cor?: string }) => (
 const IconeCerto = () => (
   <svg {...svg} width={26} height={26} strokeWidth={2.2} stroke={c.ok}><path d="M20 6 9 17l-5-5" /></svg>
 );
+
+/** As ordens de serviço. O módulo existe e a tela abre; o que ainda não existe é o BANCO por
+ *  trás dela — as ordens são as de exemplo. O cartão diz isso, porque "a construir" dizia que a
+ *  tela não existia, e isso deixou de ser verdade. */
+function CartaoOrdens({ irPara }: { irPara: (r: 'plano') => void }) {
+  const resumos = ORDENS.map((o) => resumirOs(o.etapas));
+  const comDivergencia = resumos.filter((r) => r.naoConformes > 0).length;
+  const porMedir = resumos.reduce((n, r) => n + r.pendentes, 0);
+
+  // A ordem é esta de propósito. "Todas conformes" com medição faltando seria verde falso: o que
+  // não foi medido não é conforme, é desconhecido — e é o que o auditor vai pedir primeiro.
+  const selo = comDivergencia
+    ? { texto: `${comDivergencia} com divergência`, tom: 'critico' as const }
+    : porMedir
+      ? { texto: `${porMedir} ${porMedir === 1 ? 'medição pendente' : 'medições pendentes'}`, tom: 'alerta' as const }
+      : { texto: 'todas conformes', tom: 'ok' as const };
+
+  return (
+    <div onClick={() => irPara('plano')} style={{ cursor: 'pointer' }}>
+      <Cartao
+        titulo="Ordens de Serviço"
+        numero={String(ORDENS.length)}
+        nota="ordens de exemplo — esta tela ainda não grava no banco"
+        selo={selo}
+        icone={<IconeOS />}
+      />
+    </div>
+  );
+}
+
+/** As não conformidades, do banco. O número que interessa não é quantas apareceram — é quantas
+ *  ainda não foram TRATADAS: registrar sem tratar é o achado da §10.2.2. */
+function CartaoNaoConformidades({ irPara }: { irPara: (r: 'nao-conformidade') => void }) {
+  const { dados, erro } = usarDados(() => listarRegistros('nao_conformidade'), []);
+  const resumo = resumoDasNcs(dados ?? []);
+
+  return (
+    <div onClick={() => irPara('nao-conformidade')} style={{ cursor: 'pointer' }}>
+      <Cartao
+        titulo="Não conformidades"
+        numero={erro ? '—' : String(resumo.total)}
+        nota={erro
+          ? 'não foi possível ler do banco'
+          : resumo.total === 0
+            ? 'nenhuma registrada até agora'
+            : 'registradas'}
+        selo={erro
+          ? { texto: 'sem leitura', tom: 'critico' }
+          : resumo.semTratativa
+            ? { texto: `${resumo.semTratativa} sem tratativa`, tom: 'critico' }
+            : { texto: resumo.total ? 'todas tratadas' : 'nada em aberto', tom: 'ok' }}
+        icone={<IconeAlerta cor={resumo.semTratativa ? c.critico : c.suave} />}
+      />
+    </div>
+  );
+}
 
 /** O cartão da lista mestra lê tudo do perfil da empresa ativa — nada aqui é fixo. */
 function CartaoListaMestra({ irPara }: { irPara: (r: 'lista-mestra') => void }) {
