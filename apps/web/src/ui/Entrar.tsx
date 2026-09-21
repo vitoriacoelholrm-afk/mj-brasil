@@ -53,11 +53,19 @@ export function Entrar({ aoEntrar }: { aoEntrar: () => void }) {
 
       {/* ── painel da marca ───────────────────────────────────────────────────────────────── */}
       <div style={{ ...S.marcaPainel, padding: celular ? '36px 26px 32px' : '0 9%' }}>
-        <img
-          src="/marca/BraMex_logo_fundo_escuro_exata.png"
-          alt="BraMex — Sistema de Qualidade e Gestão"
-          style={{ ...S.logo, width: celular ? 152 : '58%' }}
-        />
+        {/* A assinatura vai numa PLACA BRANCA, e não direto no azul.
+            A prancha mostra o "Bra" em branco sobre o azul, mas essa versão não existe no material
+            escolhido — e derivá-la não é possível: as letras são desenhadas como forma escura com
+            um brilho claro por dentro, então clarear a forma funde letra e miolo e o "B" vira uma
+            mancha. Preferi a placa a entregar a assinatura desmanchada. Com a versão de fundo
+            escuro em mãos, a placa sai e a assinatura vai direto no azul, como na prancha. */}
+        <div style={S.placa}>
+          <img
+            src="/marca/BraMex_logo_exata.png"
+            alt="BraMex — Sistema de Qualidade e Gestão"
+            style={{ ...S.logo, width: celular ? 150 : '100%' }}
+          />
+        </div>
         <p style={{ ...S.frase, fontSize: celular ? 14 : 'clamp(15px, 1.5vw, 21px)' }}>
           Processos que conectam resultados.
         </p>
@@ -178,7 +186,11 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center',
     gap: 26,
   },
-  logo: { display: 'block', maxWidth: 300, height: 'auto' },
+  placa: {
+    background: '#FFFFFF', borderRadius: 16, padding: '26px 30px',
+    width: '72%', maxWidth: 260, boxShadow: '0 10px 30px rgba(0,0,0,.18)',
+  },
+  logo: { display: 'block', maxWidth: '100%', height: 'auto' },
   frase: { margin: 0, color: '#FFFFFF', lineHeight: 1.45, maxWidth: '18ch', fontWeight: 500 },
   regua: { display: 'flex', gap: 14, width: '76%', maxWidth: 300 },
   tira1: { flex: 1, height: 6, borderRadius: 3, background: marca.verde },
