@@ -11,6 +11,7 @@ import { ordensDaEmpresa } from '@/modules/tratamento-superficie/ordens';
 import { resumirOs } from '@/modules/tratamento-superficie/regras';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { catalogados, conflitos, listaMestraMeta } from '@/modules/sgq-documentos/listaMestra';
+import { motivoLegivel, quantosEmAtencao, vereditoDe } from '../veredito';
 
 interface Credencial {
   id: string; holder_label: string; kind: string;
@@ -30,12 +31,25 @@ export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
   );
 
   if (carregando) return <div style={S.vazio}>Carregando…</div>;
-  if (erro) return <div style={{ ...S.vazio, color: c.critico, borderColor: c.critico }}>{erro}</div>;
 
+  // NÃO CONSEGUIR LER NÃO É "ESTAMOS EM DIA".
+  //
+  // Antes o erro devolvia a tela inteira como uma faixa vermelha, e a home sumia junto com os
+  // cartões que não dependem do banco — a lista mestra e as ordens de serviço vêm do perfil da
+  // empresa e continuam certas com o servidor fora do ar.
+  //
+  // Tirar só o desvio seria pior: `atencao` é zero quando não há dado, e o veredito passaria a
+  // anunciar "Estamos em dia" justamente quando não sabe de nada. Num sistema da qualidade, dizer
+  // que está tudo certo sem ter lido é o erro mais caro que uma tela pode cometer — é o que faz
+  // alguém não ir olhar.
+  //
+  // Por isso são três estados, e não dois: em dia, com atenção, e SEM LEITURA.
   const cont = dados?.counts ?? {};
+  const veredito = vereditoDe(erro, cont);
+  const semLeitura = veredito === 'sem_leitura';
+  const emDia = veredito === 'em_dia';
   const total = Object.values(cont).reduce((a, b) => a + b, 0);
-  const atencao = (cont.expired ?? 0) + (cont.d7 ?? 0) + (cont.d15 ?? 0) + (cont.d30 ?? 0);
-  const emDia = atencao === 0;
+  const atencao = quantosEmAtencao(cont);
 
   // As duas credenciais que vencem primeiro, seja qual for o balde.
   const proximas = ['expired', 'd7', 'd15', 'd30', 'later']
@@ -49,24 +63,36 @@ export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
       <div style={{ ...s.cartao, display: 'flex', alignItems: 'center', gap: 22, padding: '24px 26px' }}>
         <div style={{
           width: 52, height: 52, flexShrink: 0, borderRadius: '50%',
-          background: emDia ? c.okFraco : c.alertaFraco,
-          border: `1px solid ${emDia ? c.ok : c.alerta}`,
+          background: semLeitura ? c.superficie2 : emDia ? c.okFraco : c.alertaFraco,
+          border: `1px solid ${semLeitura ? c.linhaForte : emDia ? c.ok : c.alerta}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {emDia ? <IconeCerto /> : <IconeAlerta />}
+          {semLeitura ? <IconeInterrogacao /> : emDia ? <IconeCerto /> : <IconeAlerta />}
         </div>
         <div style={{ flexGrow: 1 }}>
           <div style={{ fontSize: 25, fontWeight: 700, letterSpacing: '-.02em' }}>
-            {emDia ? 'Estamos em dia' : `${atencao} ${atencao === 1 ? 'item precisa' : 'itens precisam'} de atenção`}
+            {semLeitura
+              ? 'Não foi possível verificar'
+              : emDia
+                ? 'Estamos em dia'
+                : `${atencao} ${atencao === 1 ? 'item precisa' : 'itens precisam'} de atenção`}
           </div>
           <div style={{ fontSize: 14.5, color: c.suave, marginTop: 4 }}>
-            {emDia
-              ? 'Nenhum vencimento controlado nos próximos 30 dias.'
-              : 'Vencimentos dentro dos próximos 30 dias, ou já vencidos.'}
+            {semLeitura
+              ? 'Os vencimentos não puderam ser lidos. O que aparece abaixo vem do cadastro da empresa e continua válido; o que depende do banco está marcado.'
+              : emDia
+                ? 'Nenhum vencimento controlado nos próximos 30 dias.'
+                : 'Vencimentos dentro dos próximos 30 dias, ou já vencidos.'}
           </div>
+          {semLeitura && erro && (
+            <>
+              <div style={{ fontSize: 13.5, color: c.tinta2, marginTop: 8 }}>{motivoLegivel(erro)}</div>
+              <div style={S.motivo}>{erro}</div>
+            </>
+          )}
         </div>
         <div style={{ textAlign: 'right', paddingLeft: 20, borderLeft: `1px solid ${c.linha}` }}>
-          <div style={{ ...S.rotuloMono, color: c.suave }}>Atualizado</div>
+          <div style={{ ...S.rotuloMono, color: c.suave }}>{semLeitura ? 'Tentado' : 'Atualizado'}</div>
           <div style={{ fontFamily: fonte.mono, fontSize: 13, marginTop: 4 }}>
             {new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </div>
@@ -77,9 +103,13 @@ export function Situacao({ irPara }: { irPara: (r: Rota) => void }) {
       <div style={S.grade}>
         <Cartao
           titulo="Vencimentos"
-          numero={String(total)}
-          nota={emDia ? 'itens controlados, todos em dia' : 'itens controlados'}
-          selo={{ texto: `${cont.expired ?? 0} vencidos`, tom: (cont.expired ?? 0) > 0 ? 'critico' : 'ok' }}
+          numero={semLeitura ? '—' : String(total)}
+          nota={semLeitura
+            ? 'não foi possível ler do banco'
+            : emDia ? 'itens controlados, todos em dia' : 'itens controlados'}
+          selo={semLeitura
+            ? { texto: 'sem leitura', tom: 'neutro' }
+            : { texto: `${cont.expired ?? 0} vencidos`, tom: (cont.expired ?? 0) > 0 ? 'critico' : 'ok' }}
           aoClicar={() => irPara('vencimentos')}
           icone={<IconeRelogio />}
         />
@@ -180,6 +210,13 @@ const IconeAlerta = ({ cor }: { cor?: string }) => (
 const IconeCerto = () => (
   <svg {...svg} width={26} height={26} strokeWidth={2.2} stroke={c.ok}><path d="M20 6 9 17l-5-5" /></svg>
 );
+/** O terceiro estado do veredito: não é certo nem alerta — é "não sei". Cinza de propósito, para
+ *  não passar por um dos dois de relance. */
+const IconeInterrogacao = () => (
+  <svg {...svg} width={26} height={26} strokeWidth={2.2} stroke={c.suave}>
+    <path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.5" /><path d="M12 17.5h.01" />
+  </svg>
+);
 
 /** As ordens de serviço. O módulo existe e a tela abre; o que ainda não existe é o BANCO por
  *  trás dela — as ordens são as de exemplo. O cartão diz isso, porque "a construir" dizia que a
@@ -263,6 +300,11 @@ const S: Record<string, React.CSSProperties> = {
     background: c.superficie, fontSize: 14, color: c.suave,
   },
   grade: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(215px,1fr))', gap: 16 },
+  motivo: {
+    marginTop: 8, fontFamily: fonte.mono, fontSize: 11.5, color: c.suave,
+    background: c.superficie2, border: `1px solid ${c.linha}`, borderRadius: 3,
+    padding: '5px 8px', display: 'inline-block',
+  },
   rotuloMono: {
     fontFamily: fonte.mono, fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase',
   },
