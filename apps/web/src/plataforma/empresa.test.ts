@@ -80,7 +80,7 @@ describe('a codificação é da empresa, não da plataforma', () => {
   it('o próximo código livre respeita a numeração de cada uma', () => {
     const docsMJ = empresas().find((e) => e.id === 'minasjato')!.documentacao.documentos;
     const docsModelo = empresas().find((e) => e.id === 'modelo')!.documentacao.documentos;
-    expect(proximoCodigoLivre(docsMJ, 'FM')).toBe('FM-024');
+    expect(proximoCodigoLivre(docsMJ, 'FM')).toBe('FM-025');   // o FM-024 foi para a SWOT
     expect(proximoCodigoLivre(docsModelo, 'MQ')).toBe('MQ-005');
   });
 

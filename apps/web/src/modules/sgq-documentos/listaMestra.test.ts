@@ -19,15 +19,15 @@ const EM = new Date('2026-09-16');
 /* ══ 1. O catálogo importado da planilha ═════════════════════════════════════════════════════ */
 
 describe('os 47 documentos da LM-SGQ-001', () => {
-  it('os 47 da planilha estão aqui, mais os dois que criamos depois', () => {
+  it('os 47 da planilha estão aqui, mais os que criamos depois', () => {
     expect(LISTA_MESTRA_META.totalCatalogado).toBe(47);   // o que a planilha declara
-    expect(CATALOGADOS).toHaveLength(51);                  // 47 + FM-020 a FM-023
+    expect(CATALOGADOS).toHaveLength(52);                  // 47 + FM-020 a FM-024
   });
 
   it('e o app acusa que o cabeçalho da planilha ficou para trás', () => {
     const c = conflitos(EM).find((x) => x.tipo === 'contagem_divergente')!;
     expect(c.detalhe).toContain('declara 47');
-    expect(c.detalhe).toContain('tem 51');
+    expect(c.detalhe).toContain('tem 52');
   });
 
   it('cada um trouxe cláusula da ISO, responsável e nível de acesso', () => {
@@ -40,10 +40,11 @@ describe('os 47 documentos da LM-SGQ-001', () => {
 
   it('a divisão por categoria mostra onde o sistema pesa', () => {
     const cats = porCategoria();
-    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(51);
+    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(52);
     // Operações lidera — é o processo que a empresa vende, e ganhou os dois formulários novos.
     expect(cats[0]).toEqual({ categoria: 'Operações', total: 14 });
-    expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(11);
+    // Gestão da Qualidade subiu de 11 para 12 em 21/09/2026: a SWOT entrou na lista.
+    expect(cats.find((x) => x.categoria === 'Gestão da Qualidade')!.total).toBe(12);
   });
 
   it('dá para achar quem atende uma cláusula — é o que o auditor pergunta', () => {
@@ -88,7 +89,7 @@ describe('a Lista Mestra é a autoridade sobre código', () => {
   });
 
   it('sabe qual é o próximo código livre — para cadastrar o que circula sem entrada', () => {
-    expect(proximoCodigoLivre('FM')).toBe('FM-024');
+    expect(proximoCodigoLivre('FM')).toBe('FM-025');   // o FM-024 foi para a SWOT em 21/09/2026
     expect(proximoCodigoLivre('IT')).toBe('IT-006');
   });
 
@@ -107,11 +108,23 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
   const cs = conflitos(EM);
   const por = (tipo: string) => cs.filter((x) => x.tipo === tipo);
 
-  it('FM-011 identifica dois documentos vigentes, com acessos diferentes', () => {
-    const dup = por('codigo_duplicado').find((x) => x.codigo === 'FM-011')!;
-    expect(dup.titulo).toContain('Pedido de Compra');
-    expect(dup.titulo).toContain('SWOT');
-    expect(dup.gravidade).toBe('alta');
+  it('o FM-011 deixou de identificar dois documentos — a SWOT saiu para o FM-024', () => {
+    // Era o conflito de gravidade alta da lista: o Pedido de Compra (restrito) e a SWOT
+    // (irrestrita) com o mesmo número. Resolvido em 21/09/2026 executando a proposta que o
+    // próprio plano de unificação já fazia. Quem mudou foi a SWOT: o FM-011 do pedido já tinha
+    // saído da empresa no 245-96 enviado à RINA, e código que circulou não se renumera.
+    expect(por('codigo_duplicado').find((x) => x.codigo === 'FM-011')).toBeUndefined();
+    expect(doc('FM-024').titulo).toContain('SWOT');
+    expect(doc('FM-024').foraDaLista).toBeUndefined();
+    expect(doc('FM-011').titulo).toContain('Pedido de Compra');
+  });
+
+  it('mas o FM-024 continua acusando que as cópias dizem FM-011', () => {
+    // A pendência mudou de natureza, não sumiu: o arquivo e a Lista Mestra em papel ainda trazem
+    // o código antigo. Enquanto trouxerem, o sistema aponta — não é ruído, é o que falta fazer
+    // fora do app.
+    const p = por('codigo_paralelo').find((x) => x.codigo === 'FM-024')!;
+    expect(p.detalhe).toContain('FM-011');
   });
 
   it('a própria Lista Mestra responde por três códigos', () => {
@@ -125,7 +138,7 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const v = por('revisao_vencida');
     expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
     const emBloco = v.find((x) => x.codigo === null)!;
-    expect(emBloco.titulo).toBe('51 documentos da lista mestra');
+    expect(emBloco.titulo).toBe('52 documentos da lista mestra');
     expect(emBloco.detalhe).toContain('04/07/2026');
     expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
   });
@@ -139,11 +152,12 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(r.detalhe).toContain('Vale o arquivo');
   });
 
-  it('o arquivo real de oito documentos usa outro código', () => {
+  it('o arquivo real de nove documentos usa outro código', () => {
     const paralelos = por('codigo_paralelo');
     expect(paralelos.find((x) => x.codigo === 'FM-001')!.detalhe).toContain('MJ-OP-01');
     expect(paralelos.find((x) => x.codigo === 'PO-002')!.detalhe).toContain('MJ-RAI-01');
-    expect(paralelos).toHaveLength(8);
+    // Eram oito. O nono é a SWOT, renumerada em 21/09/2026: as cópias ainda dizem FM-011.
+    expect(paralelos).toHaveLength(9);
   });
 
   it('a Lista de Presença usa um prefixo que a Legenda não conhece', () => {
@@ -167,9 +181,10 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(semCodigo.map((x) => x.titulo)).toContain('Plano de Calibração');
   });
 
-  it('oito documentos circulam fora da lista', () => {
-    // SWOT, Lista de Presença, avaliação de impacto de calibração e 5 registros sem código.
-    expect(por('fora_da_lista')).toHaveLength(8);
+  it('sete documentos circulam fora da lista', () => {
+    // Lista de Presença, avaliação de impacto de calibração e 5 registros sem código.
+    // Eram oito: a SWOT entrou na lista em 21/09/2026, como FM-024.
+    expect(por('fora_da_lista')).toHaveLength(7);
   });
 
   it('nada disso é histórico: é tudo documento vigente', () => {

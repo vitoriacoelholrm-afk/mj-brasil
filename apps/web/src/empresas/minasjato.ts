@@ -194,6 +194,30 @@ export const CATALOGADOS: DocumentoMestre[] = [
     padroes: ['controle_cargas'], tela: 'cargas',
   }),
 
+  // A SWOT, catalogada em 21/09/2026. Executa a proposta que o próprio plano de unificação já
+  // fazia: ela estava FORA DA LISTA por ter tomado o FM-011, que a Lista Mestra dá ao Pedido de
+  // Compra — e os dois têm acesso diferente (o pedido é restrito, a SWOT é irrestrita).
+  //
+  // Quem muda de número é a SWOT, e não o pedido: o FM-011 do Pedido de Compra já saiu da empresa
+  // — o pedido 245-96 enviado à RINA traz esse código. Código que já circulou não se renumera.
+  //
+  // FM-024 porque a numeração segue do maior e nunca preenche buraco; buraco pode ser código
+  // aposentado, e reaproveitá-lo faz o arquivo antigo virar armadilha.
+  //
+  // O FM-011 fica registrado como código paralelo DE PROPÓSITO: o arquivo e as cópias impressas
+  // ainda dizem FM-011 até a próxima revisão. O sistema continua apontando isso como pendência
+  // — não é ruído, é o que falta fazer no mundo físico.
+  //
+  // Com ela na lista, a 4.2 deixa de ter o manual como única resposta: passa a ter documento
+  // próprio, que era o que a auditoria ia cobrar.
+  catalogado('FM-024', 'Formulário — Contexto Organizacional e Matriz SWOT', 'formulario', 'Gestão da Qualidade', 'RQ', ['4.1', '4.2', '6.1'], 'irrestrito', {
+    padroes: ['contexto_partes_interessadas'],
+    revisao: '00',
+    emissao: '2026-08-10',
+    codigosParalelos: ['FM-011'],
+    nota: 'Era FM-011, que colidia com o Pedido de Compra. Renumerada em 21/09/2026 para FM-024. A Lista Mestra e o arquivo ainda trazem o código antigo — atualizar os dois é o que fecha a pendência.',
+  }),
+
   catalogado('FM-011', 'Formulário — Pedido de Compra', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['compras'],
     nota: 'Requisição e aprovação de compra de materiais e serviços. O pedido 245-96 enviado à RINA traz este código.',
   }),
@@ -214,9 +238,7 @@ function foraDaLista(
 }
 
 const FORA: DocumentoMestre[] = [
-  foraDaLista('FM-011', 'Contexto Organizacional e Matriz SWOT', 'formulario', 'Gestão da Qualidade',
-    'Tomou um código que a Lista Mestra já dá ao Pedido de Compra. E os dois têm nível de acesso diferente: o pedido é restrito, a SWOT é irrestrita.',
-    { revisao: '00', emissao: '2026-08-10', clausulas: ['4.1', '4.2', '6.1'], padroes: ['contexto_partes_interessadas'] }),
+  // A SWOT saiu daqui em 21/09/2026 — virou FM-024, catalogada. Ver a nota lá.
 
   foraDaLista('TR-001', 'Lista de Presença — Treinamento de Maquinário', 'formulario', 'RH',
     'Usa um prefixo (TR) que a Legenda da Lista Mestra não conhece — ela só reconhece MQ, PG, PC, PO, PQ, PF, PRH, PSSMA, IT e FM. É vizinho do FM-009, mas não é o mesmo documento: o LNT levanta a necessidade de treinamento, a Lista de Presença registra quem esteve na sala.',

@@ -9,11 +9,12 @@ const plano = planoDeUnificacao(MINASJATO.documentacao, MINASJATO.modulos);
 const de = (codigo: string) => plano.propostas.find((p) => p.de.startsWith(codigo));
 
 describe('cada duplicidade vira uma decisão com código concreto', () => {
-  it('a SWOT sai do FM-011 e recebe o próximo livre', () => {
-    const p = de('FM-011')!;
-    expect(p.tipo).toBe('renumerar');
-    expect(p.titulo).toContain('SWOT');
-    expect(p.para).toBe('FM-024');   // segue do maior, não preenche buraco
+  it('a SWOT saiu da lista de propostas porque a proposta foi EXECUTADA', () => {
+    // O plano dizia: tire a SWOT do FM-011 e dê a ela o FM-024 — segue do maior, não preenche
+    // buraco. Em 21/09/2026 isso foi feito no perfil da empresa, e a proposta some sozinha.
+    // É o teste de que o plano mede a realidade e não uma lista fixa: resolver uma pendência
+    // tem de tirá-la da fila sem ninguém apagar nada.
+    expect(de('FM-011')).toBeUndefined();
   });
 
   it('o que usa prefixo de fora entra na numeração da casa', () => {

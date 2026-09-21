@@ -148,12 +148,21 @@ describe('quem declara a seção cobre as cláusulas de dentro', () => {
     expect(docs.indexOf('FM-020')).toBeLessThan(docs.indexOf('MQ-001'));
   });
 
-  it('e o índice separa "coberto" de "nomeado"', () => {
-    // A 4.1 está coberta no papel — o manual declara a seção 4. Nomeada, não está: nenhum
-    // documento diz "4.1". Para a auditoria, a segunda é a que vale.
-    expect(quantoTem('4.1', MODULOS)).toBeGreaterThan(0);
-    expect(quantosEspecificos('4.1', MODULOS)).toBe(0);
-    // Já a 8.5.3 tem dois formulários que a nomeiam, e duas telas.
+  it('e o índice separa "coberto" de "com documento próprio"', () => {
+    // A 7.4 está coberta no papel — o manual percorre a norma inteira. Mas nenhum procedimento,
+    // formulário ou tela responde por ela, e é isso que a auditoria cobra.
+    expect(quantoTem('7.4', MODULOS)).toBeGreaterThan(0);
+    expect(quantosEspecificos('7.4', MODULOS)).toBe(0);
+    // Já a 8.5.3 tem dois formulários e duas telas.
     expect(quantosEspecificos('8.5.3', MODULOS)).toBeGreaterThan(0);
+  });
+
+  it('a 4.1 e a 4.2 deixaram de ser "só no manual" quando a SWOT entrou na lista', () => {
+    // O FM-024 declara 4.1, 4.2 e 6.1. Catalogá-lo em 21/09/2026 não criou documento nenhum —
+    // ele já existia, fora da lista, com um código que colidia. Dar endereço ao que já existe
+    // fechou duas das treze.
+    expect(quantosEspecificos('4.1', MODULOS)).toBeGreaterThan(0);
+    expect(quantosEspecificos('4.2', MODULOS)).toBeGreaterThan(0);
+    expect(relacionadosDa('4.2', MODULOS)!.documentos.map((d) => d.codigo)).toContain('FM-024');
   });
 });
