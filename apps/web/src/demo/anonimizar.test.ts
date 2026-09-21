@@ -2,7 +2,7 @@
 // a troca, é aqui que aparece — e o build de demo também quebra, pelo mesmo `vazamentos`.
 import { describe, it, expect } from 'vitest';
 import { TROCAS, fundo, texto, vazamentos } from './anonimizar';
-import { ORDENS } from '@/os/exemplos';
+import { ORDENS } from '@/modules/tratamento-superficie/exemplos';
 import { MINASJATO } from '@/empresas/minasjato';
 import { apiDemo } from './api';
 

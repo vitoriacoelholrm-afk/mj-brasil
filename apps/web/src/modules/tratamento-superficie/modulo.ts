@@ -9,7 +9,7 @@
 // NÃO é essencial: instala quem faz o serviço.
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
-import { PlanoServico } from '@/telas/PlanoServico';
+import { PlanoServico } from './ui/PlanoServico';
 
 export const tratamentoSuperficie: Modulo = {
   chave: 'tratamento-superficie',

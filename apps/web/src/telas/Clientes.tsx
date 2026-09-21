@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { c, pastilha, s } from '@/ui/estilo';
-import { Aviso, Cabecalho } from './Vencimentos';
+import { Aviso, Cabecalho } from '@/ui/Cabecalho';
 
 interface Cliente {
   id: string; name: string; type: string; tax_id: string | null;

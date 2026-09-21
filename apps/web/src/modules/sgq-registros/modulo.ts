@@ -12,7 +12,7 @@ import type { Modulo } from '@/plataforma/modulo';
 import {
   MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
 } from './formularios';
-import { Registros } from '@/telas/Registros';
+import { Registros } from '@/ui/Registros';
 
 export const sgqRegistros: Modulo = {
   chave: 'sgq-registros',

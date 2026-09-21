@@ -3,15 +3,15 @@
 // Cada linha é ESPECIFICADO | ENCONTRADO | DATA | RESPONSÁVEL PROCESSO | RESPONSÁVEL INSPEÇÃO,
 // como no papel. A diferença é que o sistema compara os dois primeiros e diz se está conforme.
 import { useMemo, useState } from 'react';
-import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '@/os/regras';
-import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '@/os/vocabulario';
-import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '@/os/exemplos';
+import { avaliarMedicao, resumirOs, type EtapaPreenchida } from '../regras';
+import { ETAPA_ROTULO, GRANDEZA_POR_CHAVE } from '../vocabulario';
+import { ORDENS, compararComRelatorio, type Anexo, type Divergencia, type OrdemServico, type Relatorio } from '../exemplos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { PainelRelatorio } from './Relatorio';
 import { motivoDaLeituraApenas, pode, somenteLeitura, type Papel } from '@/plataforma/acesso';
 import { papelAtual } from '@/lib/session';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
-import { Cabecalho } from './Vencimentos';
+import { Cabecalho } from '@/ui/Cabecalho';
 
 export function PlanoServico() {
   const [ordens, setOrdens] = useState<OrdemServico[]>(ORDENS);

@@ -11,8 +11,8 @@ import '@/empresas/minasjato';
 import '@/empresas/modelo';
 import { definirEmpresaAtiva, empresaAtiva, empresas, toleranciaAtiva } from './empresa';
 import { acharConflitos, acharDoc, proximoCodigoLivre, significadoDoPrefixo } from './documentos';
-import { avaliarMedicao } from '@/os/regras';
-import { faixaTolerada } from '@/os/vocabulario';
+import { avaliarMedicao } from '@/modules/tratamento-superficie/regras';
+import { faixaTolerada } from '@/modules/tratamento-superficie/vocabulario';
 import { carimbo, carimboDoPapel, codigoDoPapel, conflitos, doc, listaMestraMeta } from '@/documentos/listaMestra';
 
 afterEach(() => definirEmpresaAtiva('minasjato'));

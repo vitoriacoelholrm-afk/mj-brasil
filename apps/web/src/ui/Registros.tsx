@@ -1,4 +1,4 @@
-// Uma tela para qualquer formulário declarado em `plataforma/formularios.ts`.
+// A tela de QUALQUER formulário declarado por qualquer módulo.
 //
 // Não é a tela da propriedade do cliente nem a do controle de mudanças: é a tela de QUALQUER um
 // deles. Acrescentar um formulário novo passa a ser acrescentar uma definição — e é assim que os
@@ -11,7 +11,7 @@ import {
   type CampoDef, type FormularioDef, type Registro, type Valores,
 } from '@/plataforma/formularios';
 import type { Anexo } from '@/plataforma/anexos';
-import { Anexos } from './Anexos';
+import { Anexos } from '@/ui/Anexos';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
@@ -19,7 +19,7 @@ import { conteudoDoAnexo, criarRegistro, listarRegistros } from '@/lib/registros
 import { usarDados } from '@/lib/usarDados';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
-import { Cabecalho } from './Vencimentos';
+import { Cabecalho } from '@/ui/Cabecalho';
 
 export function Registros({ def, painel }: {
   def: FormularioDef;

@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
-import { Aviso, Cabecalho } from './Vencimentos';
+import { Aviso, Cabecalho } from '@/ui/Cabecalho';
 
 interface Ativo {
   id: string; code: string; name: string; area: string | null;

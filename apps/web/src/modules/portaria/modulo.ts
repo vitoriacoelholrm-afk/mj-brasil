@@ -9,7 +9,7 @@
 // Empresa que recebe e despacha carga precisa; consultório de engenharia, não.
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
-import { Registros } from '@/telas/Registros';
+import { Registros } from '@/ui/Registros';
 import { CONTROLE_CARGAS } from './formularios';
 import { PainelDaPortaria } from './ui/Painel';
 

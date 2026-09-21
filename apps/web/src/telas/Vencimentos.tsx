@@ -4,6 +4,7 @@
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
+import { Aviso, Cabecalho } from '@/ui/Cabecalho';
 
 interface Credencial {
   id: string;
@@ -117,26 +118,6 @@ export function Vencimentos() {
       })}
 
       {total === 0 && <Aviso texto="Nenhuma credencial cadastrada ainda." />}
-    </div>
-  );
-}
-
-export function Cabecalho({ titulo, sub, acao }: { titulo: string; sub?: string; acao?: React.ReactNode }) {
-  return (
-    <div style={S.cabecalho}>
-      <div>
-        <h1 style={S.h1}>{titulo}</h1>
-        {sub && <p style={{ ...S.sub, ...s.prosa }}>{sub}</p>}
-      </div>
-      {acao}
-    </div>
-  );
-}
-
-export function Aviso({ texto, erro }: { texto: string; erro?: boolean }) {
-  return (
-    <div style={{ ...S.aviso, color: erro ? c.critico : c.suave, borderColor: erro ? c.critico : c.linha }}>
-      {texto}
     </div>
   );
 }

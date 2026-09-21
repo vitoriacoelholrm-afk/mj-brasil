@@ -10,7 +10,7 @@ import { aderencia, gerarGaps, type ItemParaGap } from '@/diagnostico/regras';
 import { AVALIACAO_ROTULO, type Avaliacao, type Severidade } from '@/diagnostico/vocabulario';
 import { ITENS_MINASJATO } from '@/diagnostico/minasjato';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
-import { Cabecalho } from './Vencimentos';
+import { Cabecalho } from '@/ui/Cabecalho';
 
 const OPCOES: (Avaliacao | 'pendente')[] = ['pendente', 'nao_atende', 'atende_parcial', 'atende', 'nao_aplicavel'];
 

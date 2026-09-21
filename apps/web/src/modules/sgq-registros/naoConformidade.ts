@@ -9,7 +9,7 @@
 // achado de auditoria não é "faltou o campo", é "a empresa registra não conformidade e não trata".
 //
 // Por isso a conta mora aqui: é ela que o painel mostra, e é calculada, não marcada.
-import type { Registro } from './formularios';
+import type { Registro } from '@/plataforma/formularios';
 
 const vazio = (v: string | undefined) => !v || v.trim() === '';
 

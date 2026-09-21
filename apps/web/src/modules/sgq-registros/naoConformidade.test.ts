@@ -5,7 +5,7 @@
 // repetir, e que alguém verificou se funcionou. Um sistema que confunde as duas registra muita
 // não conformidade e não trata nenhuma — e é assim que a auditoria encontra.
 import { describe, it, expect } from 'vitest';
-import type { Registro, Valores } from './formularios';
+import type { Registro, Valores } from '@/plataforma/formularios';
 import { faltaNaTratativa, resumoDasNcs, semTratativa } from './naoConformidade';
 
 let seq = 0;

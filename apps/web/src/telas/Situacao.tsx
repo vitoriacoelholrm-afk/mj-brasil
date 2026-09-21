@@ -6,9 +6,9 @@
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
 import { listarRegistros } from '@/lib/registrosApi';
-import { resumoDasNcs } from '@/plataforma/naoConformidade';
-import { ORDENS } from '@/os/exemplos';
-import { resumirOs } from '@/os/regras';
+import { resumoDasNcs } from '@/modules/sgq-registros/naoConformidade';
+import { ORDENS } from '@/modules/tratamento-superficie/exemplos';
+import { resumirOs } from '@/modules/tratamento-superficie/regras';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { catalogados, conflitos, listaMestraMeta } from '@/documentos/listaMestra';
 

@@ -19,7 +19,7 @@ import { empresaAtiva } from '@/plataforma/empresa';
 import { carimboDoPapel } from '@/documentos/listaMestra';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
-import { Cabecalho } from './Vencimentos';
+import { Cabecalho } from '@/ui/Cabecalho';
 
 const TOM: Record<Situacao, 'ok' | 'alerta' | 'critico' | 'neutro'> = {
   boa: 'ok', limite: 'alerta', ruim: 'critico', sem_dado: 'neutro',

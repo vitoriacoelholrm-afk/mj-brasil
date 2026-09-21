@@ -17,7 +17,7 @@ import {
   PROPOSTA_ROTULO, planoDeUnificacao, resumoDoPlano, type PlanoDeUnificacao, type Proposta,
 } from '@/plataforma/unificacao';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
-import { Cabecalho } from './Vencimentos';
+import { Cabecalho } from '@/ui/Cabecalho';
 
 const ORDEM_CONFLITO: TipoConflito[] = [
   'codigo_duplicado', 'prefixo_desconhecido', 'revisao_divergente', 'fora_da_lista',
