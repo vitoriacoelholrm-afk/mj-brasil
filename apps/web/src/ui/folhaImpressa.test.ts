@@ -1,13 +1,13 @@
-// A FOLHA DO FORMULÁRIO EM BRANCO.
+// A FOLHA IMPRESSA — em branco e preenchida.
 //
-// O que estes testes guardam não é o desenho da página — é o que a folha AFIRMA quando sai da
+// O que estes testes guardam não é o desenho da página: é o que a folha AFIRMA quando sai da
 // impressora. Papel que circula sem dizer de onde veio é o achado de 7.5.3 mais fácil de levantar
 // numa auditoria: o documento é revisado, a folha na mão continua a mesma, e ninguém sabe.
 import { describe, it, expect, beforeEach } from 'vitest';
 import '@/empresas';
 import { definirEmpresaAtiva } from '@/plataforma/empresa';
 import { formularioDoPapel } from '@/modules';
-import { folhaDoFormulario } from './ui/imprimirFormulario';
+import { folhaDoFormulario, type RegistroParaFolha } from './folhaImpressa';
 
 const folhaDe = (papel: Parameters<typeof formularioDoPapel>[0]) =>
   folhaDoFormulario(formularioDoPapel(papel)!);
@@ -76,6 +76,75 @@ describe('a folha é preenchível à mão', () => {
     const html = folhaDe('nao_conformidade');
     expect(html).toContain('Preenchido por');
     expect(html).toContain('Verificado por');
+  });
+});
+
+describe('a folha do registro preenchido', () => {
+  beforeEach(() => definirEmpresaAtiva('minasjato'));
+
+  const registro: RegistroParaFolha = {
+    id: 'reg-teste-01',
+    criadoEm: '2026-09-18T14:20:00.000Z',
+    criadoPor: 'Emerson William de Faria',
+    valores: {
+      numero: '03/2026', tipo: 'Extraordinária', escopo: 'Pintura e expedição',
+      criterios: 'ISO 9001:2015 e PO-005', data: '2026-09-18',
+      auditor: 'Gustavo Moreira', auditados: 'Gerência de Pintura',
+      independencia: 'Não', resultado: 'Realizada', naoConformidades: '2 — RNC 11 e 12',
+      relatadoPara: 'Alta Direção', planejadoEm: '2026-09-10', planejadoPor: 'Gustavo Moreira',
+    },
+    anexos: [
+      { id: 'a1', tipo: 'foto', nome: 'sala.jpg', url: 'data:image/png;base64,AAA', legenda: 'Reunião de abertura', comentario: '', data: null, adicionadoPor: null },
+      { id: 'a2', tipo: 'arquivo', nome: 'relatorio-03-2026.pdf', url: null, legenda: '', comentario: '', data: null, adicionadoPor: null },
+    ],
+  };
+
+  const html = () => folhaDoFormulario(formularioDoPapel('plano_auditoria')!, registro);
+
+  it('traz os valores, e a data em formato de gente', () => {
+    expect(html()).toContain('03/2026');
+    expect(html()).toContain('18/09/2026');       // o campo 'data', que vem como 2026-09-18
+    expect(html()).toContain('Gustavo Moreira');
+  });
+
+  it('a escolha sai MARCADA, e as outras opções continuam visíveis', () => {
+    // Mostrar só a resposta esconderia o que mais havia para escolher — e é isso que o auditor
+    // olha quando quer saber se a pergunta era realmente essa.
+    expect(html()).toContain('&#9746; Extraordinária');
+    expect(html()).toContain('&#9744; Programada');
+  });
+
+  it('campo sem resposta sai com traço, e não com linha em branco', () => {
+    // Linha em branco num registro impresso é convite para preencher depois. Registro alterado
+    // depois de emitido é adulteração de evidência, não correção.
+    expect(html()).toContain('&mdash;');
+    expect(html()).not.toContain('class="caixa"');
+  });
+
+  it('campo condicional que não se deu não aparece — nunca foi perguntado', () => {
+    // 'independencia' é Não, então 'Como a imparcialidade foi assegurada' não existia neste caso.
+    expect(html()).not.toContain('Como a imparcialidade foi assegurada');
+    // E o que a condição abriu aparece: 'resultado' é Realizada.
+    expect(html()).toContain('Não conformidades levantadas');
+  });
+
+  it('as fotos entram na folha; o arquivo entra pelo nome', () => {
+    expect(html()).toContain('data:image/png;base64,AAA');
+    expect(html()).toContain('Reunião de abertura');
+    expect(html()).toContain('relatorio-03-2026.pdf');
+  });
+
+  it('quem preencheu já vem assinado; quem verifica, não', () => {
+    expect(html()).toContain('Preenchido por &mdash; Emerson William de Faria');
+    expect(html()).toContain('Verificado por &mdash; nome e data');
+  });
+
+  it('e o rodapé diz que o original é o do sistema', () => {
+    const f = html();
+    expect(f).toContain('O registro original é o do sistema');
+    expect(f).toContain('alterá-la à mão não altera o registro');
+    // O texto do modelo em branco não vale aqui: este papel não é modelo nenhum.
+    expect(f).not.toContain('Modelo em branco');
   });
 });
 

@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { SETOR_ROTULO } from '@/plataforma/acesso';
 import type { CampoDef, FormularioDef } from '@/plataforma/formularios';
 import { carimboDoPapel, codigoDoPapel } from '@/modules/sgq-documentos/listaMestra';
-import { abrirFormularioEmJanela } from './imprimirFormulario';
+import { abrirFormularioEmJanela } from '@/ui/folhaImpressa';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 
 const TIPO_ROTULO: Record<CampoDef['tipo'], string> = {

@@ -13,6 +13,7 @@ import {
 import type { Anexo } from '@/plataforma/anexos';
 import { Anexos } from '@/ui/Anexos';
 import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
+import { abrirFormularioEmJanela } from '@/ui/folhaImpressa';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
 import { conteudoDoAnexo, criarRegistro, listarRegistros } from '@/lib/registrosApi';
@@ -351,6 +352,7 @@ function Visualizacao({
   // as imagens vêm. Enquanto não chegam, o bloco já aparece com nome, legenda e observação; o que
   // falta é só a miniatura.
   const [comImagem, setComImagem] = useState<Anexo[]>(registro.anexos);
+  const [bloqueado, setBloqueado] = useState(false);
   useEffect(() => {
     let vivo = true;
     setComImagem(registro.anexos);
@@ -371,10 +373,30 @@ function Visualizacao({
       <div style={{ ...s.cartao, overflow: 'hidden' }}>
         <div style={S.faixa}>
           <span>Registro de {dataBR(registro.criadoEm)}</span>
-          <span style={{ fontSize: 11.5, color: c.suave, fontWeight: 400 }}>
-            por {registro.criadoPor ?? '—'}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11.5, color: c.suave, fontWeight: 400 }}>
+              por {registro.criadoPor ?? '—'}
+            </span>
+            {/* As fotos entram na folha quando já carregaram — por isso `comImagem`, e não
+                `registro.anexos`. Imprimir antes de chegarem sai com a lista dos anexos e sem as
+                miniaturas, que é melhor do que travar o botão esperando. */}
+            <button
+              style={S.imprimir}
+              title="Abre este registro numa janela própria, pronto para imprimir ou salvar em PDF"
+              onClick={() => setBloqueado(!abrirFormularioEmJanela(def, { ...registro, anexos: comImagem }))}
+            >
+              Abrir em janela
+            </button>
           </span>
         </div>
+
+        {bloqueado && (
+          <div style={{ ...S.bloqueado, ...s.prosa }}>
+            O navegador bloqueou a janela. Libere os pop-ups para este endereço e clique de novo —
+            a janela é uma página do próprio sistema, não um site de fora.
+          </div>
+        )}
+
         <div style={{ ...S.grade, gridTemplateColumns: celular ? '1fr' : 'repeat(auto-fit,minmax(240px,1fr))' }}>
           {preenchidos.map((campo) => (
             <div key={campo.chave} style={campo.tipo === 'texto_longo' ? { gridColumn: '1 / -1' } : undefined}>
@@ -405,6 +427,18 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: c.tinta2,
   },
   grade: { display: 'grid', gap: 16, padding: '18px' },
+  imprimir: {
+    padding: '4px 10px', cursor: 'pointer',
+    fontFamily: fonte.texto, fontSize: 11.5, fontWeight: 600, color: c.acento,
+    textTransform: 'none', letterSpacing: 0,
+    background: c.superficie, border: `1px solid ${c.linhaForte}`, borderRadius: 3,
+  },
+  bloqueado: {
+    fontSize: 12.5, color: c.alerta, lineHeight: 1.6, margin: '12px 18px 0',
+    padding: '9px 12px', borderRadius: 3,
+    background: c.alertaFraco, border: `1px solid ${c.alerta}`,
+    textTransform: 'none', letterSpacing: 0, fontWeight: 400,
+  },
   rotulo: {
     display: 'block', fontSize: 11, letterSpacing: '.07em', textTransform: 'uppercase',
     color: c.suave, fontWeight: 600, marginBottom: 5,
