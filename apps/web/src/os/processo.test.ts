@@ -1,4 +1,4 @@
-// Teste de funcionalidade do processo completo do surface-treatment, com DUAS ordens de serviço
+// Teste de funcionalidade do processo completo do tratamento-superficie, com DUAS ordens de serviço
 // independentes — uma simples e uma composta. Elas não se misturam em ponto nenhum: cada uma tem
 // seu esquema, suas etapas ativas e seu resultado.
 import { describe, it, expect } from 'vitest';

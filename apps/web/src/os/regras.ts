@@ -1,4 +1,4 @@
-// surface-treatment — as regras do Plano de Serviço. Puras, sem banco.
+// tratamento-superficie — as regras do Plano de Serviço. Puras, sem banco.
 //
 // A regra central é `avaliarMedicao`: dado o especificado e o encontrado, ela diz se está
 // conforme. Hoje esses dois valores são digitados à mão em formulários separados e ninguém os

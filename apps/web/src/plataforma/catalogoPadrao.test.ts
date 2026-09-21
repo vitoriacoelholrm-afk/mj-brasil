@@ -61,7 +61,7 @@ describe('o catálogo é modular', () => {
   });
 
   it('com o módulo de tratamento de superfície, entram os documentos dele', () => {
-    const com = catalogoPara(['surface-treatment']);
+    const com = catalogoPara(['tratamento-superficie']);
     expect(com.length).toBeGreaterThan(catalogoPara([]).length);
     expect(com.some((x) => x.chave === 'st_jateamento')).toBe(true);
     expect(com.find((x) => x.chave === 'st_ordem_servico')!.papel).toBe('ordem_servico');
@@ -69,7 +69,7 @@ describe('o catálogo é modular', () => {
 
   it('módulo que não existe não traz nada de novo', () => {
     expect(catalogoPara(['setor-inexistente'])).toEqual(catalogoPara([]));
-    expect(modulosDisponiveis()).toContain('surface-treatment');
+    expect(modulosDisponiveis()).toContain('tratamento-superficie');
   });
 });
 

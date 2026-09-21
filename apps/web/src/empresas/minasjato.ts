@@ -251,7 +251,7 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
   },
   indicadores: INDICADORES,
   apuracoes: APURACOES,
-  modulos: ['surface-treatment', 'ssma'],
+  modulos: ['tratamento-superficie', 'ssma', 'portaria'],
 });
 
 export { META, LEGENDA };

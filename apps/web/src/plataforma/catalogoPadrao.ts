@@ -151,9 +151,9 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
       nota: 'O livro da portaria. Não substitui o recebimento nem o romaneio: aqueles inspecionam a carga, este registra o veículo passando pelo portão.' }),
 ];
 
-/* ══ MÓDULO surface-treatment — só para quem jateia e pinta ══════════════════════════════════ */
+/* ══ MÓDULO tratamento-superficie — só para quem jateia e pinta ══════════════════════════════════ */
 
-const ST = 'surface-treatment';
+const ST = 'tratamento-superficie';
 const st = (
   chave: string, titulo: string, natureza: Natureza, categoria: string,
   clausulas: string[], exigencia: Exigencia, codigoSugerido: string,

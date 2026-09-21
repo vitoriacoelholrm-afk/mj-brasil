@@ -4,7 +4,7 @@ import {
   ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, pode, podeEditar, podeVer,
   somenteLeitura, type Papel,
 } from './acesso';
-import { REGISTRO_TREINAMENTO, NAO_CONFORMIDADE } from './formularios';
+import { NAO_CONFORMIDADE, REGISTRO_TREINAMENTO } from '@/modules/sgq-registros/formularios';
 import { EQUIPE, papelAtual } from '@/lib/session';
 
 const PAPEIS = Object.keys(ACESSO) as Papel[];

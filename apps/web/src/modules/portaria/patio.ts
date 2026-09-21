@@ -12,7 +12,7 @@
 //
 // Nada aqui se pergunta a quem está no portão. É tudo calculado dos registros que ele já fez —
 // mesma regra do resto do sistema: veredito que se conta é veredito que se discute.
-import type { Registro, Valores } from './formularios';
+import type { Registro, Valores } from '@/plataforma/formularios';
 
 /** Os tipos de carga que são propriedade do cliente. A norma não fala de peça: fala de
  *  propriedade — que chega tanto como estrutura quanto como lata de tinta. */

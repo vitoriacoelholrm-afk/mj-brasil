@@ -1,4 +1,4 @@
-// surface-treatment — vocabulário do Plano de Serviço.
+// tratamento-superficie — vocabulário do Plano de Serviço.
 //
 // Tudo aqui saiu dos formulários reais em uso (Plano de Serviço e Relatório de Inspeção).
 // Nomes amplos de propósito: o módulo tem que servir a jateamento, pintura, galvanização ou

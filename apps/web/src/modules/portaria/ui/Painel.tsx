@@ -15,7 +15,7 @@
 // bloco de problema.
 import type { Registro } from '@/plataforma/formularios';
 import { hojeLocal } from '@/plataforma/formularios';
-import { avariasVistas, diasNoPatio, movimentoDoDia, noPatio, semRastro } from '@/plataforma/portaria';
+import { avariasVistas, diasNoPatio, movimentoDoDia, noPatio, semRastro } from '../patio';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 
 export function PainelDaPortaria({ registros }: { registros: Registro[] }) {

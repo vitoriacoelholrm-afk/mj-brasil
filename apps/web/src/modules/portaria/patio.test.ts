@@ -4,11 +4,11 @@
 // está aqui dentro agora. Quem responde é a conta sobre os registros, não a memória de ninguém —
 // e uma conta errada aqui é peça de cliente dada como devolvida sem ter saído.
 import { describe, it, expect } from 'vitest';
-import { valoresIniciais, type Registro, type Valores } from './formularios';
+import { valoresIniciais, type Registro, type Valores } from '@/plataforma/formularios';
 import { CONTROLE_CARGAS } from './formularios';
 import {
   avariasVistas, chaveDaOs, diasNoPatio, ehDoCliente, movimentoDoDia, noPatio, semRastro,
-} from './portaria';
+} from './patio';
 
 let seq = 0;
 const carga = (v: Valores): Registro => ({

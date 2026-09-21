@@ -10,7 +10,7 @@ import { registrar, type PerfilDaEmpresa } from '@/plataforma/empresa';
 import type { DocumentoMestre, ListaMestraMeta } from '@/plataforma/documentos';
 import { LEGENDA_PADRAO, catalogoPara } from '@/plataforma/catalogoPadrao';
 
-const MODULOS = ['surface-treatment'];
+const MODULOS = ['tratamento-superficie'];
 const EMISSAO = '2026-09-01';
 const PROXIMA = '2027-09-01';
 

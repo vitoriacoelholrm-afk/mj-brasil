@@ -49,7 +49,7 @@ export interface PerfilDaEmpresa {
    *  acompanha os seus: não há lista de indicadores que sirva para todo mundo. */
   indicadores?: Indicador[];
   apuracoes?: Apuracao[];
-  /** Os módulos setoriais que esta empresa usa. Quem não jateia não recebe surface-treatment. */
+  /** Os módulos setoriais que esta empresa usa. Quem não jateia não recebe tratamento-superficie. */
   modulos: string[];
   /** Verdadeiro para o perfil em branco que serve de ponto de partida ao próximo cliente. */
   modelo?: boolean;

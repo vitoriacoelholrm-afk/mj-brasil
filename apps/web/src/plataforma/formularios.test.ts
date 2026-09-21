@@ -5,12 +5,15 @@
 // passa a fechar sem provar o que a norma manda provar — e ninguém percebe até a auditoria.
 import { describe, it, expect } from 'vitest';
 import {
-  CONTROLE_CARGAS, FORMULARIOS, MONITORAMENTO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE,
-  PROPRIEDADE_CLIENTE,
-  REGISTRO_TREINAMENTO,
-  campoVisivel, faltaFoto, formularioDoPapel, pendencias, resumoDoRegistro,
+  campoVisivel, faltaFoto, pendencias, resumoDoRegistro,
   type FormularioDef, type Valores,
 } from './formularios';
+import {
+  MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
+} from '@/modules/sgq-registros/formularios';
+import { MONITORAMENTO_SGQ } from '@/modules/sgq-indicadores/formularios';
+import { CONTROLE_CARGAS } from '@/modules/portaria/formularios';
+import { FORMULARIOS, formularioDoPapel } from '@/modules';
 import { MINASJATO } from '@/empresas/minasjato';
 import type { Anexo } from './anexos';
 

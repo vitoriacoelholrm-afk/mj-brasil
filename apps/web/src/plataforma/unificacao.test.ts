@@ -99,7 +99,7 @@ describe('depois do alinhamento', () => {
   });
 
   it('a Minasjato usa dois módulos: o do setor e o de segurança', () => {
-    expect(MINASJATO.modulos).toEqual(['surface-treatment', 'ssma']);
+    expect(MINASJATO.modulos).toEqual(['tratamento-superficie', 'ssma', 'portaria']);
   });
 
   it('quem nasce do padrão não tem nada a unificar', () => {
