@@ -13,7 +13,8 @@ import {
 import type { Anexo } from '@/plataforma/anexos';
 import { Anexos } from '@/ui/Anexos';
 import { carimboDoPapel } from '@/modules/sgq-documentos/listaMestra';
-import { abrirFormularioEmJanela } from '@/ui/folhaImpressa';
+import { abrirFormularioEmJanela, folhaDoFormulario } from '@/ui/folhaImpressa';
+import { FolhaNaTela } from '@/ui/FolhaNaTela';
 import { motivoDoBloqueio, podeEditar } from '@/plataforma/acesso';
 import { EQUIPE, papelAtual, pessoaAtual } from '@/lib/session';
 import { conteudoDoAnexo, criarRegistro, listarRegistros } from '@/lib/registrosApi';
@@ -352,7 +353,8 @@ function Visualizacao({
   // as imagens vêm. Enquanto não chegam, o bloco já aparece com nome, legenda e observação; o que
   // falta é só a miniatura.
   const [comImagem, setComImagem] = useState<Anexo[]>(registro.anexos);
-  const [bloqueado, setBloqueado] = useState(false);
+  // A folha desenhada aqui dentro, para quando o navegador não deixa abrir a janela.
+  const [naTela, setNaTela] = useState<string | null>(null);
   useEffect(() => {
     let vivo = true;
     setComImagem(registro.anexos);
@@ -383,19 +385,19 @@ function Visualizacao({
             <button
               style={S.imprimir}
               title="Abre este registro numa janela própria, pronto para imprimir ou salvar em PDF"
-              onClick={() => setBloqueado(!abrirFormularioEmJanela(def, { ...registro, anexos: comImagem }))}
+              onClick={() => {
+                const folha = { ...registro, anexos: comImagem };
+                if (!abrirFormularioEmJanela(def, folha)) {
+                  setNaTela(folhaDoFormulario(def, folha, { semBotoes: true }));
+                }
+              }}
             >
               Abrir em janela
             </button>
           </span>
         </div>
 
-        {bloqueado && (
-          <div style={{ ...S.bloqueado, ...s.prosa }}>
-            O navegador bloqueou a janela. Libere os pop-ups para este endereço e clique de novo —
-            a janela é uma página do próprio sistema, não um site de fora.
-          </div>
-        )}
+        {naTela && <FolhaNaTela html={naTela} aoFechar={() => setNaTela(null)} />}
 
         <div style={{ ...S.grade, gridTemplateColumns: celular ? '1fr' : 'repeat(auto-fit,minmax(240px,1fr))' }}>
           {preenchidos.map((campo) => (
@@ -432,12 +434,6 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: fonte.texto, fontSize: 11.5, fontWeight: 600, color: c.acento,
     textTransform: 'none', letterSpacing: 0,
     background: c.superficie, border: `1px solid ${c.linhaForte}`, borderRadius: 3,
-  },
-  bloqueado: {
-    fontSize: 12.5, color: c.alerta, lineHeight: 1.6, margin: '12px 18px 0',
-    padding: '9px 12px', borderRadius: 3,
-    background: c.alertaFraco, border: `1px solid ${c.alerta}`,
-    textTransform: 'none', letterSpacing: 0, fontWeight: 400,
   },
   rotulo: {
     display: 'block', fontSize: 11, letterSpacing: '.07em', textTransform: 'uppercase',

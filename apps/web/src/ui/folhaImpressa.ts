@@ -113,7 +113,12 @@ function anexosEmPapel(anexos: Anexo[]): string {
   </div>`;
 }
 
-function folha(def: FormularioDef, registro?: RegistroParaFolha | null): string {
+/** `semBotoes` é para quando a folha é desenhada DENTRO do sistema, e não numa janela: ali quem
+ *  manda imprimir e fechar é a tela que a envolve, e um "Fechar" que chama `window.close()` de
+ *  dentro de um iframe não fecha nada. */
+function folha(
+  def: FormularioDef, registro?: RegistroParaFolha | null, opcoes?: { semBotoes?: boolean },
+): string {
   const empresa = empresaAtiva();
   const carimbo = carimboDoPapel(def.papel);
   const lista = empresa.documentacao.meta.codigo;
@@ -187,10 +192,10 @@ function folha(def: FormularioDef, registro?: RegistroParaFolha | null): string 
 </style>
 </head>
 <body>
-  <div class="acoes">
+  ${opcoes?.semBotoes ? '' : `<div class="acoes">
     <button onclick="window.print()">Imprimir ou salvar em PDF</button>
     <button onclick="window.close()">Fechar</button>
-  </div>
+  </div>`}
 
   <header>
     <div class="topo">

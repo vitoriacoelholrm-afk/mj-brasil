@@ -15,7 +15,8 @@ import { useState } from 'react';
 import { SETOR_ROTULO } from '@/plataforma/acesso';
 import type { CampoDef, FormularioDef } from '@/plataforma/formularios';
 import { carimboDoPapel, codigoDoPapel } from '@/modules/sgq-documentos/listaMestra';
-import { abrirFormularioEmJanela } from '@/ui/folhaImpressa';
+import { abrirFormularioEmJanela, folhaDoFormulario } from '@/ui/folhaImpressa';
+import { FolhaNaTela } from '@/ui/FolhaNaTela';
 import { c, fonte, pastilha, s } from '@/ui/estilo';
 
 const TIPO_ROTULO: Record<CampoDef['tipo'], string> = {
@@ -54,7 +55,8 @@ export function ModelosDeFormulario({ defs }: { defs: FormularioDef[] }) {
 function Modelo({ def }: { def: FormularioDef }) {
   // Um formulário só por vez aberto: a cláusula que tem três viraria uma parede de campos.
   const [aberto, setAberto] = useState(false);
-  const [bloqueado, setBloqueado] = useState(false);
+  // A folha desenhada aqui dentro, para quando o navegador não deixa abrir a janela.
+  const [naTela, setNaTela] = useState<string | null>(null);
   // O código é da empresa, não do formulário: cada cliente numera o seu. Sem código cadastrado a
   // tela diz isso em vez de carimbar um número inventado.
   const codigo = codigoDoPapel(def.papel);
@@ -79,18 +81,15 @@ function Modelo({ def }: { def: FormularioDef }) {
         <button
           style={S.janela}
           title="Abre o formulário em branco numa janela própria, pronto para imprimir ou salvar em PDF"
-          onClick={() => setBloqueado(!abrirFormularioEmJanela(def))}
+          onClick={() => {
+            if (!abrirFormularioEmJanela(def)) setNaTela(folhaDoFormulario(def, null, { semBotoes: true }));
+          }}
         >
           Abrir em janela
         </button>
       </div>
 
-      {bloqueado && (
-        <div style={{ ...S.bloqueado, ...s.prosa }}>
-          O navegador bloqueou a janela. Libere os pop-ups para este endereço e clique de novo —
-          a janela é uma página do próprio sistema, não um site de fora.
-        </div>
-      )}
+      {naTela && <FolhaNaTela html={naTela} aoFechar={() => setNaTela(null)} />}
 
       {aberto && (
         <div style={S.corpo}>
@@ -189,11 +188,6 @@ const S: Record<string, React.CSSProperties> = {
     flexShrink: 0, marginTop: 11, padding: '5px 11px', cursor: 'pointer',
     fontFamily: fonte.texto, fontSize: 12, color: c.acento,
     background: c.superficie, border: `1px solid ${c.linhaForte}`, borderRadius: 3,
-  },
-  bloqueado: {
-    fontSize: 12.5, color: c.alerta, lineHeight: 1.6, margin: '0 18px 12px',
-    padding: '9px 12px', borderRadius: 3,
-    background: c.alertaFraco, border: `1px solid ${c.alerta}`,
   },
   cabeca: {
     display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 220, textAlign: 'left',
