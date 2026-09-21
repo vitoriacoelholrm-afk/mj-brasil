@@ -1,0 +1,6 @@
+BraMex — paleta sugerida
+Azul profundo: #0B2F5A
+Azul: #1468D5
+Turquesa: #00BFAE
+Verde: #00A651
+Amarelo de apoio: #F4C430
