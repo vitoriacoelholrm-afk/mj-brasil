@@ -118,6 +118,17 @@ export interface Documentacao {
 const br = (iso: string) => iso.slice(0, 10).split('-').reverse().join('/');
 const codigoReal = (d: DocumentoMestre) => (d.codigo.startsWith(SEM_CODIGO) ? null : d.codigo);
 
+/** Documento APOSENTADO — o que saiu de circulação porque outro passou a responder por ele.
+ *
+ *  Continua na lista de propósito: a §7.5.3 manda controlar o obsoleto justamente para ninguém o
+ *  usar por engano, e apagá-lo faria a lista esquecer que ele existiu e circulou. Mas ele não
+ *  cobre cláusula, não vence revisão, não recebe código novo e não entra em plano de unificação:
+ *  não há o que consertar num documento que não se usa mais.
+ *
+ *  É o espelho de `em_elaboracao`. Um ainda não nasceu, o outro já morreu, e nenhum dos dois
+ *  responde por nada hoje. */
+export const aposentado = (d: DocumentoMestre) => d.situacao === 'obsoleto';
+
 /* ── Consulta ──────────────────────────────────────────────────────────────────────────────── */
 
 export function indexar(docs: DocumentoMestre[]): Map<string, DocumentoMestre[]> {
@@ -211,7 +222,9 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
   const out: Conflito[] = [];
   const { meta, legenda, documentos } = docs;
 
-  for (const [codigo, iguais] of indexar(documentos)) {
+  // Só entre os que circulam: um obsoleto dividindo o código com o vigente que o substituiu é o
+  // funcionamento normal de uma lista mestra, não uma disputa.
+  for (const [codigo, iguais] of indexar(documentos.filter((d) => !aposentado(d)))) {
     if (iguais.length > 1) {
       out.push({
         tipo: 'codigo_duplicado', codigo, titulo: iguais.map((d) => d.titulo).join(' × '),
@@ -222,6 +235,10 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
   }
 
   for (const d of documentos) {
+    // Documento aposentado não gera achado. Não há o que consertar no cabeçalho, no prefixo nem na
+    // revisão de um documento que saiu de circulação — apontá-lo seria pedir trabalho sobre papel
+    // morto, e afogaria os achados que ainda valem.
+    if (aposentado(d)) continue;
     if (d.foraDaLista) {
       out.push({
         tipo: 'fora_da_lista', codigo: codigoReal(d), titulo: d.titulo,
@@ -256,6 +273,7 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
   // no mesmo dia — e uma carta por documento esconderia justamente isso.
   const vencidos = new Map<string, DocumentoMestre[]>();
   for (const d of documentos) {
+    if (aposentado(d)) continue;
     if (d.proximaRevisao && new Date(d.proximaRevisao) < hoje) {
       vencidos.set(d.proximaRevisao, [...(vencidos.get(d.proximaRevisao) ?? []), d]);
     }
@@ -279,7 +297,7 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
   // a consultoria escreve o sistema porque ninguém lá dentro sabe escrevê-lo ainda. O que não pode
   // é chegar à certificação assim — por isso aparece, e por isso não pinta de vermelho.
   for (const r of docs.responsaveisExternos ?? []) {
-    const seus = documentos.filter((d) => d.responsavel === r.rotulo);
+    const seus = documentos.filter((d) => !aposentado(d) && d.responsavel === r.rotulo);
     if (!seus.length) continue;
     const n = seus.length;
     const quais = `${n > 1 ? 'São' : 'É'}: ${seus.map((d) => codigoReal(d) ?? d.titulo).join(', ')}.`;

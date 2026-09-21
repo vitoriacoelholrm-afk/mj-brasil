@@ -344,6 +344,12 @@ function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMe
         {d.situacao === 'em_elaboracao' && (
           <span style={{ ...pastilha('alerta'), marginLeft: 8 }}>a escrever</span>
         )}
+        {/* O obsoleto fica na lista porque a 7.5.3 manda controlá-lo, mas tem de se anunciar: sem
+            a marca ele passa por vigente, e alguém abre o documento errado — que é exatamente o
+            que a cláusula existe para impedir. */}
+        {d.situacao === 'obsoleto' && (
+          <span style={{ ...pastilha('neutro'), marginLeft: 8 }}>obsoleto</span>
+        )}
         {d.tela && <span style={{ ...pastilha('ok'), marginLeft: 8 }}>vira tela</span>}
         <div style={S.subLinha}>
           {NATUREZA_ROTULO[d.natureza]}{d.local ? ` · ${d.local}` : ''}

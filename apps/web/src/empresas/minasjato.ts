@@ -71,7 +71,7 @@ const PROXIMA = '2026-07-04';
 
 type Extra = Partial<Pick<DocumentoMestre,
   'revisao' | 'emissao' | 'clausulas' | 'codigosParalelos' | 'divergenciaNaLista'
-  | 'tela' | 'nota' | 'local' | 'padroes' | 'exclusoes'>>;
+  | 'tela' | 'nota' | 'local' | 'padroes' | 'exclusoes' | 'situacao' | 'proximaRevisao'>>;
 
 function catalogado(
   codigo: string, titulo: string, natureza: Natureza, categoria: string,
@@ -159,8 +159,29 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('PF-001', 'Qualificação e Avaliação de Fornecedores', 'procedimento', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'] }),
   catalogado('PF-002', 'Controle de Materiais e Insumos', 'procedimento', 'Compras', 'Almoxarifado', ['8.4.3'], 'irrestrito', { padroes: ['controle_insumos'] }),
 
-  catalogado('PRH-001', 'Competência, Treinamento e Conscientização', 'procedimento', 'RH', 'Ger. RH', ['7.2', '7.3'], 'irrestrito', { padroes: ['competencia_treinamento'] }),
-  catalogado('PRH-002', 'Integração de Novos Colaboradores', 'procedimento', 'RH', 'Ger. RH', ['7.2'], 'irrestrito', { padroes: ['conscientizacao'] }),
+  // Um procedimento de RH, e não dois. Decidido por ela em 21/09/2026: integração de novos
+  // colaboradores é conscientização (7.3), que este procedimento já cobria — dois documentos para
+  // o mesmo assunto são dois textos para manter, revisar e conciliar quando um dos dois mudar.
+  catalogado('PRH-001', 'Competência, Treinamento, Conscientização e Integração', 'procedimento', 'RH', 'Ger. RH', ['7.2', '7.3'], 'irrestrito', {
+    padroes: ['competencia_treinamento', 'conscientizacao'],
+    nota: 'Absorveu o PRH-002 (Integração de Novos Colaboradores) em 21/09/2026. A integração passou a ser um capítulo daqui — o que ela é, de fato: conscientização de quem chega.',
+  }),
+  // Aposentados, e mantidos na lista de propósito: a 7.5.3 manda controlar o obsoleto para ninguém
+  // abrir por engano. Apagá-los faria a lista esquecer que existiram e circularam.
+  catalogado('PRH-002', 'Integração de Novos Colaboradores', 'procedimento', 'RH', 'Ger. RH', ['7.3'], 'irrestrito', {
+    situacao: 'obsoleto',
+    proximaRevisao: null,
+    nota: 'Aposentado em 21/09/2026: o conteúdo passou para o PRH-001. Declarava 7.2 na planilha, mas integração é 7.3 — a cláusula foi corrigida junto, para quem procurar pelo histórico achar no lugar certo.',
+  }),
+  // A Lista de Presença nunca teve entrada própria na lista mestra: circulava com prefixo TR, que
+  // a Legenda não conhece. Entrou já aposentada, que é o registro honesto do que aconteceu — ela
+  // existiu, circulou, e parou. Sem esta linha, a lista fingiria que nunca houve folha de presença.
+  catalogado('TR-001', 'Lista de Presença — Treinamento de Maquinário', 'formulario', 'RH', 'Ger. RH', ['7.2'], 'irrestrito', {
+    situacao: 'obsoleto',
+    revisao: '01',
+    proximaRevisao: null,
+    nota: 'Aposentada em 21/09/2026, absorvida pelo FM-009. A folha assinada provava presença; o que a 7.2 manda reter é evidência de COMPETÊNCIA, que é um registro por pessoa com avaliação de eficácia. Entrou na lista com o código antigo, que não se reaproveita.',
+  }),
 
   catalogado('PSSMA-001', 'Controle de EPI e EPC', 'procedimento', 'SSMA', 'SSMA', ['7.1.4'], 'irrestrito', { padroes: ['ssma_epi'], local: 'Servidor / Pasta SSMA', nota: 'Ref. NR-6.' }),
   catalogado('PSSMA-002', 'Gestão de Resíduos Industriais', 'procedimento', 'SSMA', 'SSMA', ['8.5.1'], 'irrestrito', { padroes: ['ssma_residuos'], local: 'Servidor / Pasta SSMA', nota: 'Ref. CONAMA 313.' }),
@@ -187,7 +208,15 @@ export const CATALOGADOS: DocumentoMestre[] = [
   catalogado('FM-006', 'Formulário — Controle de Recebimento de Peças', 'formulario', 'Logística', 'Logística', ['8.4.3'], 'irrestrito', { padroes: ['recebimento'], codigosParalelos: ['MJ-REC-01'] }),
   catalogado('FM-007', 'Formulário — Romaneio de Expedição', 'formulario', 'Logística', 'Logística', ['8.5.4'], 'irrestrito', { padroes: ['expedicao'], codigosParalelos: ['MJ-ROM-01'] }),
   catalogado('FM-008', 'Formulário — Avaliação de Fornecedores', 'formulario', 'Compras', 'Ger. Administrativo', ['8.4'], 'restrito', { padroes: ['avaliacao_fornecedor'] }),
-  catalogado('FM-009', 'Formulário — Registro de Treinamento (LNT)', 'formulario', 'RH', 'Ger. RH', ['7.2'], 'irrestrito', { padroes: ['evidencia_competencia'] }),
+  // Um registro por pessoa por treinamento, com a avaliação da eficácia junto — que é o que a 7.2
+  // pede reter. Absorveu a Lista de Presença em 21/09/2026: a folha assinada prova que a pessoa
+  // esteve na sala; este registro prova que ela ficou competente, que é outra coisa e é a que a
+  // norma cobra. A tela estava no ar desde antes e a lista não dizia.
+  catalogado('FM-009', 'Formulário — Registro de Treinamento (LNT)', 'formulario', 'RH', 'Ger. RH', ['7.2', '7.3'], 'irrestrito', {
+    padroes: ['evidencia_competencia'],
+    tela: 'treinamento',
+    nota: 'Absorveu a Lista de Presença (TR-001) em 21/09/2026. O campo Tipo cobre a integração, o treinamento interno, o externo, o no posto e a reciclagem — um registro por pessoa, em vez de uma folha por turma.',
+  }),
   catalogado('FM-010', 'Formulário — Plano de Auditoria Interna', 'formulario', 'Gestão da Qualidade', 'RQ', ['9.2'], 'irrestrito', { padroes: ['auditoria_interna'] }),
   // Os dois que faltavam à norma, criados em 16/09/2026. Entram em FM-020 e FM-021 — a numeração
   // segue do maior, nunca preenche buraco. Buraco pode ser código aposentado, e reaproveitar
@@ -293,9 +322,8 @@ function foraDaLista(
 const FORA: DocumentoMestre[] = [
   // A SWOT saiu daqui em 21/09/2026 — virou FM-024, catalogada. Ver a nota lá.
 
-  foraDaLista('TR-001', 'Lista de Presença — Treinamento de Maquinário', 'formulario', 'RH',
-    'Usa um prefixo (TR) que a Legenda da Lista Mestra não conhece — ela só reconhece MQ, PG, PC, PO, PQ, PF, PRH, PSSMA, IT e FM. É vizinho do FM-009, mas não é o mesmo documento: o LNT levanta a necessidade de treinamento, a Lista de Presença registra quem esteve na sala.',
-    { revisao: '01', clausulas: ['7.2'], padroes: ['evidencia_competencia'] }),
+  // A Lista de Presença saiu daqui em 21/09/2026 — entrou na lista mestra como obsoleta, absorvida
+  // pelo FM-009. Ver a entrada dela lá em cima.
 
   foraDaLista('MJ-FORM-CAL-02', 'Avaliação de Impacto de Calibração', 'formulario', 'Qualidade',
     'Citado pelo MJ-CAL-01 (o PQ-005), mas o arquivo nunca apareceu. A 7.1.5.2 exige avaliar o impacto quando um instrumento aparece fora de calibração — é este documento.',

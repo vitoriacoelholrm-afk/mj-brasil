@@ -22,7 +22,7 @@
 //
 // E o catálogo é MODULAR: o núcleo vale para qualquer empresa certificada; o resto vem do módulo
 // setorial que ela usa. Quem não jateia não recebe procedimento de jateamento.
-import type { DocumentoMestre, Natureza } from '@/plataforma/documentos';
+import { aposentado, type DocumentoMestre, type Natureza } from '@/plataforma/documentos';
 import type { PapelDeFormulario } from '@/plataforma/empresa';
 
 /** A codificação sugerida. Quatro prefixos, de propósito.
@@ -311,6 +311,10 @@ export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cob
     // e não no dia em que se escreve. Verde por intenção é o pior verde que existe: some na
     // auditoria, que pede o documento e não a linha da planilha.
     if (doc.situacao === 'em_elaboracao') continue;
+    // E o APOSENTADO também não cobre. Ele saiu de circulação porque outro documento passou a
+    // responder pelo assunto — se contasse, fundir dois num só deixaria a cobertura de pé pelo que
+    // acabou de morrer, e não pelo que herdou. O herdeiro é que tem de declarar o padrão.
+    if (aposentado(doc)) continue;
     for (const chave of doc.padroes ?? []) {
       porChave.set(chave, [...(porChave.get(chave) ?? []), doc]);
     }
@@ -327,7 +331,10 @@ export function cobertura(documentos: DocumentoMestre[], modulos: string[]): Cob
   return {
     atendidos,
     faltando,
-    extras: documentos.filter((doc) => !doc.padroes?.length && !doc.codigo.startsWith('SEM-CODIGO')),
+    // "Fora do padrão" é documento vivo que o catálogo não conhece. Um aposentado nunca é extra:
+    // ele não está fora do padrão, está fora de uso.
+    extras: documentos.filter((doc) =>
+      !aposentado(doc) && !doc.padroes?.length && !doc.codigo.startsWith('SEM-CODIGO')),
   };
 }
 

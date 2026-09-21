@@ -10,7 +10,7 @@
 // arquivos reais disputando o mesmo código. O resto fica listado para ser olhado por quem conhece
 // o conteúdo, que não é o software.
 import {
-  SEM_CODIGO, proximoCodigoLivre,
+  SEM_CODIGO, aposentado, proximoCodigoLivre,
   type Documentacao, type DocumentoMestre, type Natureza,
 } from '@/plataforma/documentos';
 import { cobertura, type DocumentoPadrao } from './catalogoPadrao';
@@ -84,10 +84,18 @@ function prefixoDeFormulario(documentos: DocumentoMestre[]): string {
 }
 
 export function planoDeUnificacao(docs: Documentacao, modulos: string[]): PlanoDeUnificacao {
-  const { documentos, meta } = docs;
+  const { meta } = docs;
   const propostas: Proposta[] = [];
+  // O plano só propõe sobre documento VIVO. Renumerar, fundir ou conciliar a revisão de um
+  // documento aposentado é trabalho sobre papel que ninguém vai abrir de novo — e a fila de
+  // decisões existe para caber na cabeça de quem vai executá-la.
+  //
+  // O distribuidor de códigos, esse, continua olhando a lista INTEIRA: código de documento
+  // aposentado não se reaproveita, senão dois documentos diferentes carregam o mesmo número em
+  // épocas diferentes, e o arquivo morto passa a colidir com o vivo.
+  const documentos = docs.documentos.filter((d) => !aposentado(d));
   const prefixo = prefixoDeFormulario(documentos);
-  const proximo = distribuidor(documentos, prefixo);
+  const proximo = distribuidor(docs.documentos, prefixo);
 
   /* ── 1. Dois documentos, o mesmo código ────────────────────────────────────────────────── */
   const porCodigo = new Map<string, DocumentoMestre[]>();

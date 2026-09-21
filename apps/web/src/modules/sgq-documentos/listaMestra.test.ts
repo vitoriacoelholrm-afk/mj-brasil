@@ -21,13 +21,14 @@ const EM = new Date('2026-09-16');
 describe('os 47 documentos da LM-SGQ-001', () => {
   it('os 47 da planilha estão aqui, mais os que criamos depois', () => {
     expect(LISTA_MESTRA_META.totalCatalogado).toBe(47);   // o que a planilha declara
-    expect(CATALOGADOS).toHaveLength(55);                  // 47 + FM-020 a FM-026 + PO-009
+    // 47 + FM-020 a FM-026 + PO-009 + a TR-001, que entrou já aposentada em 21/09/2026.
+    expect(CATALOGADOS).toHaveLength(56);
   });
 
   it('e o app acusa que o cabeçalho da planilha ficou para trás', () => {
     const c = conflitos(EM).find((x) => x.tipo === 'contagem_divergente')!;
     expect(c.detalhe).toContain('declara 47');
-    expect(c.detalhe).toContain('tem 55');
+    expect(c.detalhe).toContain('tem 56');
   });
 
   it('cada um trouxe cláusula da ISO, responsável e nível de acesso', () => {
@@ -40,7 +41,10 @@ describe('os 47 documentos da LM-SGQ-001', () => {
 
   it('a divisão por categoria mostra onde o sistema pesa', () => {
     const cats = porCategoria();
-    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(55);
+    expect(cats.reduce((n, x) => n + x.total, 0)).toBe(56);
+    // RH foi de 3 para 4: a Lista de Presença entrou na lista mestra, ainda que aposentada. O
+    // obsoleto conta na CONTAGEM — ele existe e é controlado; o que ele não faz é cobrir cláusula.
+    expect(cats.find((x) => x.categoria === 'RH')!.total).toBe(4);
     // Operações lidera — é o processo que a empresa vende. Subiu de 14 para 16 em 21/09/2026,
     // com a política e o registro de pós-entrega.
     expect(cats[0]).toEqual({ categoria: 'Operações', total: 16 });
@@ -139,9 +143,10 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     const v = por('revisao_vencida');
     expect(v).toHaveLength(2);                       // os 47 catalogados + a própria lista
     const emBloco = v.find((x) => x.codigo === null)!;
-    // 52, e não 55: os três reservados em 21/09/2026 não entram na conta do vencimento. Documento
-    // que ainda não foi escrito não tem revisão para vencer.
-    expect(emBloco.titulo).toBe('52 documentos da lista mestra');
+    // 51, e não 56. Fora da conta ficam os três reservados em 21/09/2026 — documento que ainda não
+    // foi escrito não tem revisão para vencer — e os dois aposentados no mesmo dia, pela razão
+    // oposta: documento que saiu de circulação não vence, porque não vai ser revisado nunca mais.
+    expect(emBloco.titulo).toBe('51 documentos da lista mestra');
     expect(emBloco.detalhe).toContain('04/07/2026');
     expect(v.find((x) => x.codigo === 'LM-SGQ-001')!.detalhe).toContain('03/06/2025');
   });
@@ -163,13 +168,31 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(paralelos).toHaveLength(9);
   });
 
-  it('a Lista de Presença usa um prefixo que a Legenda não conhece', () => {
-    const fora = por('fora_da_lista').find((x) => x.codigo === 'TR-001')!;
-    expect(fora.gravidade).toBe('alta');
-    expect(fora.detalhe).toContain('FM-009');
-    const prefixo = por('prefixo_desconhecido').find((x) => x.codigo === 'TR-001')!;
-    expect(prefixo.detalhe).toContain('PSSMA');
-    expect(doc('TR-001').revisao).toBe('01');
+  it('a Lista de Presença foi aposentada, e o aposentado para de gerar achado', () => {
+    // Ela circulava fora da lista, com um prefixo (TR) que a Legenda não conhece — dois achados.
+    // Em 21/09/2026 ela entrou na lista mestra já obsoleta, absorvida pelo FM-009, e os dois
+    // fecharam junto. Não é que o problema tenha sido escondido: o documento parou de existir.
+    expect(doc('TR-001').situacao).toBe('obsoleto');
+    expect(doc('TR-001').revisao).toBe('01');           // guarda a revisão em que parou
+    expect(doc('TR-001').foraDaLista).toBeUndefined();
+    expect(por('fora_da_lista').find((x) => x.codigo === 'TR-001')).toBeUndefined();
+    expect(por('prefixo_desconhecido').find((x) => x.codigo === 'TR-001')).toBeUndefined();
+    // E o código não volta a circular: quem distribui código novo continua enxergando o TR-001.
+    expect(doc('TR-001').proximaRevisao).toBeNull();
+  });
+
+  it('o mesmo vale para o PRH-002, que virou capítulo do PRH-001', () => {
+    expect(doc('PRH-002').situacao).toBe('obsoleto');
+    expect(doc('PRH-002').clausulas).toEqual(['7.3']);   // integração é conscientização, não 7.2
+    expect(doc('PRH-001').titulo).toContain('Integração');
+    expect(doc('PRH-001').clausulas).toEqual(['7.2', '7.3']);
+    // O herdeiro é que declara os dois padrões — senão a cobertura ficaria de pé pelo morto.
+    expect(doc('PRH-001').padroes).toEqual(['competencia_treinamento', 'conscientizacao']);
+  });
+
+  it('o FM-009 agora se anuncia como tela — ela já existia e a lista não dizia', () => {
+    expect(doc('FM-009').tela).toBe('treinamento');
+    expect(doc('FM-009').clausulas).toEqual(['7.2', '7.3']);
   });
 
   it('a Lista Mestra não tem quem a elaborou nem quem a aprovou', () => {
@@ -184,10 +207,11 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     expect(semCodigo.map((x) => x.titulo)).toContain('Plano de Calibração');
   });
 
-  it('sete documentos circulam fora da lista', () => {
-    // Lista de Presença, avaliação de impacto de calibração e 5 registros sem código.
-    // Eram oito: a SWOT entrou na lista em 21/09/2026, como FM-024.
-    expect(por('fora_da_lista')).toHaveLength(7);
+  it('seis documentos circulam fora da lista', () => {
+    // Avaliação de impacto de calibração e 5 registros sem código. Eram oito em 16/09: a SWOT
+    // entrou como FM-024, e a Lista de Presença entrou aposentada — dois saíram da fila por
+    // motivos opostos, um por ter virado documento e outro por ter deixado de ser.
+    expect(por('fora_da_lista')).toHaveLength(6);
   });
 
   it('o miolo do sistema está com a consultoria — mas o POSTO existe, e isso muda o achado', () => {
@@ -235,7 +259,15 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     // E documento que não nasceu não tem data de nascimento.
     expect(emElaboracao.every((d) => d.emissao === null && d.revisao === null)).toBe(true);
 
-    const resto = LISTA_MESTRA.filter((d) => d.situacao !== 'em_elaboracao');
+    // E o que saiu de circulação diz que saiu. São os dois extremos da vida de um documento, e
+    // nenhum dos dois pode passar por vigente: um nunca foi escrito, o outro não se usa mais.
+    const obsoletos = LISTA_MESTRA.filter((d) => d.situacao === 'obsoleto');
+    expect(obsoletos.map((d) => d.codigo).sort()).toEqual(['PRH-002', 'TR-001']);
+    expect(obsoletos.every((d) => d.proximaRevisao === null)).toBe(true);
+    expect(obsoletos.every((d) => (d.nota ?? '').includes('21/09/2026'))).toBe(true);
+
+    const resto = LISTA_MESTRA.filter(
+      (d) => d.situacao !== 'em_elaboracao' && d.situacao !== 'obsoleto');
     expect(resto.every((d) => d.situacao === 'vigente')).toBe(true);
   });
 });

@@ -18,17 +18,26 @@ describe('cada duplicidade vira uma decisão com código concreto', () => {
   });
 
   it('o que usa prefixo de fora entra na numeração da casa', () => {
-    // Os códigos andaram: FM-025 e FM-026 foram reservados em 21/09/2026 para a matriz de
-    // comunicação e o atendimento pós-entrega. O plano recalcula sozinho — é para isso que ele
-    // lê a lista em vez de carregar números fixos.
-    expect(de('TR-001')).toMatchObject({ tipo: 'renumerar', para: 'FM-027' });
-    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-028' });
+    // O plano recalcula sozinho — é para isso que ele lê a lista em vez de carregar números fixos.
+    // A TR-001 saiu desta fila em 21/09/2026 sem receber código novo: foi aposentada, e a proposta
+    // desapareceu junto. Renumerar documento que ninguém vai abrir de novo é trabalho inventado.
+    expect(de('TR-001')).toBeUndefined();
+    expect(de('MJ-FORM-CAL-02')).toMatchObject({ tipo: 'renumerar', para: 'FM-027' });
   });
 
   it('os cinco registros sem código recebem código, um cada', () => {
     const cadastros = plano.propostas.filter((p) => p.tipo === 'cadastrar');
     expect(cadastros).toHaveLength(5);
-    expect(cadastros.map((p) => p.para)).toEqual(['FM-029', 'FM-030', 'FM-031', 'FM-032', 'FM-033']);
+    expect(cadastros.map((p) => p.para)).toEqual(['FM-028', 'FM-029', 'FM-030', 'FM-031', 'FM-032']);
+  });
+
+  it('o código do aposentado não volta a circular', () => {
+    // O TR-001 continua ocupado, ainda que morto. Reaproveitar o número faria dois documentos
+    // diferentes carregarem o mesmo código em épocas diferentes — e o arquivo antigo, que ainda
+    // existe na pasta, passaria a colidir com o novo.
+    const propostos = plano.propostas.map((p) => p.para);
+    expect(propostos).not.toContain('TR-001');
+    expect(MINASJATO.documentacao.documentos.filter((d) => d.codigo === 'TR-001')).toHaveLength(1);
   });
 
   it('nenhum código proposto colide com um que já existe', () => {
@@ -80,11 +89,29 @@ describe('o que o plano se recusa a propor', () => {
     expect(plano.propostas.some((p) => p.de.includes('PO-004'))).toBe(false);
   });
 
-  it('NÃO funde o levantamento de treinamento com a lista de presença', () => {
-    // Um diz de que treinamento se precisa; o outro registra quem esteve na sala.
-    const comp = plano.agrupados.find((a) => a.padrao.chave === 'evidencia_competencia')!;
-    expect(comp.documentos.map((d) => d.codigo).sort()).toEqual(['FM-009', 'TR-001']);
+  it('NUNCA propôs fundir o LNT com a lista de presença — e mesmo assim elas se fundiram', () => {
+    // Enquanto as duas conviveram, o plano as deixou juntas no mesmo padrão e não propôs nada: o
+    // software não sabe se dois documentos dizem a mesma coisa, só sabe que cumprem o mesmo
+    // requisito. Nunca houve proposta de fusão.
     expect(plano.propostas.some((p) => p.tipo === 'fundir' && p.de.includes('FM-009'))).toBe(false);
+
+    // A fusão aconteceu por decisão dela em 21/09/2026, escrita no perfil — que é por onde uma
+    // decisão de CONTEÚDO tem de entrar. O resultado é o padrão com um documento só, e por isso
+    // ele nem aparece mais na lista de "vários documentos no mesmo padrão".
+    expect(plano.agrupados.find((a) => a.padrao.chave === 'evidencia_competencia')).toBeUndefined();
+    const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
+    const comp = c.atendidos.find((a) => a.padrao.chave === 'evidencia_competencia')!;
+    expect(comp.locais.map((d) => d.codigo)).toEqual(['FM-009']);
+  });
+
+  it('e a cobertura não ficou de pé pelo documento que morreu', () => {
+    // O PRH-001 herdou o padrão da integração junto com o texto. Sem isso, aposentar o PRH-002
+    // teria aberto um buraco de cobertura — ou, pior, deixado o verde apoiado num obsoleto.
+    const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
+    const conscientizacao = c.atendidos.find((a) => a.padrao.chave === 'conscientizacao')!;
+    expect(conscientizacao.locais.map((d) => d.codigo)).toEqual(['PRH-001']);
+    // E o aposentado não vira "fora do padrão" só por ter parado de declarar o que declarava.
+    expect(c.extras).toEqual([]);
   });
 });
 
