@@ -22,7 +22,8 @@ export const sgqRegistros: Modulo = {
   descricao:
     'Os registros que a norma exige de qualquer empresa certificada: propriedade do cliente, mudança na produção, saída não conforme e competência.',
   clausulas: ['7.2', '7.4', '8.5.3', '8.5.5', '8.5.6', '8.7.2', '9.1.2', '9.2', '10.2', '10.2.2'],
-  dominio: 'Qualidade',
+  // O que se RETÉM: cada tela daqui guarda uma ocorrência que aconteceu.
+  dominio: 'Registros',
   exige: 'sgq.ver',
   essencial: true,
   formularios: [

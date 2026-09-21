@@ -17,7 +17,8 @@ export const sgqDocumentos: Modulo = {
   descricao:
     'A lista mestra da empresa, a codificação dela, e o diagnóstico do que a norma pede e ainda não existe.',
   clausulas: ['7.5.1', '7.5.2', '7.5.3'],
-  dominio: 'Qualidade',
+  // O que se MANTÉM: a lista mestra e o diagnóstico falam do documento vigente.
+  dominio: 'Documentos',
   exige: 'sgq.ver',
   essencial: true,
   telas: [

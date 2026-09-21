@@ -53,8 +53,12 @@ export interface Modulo {
   descricao: string;
   /** As cláusulas da ISO 9001 que ele atende. É o que liga o módulo à auditoria. */
   clausulas: string[];
-  /** Onde as telas dele entram no menu de cima. Módulos que dividem o mesmo domínio aparecem
-   *  como abas dentro dele. */
+  /** A seção da coluna em que as telas dele entram. Módulos que dividem o mesmo domínio caem
+   *  na mesma seção — é assim que "Registros" junta oito telas de um módulo só e "Monitoramento"
+   *  junta as de dois.
+   *
+   *  Domínio de uma tela só não vira seção: viraria título para um item. Nesse caso o próprio
+   *  domínio é o item, com o nome pelo qual a pessoa o procura. */
   dominio: string;
   /** Sem esta permissão, o módulo inteiro some do menu. Esconder é diferente de travar: um setor
    *  que não é seu não deveria nem sugerir que existe algo ali para você. */

@@ -3,7 +3,7 @@
 // Acrescentar um módulo é acrescentar uma pasta e uma linha aqui. Nada mais: o menu, as rotas, os
 // formulários e a lista de cláusulas atendidas se montam a partir desta lista.
 //
-// A ORDEM importa: é a ordem do menu, da esquerda para a direita. Situação primeiro porque é o
+// A ORDEM importa: é a ordem da coluna, de cima para baixo. Situação primeiro porque é o
 // veredito; o que a empresa faz no dia a dia depois; cadastro por último.
 //
 // Quem escolhe quais destes uma empresa tem é o perfil dela (`empresas/<nome>.ts`). Uma empresa

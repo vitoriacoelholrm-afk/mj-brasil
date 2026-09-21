@@ -18,7 +18,8 @@ export const sgqIndicadores: Modulo = {
   descricao:
     'As metas do sistema da qualidade, o apurado de cada período e o que não fecha na série.',
   clausulas: ['9.1.1', '9.1.3'],
-  dominio: 'Qualidade',
+  // Nem documento nem registro de ocorrência: é o 9.1, medir e avaliar.
+  dominio: 'Monitoramento',
   exige: 'sgq.ver',
   essencial: true,
   formularios: [MONITORAMENTO_SGQ],

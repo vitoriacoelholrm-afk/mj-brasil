@@ -18,7 +18,9 @@ export const nucleo: Modulo = {
   nome: 'Núcleo',
   descricao: 'A situação do sistema, os vencimentos controlados, os instrumentos e os clientes.',
   clausulas: ['7.1.5', '9.3'],
-  dominio: 'Qualidade',
+  // Vencimento e instrumento são o que se acompanha para saber se ainda vale — 7.1.5 e a
+  // validade das certificações. Acompanha-se, não se emite nem se arquiva.
+  dominio: 'Monitoramento',
   exige: 'sgq.ver',
   essencial: true,
   telas: [
