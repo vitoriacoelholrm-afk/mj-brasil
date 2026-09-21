@@ -22,7 +22,17 @@ export const sgqDocumentos: Modulo = {
   exige: 'sgq.ver',
   essencial: true,
   telas: [
-    { rotulo: 'Diagnóstico', rota: 'diagnostico', render: () => createElement(Diagnostico) },
+    // O DIAGNÓSTICO é trabalho da consultoria, não da empresa: é o levantamento do que falta,
+    // com os achados. Por isso cai pelos dois cortes — só existe em contrato que inclua
+    // auditoria, e dentro dele só quem confere o abre. Num contrato só de gestão ele não tem
+    // autor, e mostrar achado sem quem responda por ele é mostrar acusação sem assinatura.
+    {
+      rotulo: 'Diagnóstico',
+      rota: 'diagnostico',
+      exige: 'auditoria.ver',
+      modo: 'auditoria',
+      render: () => createElement(Diagnostico),
+    },
     { rotulo: 'Lista Mestra', rota: 'lista-mestra', render: () => createElement(ListaMestra) },
   ],
 };

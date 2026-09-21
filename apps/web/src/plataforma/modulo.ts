@@ -10,6 +10,8 @@
 // sentido: módulo importa plataforma, plataforma não importa módulo. Se um dia inverter, o motor
 // deixa de servir para o cliente seguinte — que é o problema que tudo isto existe para evitar.
 import type { Permissao } from './acesso';
+import type { ModoDeContratacao } from './contratacao';
+import { temAuditoria, temGestao } from './contratacao';
 import type { FormularioDef } from './formularios';
 import type { PapelDeFormulario } from './empresa';
 
@@ -37,6 +39,27 @@ export interface ContextoDeTela {
 export interface TelaDeModulo {
   rotulo: string;
   rota: Rota;
+  /** A permissão DESTA tela, quando ela é diferente da do módulo.
+   *
+   *  Existe porque um módulo é uma unidade de INSTALAÇÃO — as regras, os formulários e as telas
+   *  que viajam juntos — e não uma unidade de acesso. "Registros do SGQ" traz oito telas, e o
+   *  auditor interno e o operador não são a mesma pessoa. Enquanto a permissão era só do módulo,
+   *  liberar a não conformidade para quem a preenche liberava, junto, o plano de auditoria de
+   *  quem vai ser auditado.
+   *
+   *  Ausente é o caso normal: a tela herda a do módulo, e nada muda para quem não precisa da
+   *  distinção. */
+  exige?: Permissao;
+  /** O que o contrato precisa incluir para esta tela EXISTIR. Ausente é o caso normal: a tela
+   *  serve aos três produtos.
+   *
+   *  `'auditoria'` é a tela que é trabalho da consultoria — o diagnóstico é o levantamento que
+   *  ela entrega, e num contrato só de gestão ele não tem autor. `'gestao'` é o contrário: tela
+   *  de operação diária, que num contrato só de auditoria não teria quem a preenchesse.
+   *
+   *  Diferente de `exige`: permissão é QUEM, dentro da empresa; modo é O QUE a empresa comprou.
+   *  Uma tela pode cair pelos dois motivos, e são motivos que não se substituem. */
+  modo?: 'auditoria' | 'gestao';
   /** O formulário que esta tela preenche, quando é uma tela de formulário. É o que permite ao
    *  manual mandar a pessoa da cláusula direto para o lugar de registrar. */
   formulario?: PapelDeFormulario;
@@ -71,11 +94,37 @@ export interface Modulo {
   essencial: boolean;
 }
 
-/** Os módulos que este papel enxerga, na ordem em que foram declarados. */
+/** Verdadeiro quando o contrato desta empresa inclui o que a tela exige. Tela sem `modo` serve
+ *  aos três produtos, que é o caso da grande maioria. */
+function cabeNoContrato(tela: TelaDeModulo, modo: ModoDeContratacao): boolean {
+  if (tela.modo === 'auditoria') return temAuditoria(modo);
+  if (tela.modo === 'gestao') return temGestao(modo);
+  return true;
+}
+
+/** Os módulos que este papel enxerga, JÁ COM AS TELAS FILTRADAS, na ordem em que foram declarados.
+ *
+ *  Dois cortes, e a ordem entre eles não importa porque são independentes:
+ *
+ *    · o do MÓDULO — um setor que não é seu não deveria nem sugerir que existe algo ali;
+ *    · o da TELA — dentro de um setor que é seu, ainda há o que não é.
+ *
+ *  Módulo que fica sem nenhuma tela SOME. Deixá-lo como título vazio seria pior do que escondê-lo:
+ *  anuncia que existe alguma coisa ali e não entrega nada.
+ *
+ *  Devolve cópias quando filtra. Os módulos são constantes compartilhadas por todo mundo — recortar
+ *  o original faria o filtro de um usuário valer para o próximo. */
 export function modulosVisiveis(
-  modulos: Modulo[], pode: (p: Permissao) => boolean,
+  modulos: Modulo[], pode: (p: Permissao) => boolean, modo: ModoDeContratacao = 'auditoria_e_gestao',
 ): Modulo[] {
-  return modulos.filter((m) => !m.exige || pode(m.exige));
+  const saida: Modulo[] = [];
+  for (const m of modulos) {
+    if (m.exige && !pode(m.exige)) continue;
+    const telas = m.telas.filter((t) => (!t.exige || pode(t.exige)) && cabeNoContrato(t, modo));
+    if (!telas.length) continue;
+    saida.push(telas.length === m.telas.length ? m : { ...m, telas });
+  }
+  return saida;
 }
 
 /** A tela de uma rota, entre os módulos dados — ou null quando a rota não é de nenhum deles.

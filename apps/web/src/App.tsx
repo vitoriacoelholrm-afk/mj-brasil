@@ -35,7 +35,7 @@ const COLUNA = 244;
 
 /** Os módulos desta empresa que este papel enxerga. */
 function menuDe(papel: Papel): Modulo[] {
-  return modulosVisiveis(modulosDe(empresaAtiva().modulos), (p) => pode(papel, p));
+  return modulosVisiveis(modulosDe(empresaAtiva().modulos), (p) => pode(papel, p), empresaAtiva().modo);
 }
 
 /** Os domínios do menu, na ordem em que os módulos aparecem. Dois módulos podem dividir um

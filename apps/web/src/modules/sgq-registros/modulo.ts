@@ -76,10 +76,17 @@ export const sgqRegistros: Modulo = {
     },
     // Estas duas são da gestão do sistema, e por isso do setor da direção: o programa de auditoria
     // e a percepção do cliente são o que a empresa mede sobre SI MESMA.
+    //
+    // A auditoria interna tem permissão PRÓPRIA, e é a única tela deste módulo que tem. A §9.2
+    // pede imparcialidade na condução, e quem é auditado saber de antemão o que vai ser olhado é
+    // o contrário disso — enquanto a permissão era a do módulo, o PCC e a produção viam o plano e
+    // o resultado da auditoria do próprio setor. Quem conduz e quem recebe o resultado continuam
+    // vendo; o trabalho de quem executa não perde nada.
     {
       rotulo: 'Auditoria Interna',
       rota: 'plano-auditoria',
       formulario: 'plano_auditoria',
+      exige: 'auditoria.ver',
       render: () => createElement(Registros, { def: PLANO_AUDITORIA }),
     },
     {

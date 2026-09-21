@@ -94,7 +94,20 @@ export type Permissao =
    *  É o que falta para a tela da cláusula responder a pergunta inteira. Hoje ela diz que o
    *  PG-004 responde pela 9.2; com isto ela ABRE o PG-004. O auditor pede o documento, não o
    *  nome dele. */
-  | 'documentos.anexar';
+  | 'documentos.anexar'
+  /** Abrir o que a empresa apura SOBRE SI MESMA: o diagnóstico documental e o programa de
+   *  auditoria interna.
+   *
+   *  Separada de `sgq.ver` em 21/09/2026, quando a matriz de acesso mostrou o furo: quem é
+   *  AUDITADO estava vendo o plano e o resultado da auditoria do próprio setor. A §9.2 pede que a
+   *  auditoria seja conduzida com imparcialidade; saber de antemão o que vai ser olhado é o
+   *  contrário disso.
+   *
+   *  Fica com quem conduz (coordenação da qualidade) e com quem recebe o resultado (direção, que
+   *  precisa dele como entrada da análise crítica, §9.3). Quem executa e quem inspeciona não
+   *  perdem nada do trabalho deles: a não conformidade, o plano de ação e o pós-entrega continuam
+   *  onde estavam. */
+  | 'auditoria.ver';
 
 /** Um conjunto de telas que anda junto em matéria de acesso.
  *
@@ -123,13 +136,13 @@ const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 
 
 const ACESSO: Record<Papel, Permissao[]> = {
   // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
-  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar', 'manual.editar', 'documentos.anexar'],
+  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar', 'manual.editar', 'documentos.anexar', 'auditoria.ver'],
   // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica. Mas o que a
   // NORMA manda a organização determinar sobre o próprio sistema é dela: a 7.4 pede determinar o
   // que se comunica e por quem, e determinar é ato de liderança (§5.1, §5.3).
   // A direção acompanha o que a empresa compra sem preencher pedido: aprovar fornecedor é decisão
   // dela, digitar o recebimento não é.
-  direcao: ['sgq.ver', 'os.ver', 'sgq.editar', 'suprimentos.ver'],
+  direcao: ['sgq.ver', 'os.ver', 'sgq.editar', 'suprimentos.ver', 'auditoria.ver'],
   // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
   execucao: ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar'],
   // Quem registra a medição e assina o relatório que vai ao cliente. Pode ser mais de uma
