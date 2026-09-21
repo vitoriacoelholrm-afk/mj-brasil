@@ -88,25 +88,27 @@ export function quantoTem(ref: string, modulos: Modulo[]): number {
   return r ? r.documentos.length + r.telas.length : 0;
 }
 
-/** Quantos NOMEIAM a cláusula — declaram 8.5.3, e não a seção 8 inteira.
+/** Quantas respostas ESPECÍFICAS a cláusula tem: um procedimento, um formulário, uma instrução,
+ *  uma tela. O manual não conta.
  *
- *  A diferença importa na auditoria. O manual da qualidade declara as sete seções, então toda
- *  cláusula tem alguma cobertura no papel. O auditor não pergunta "onde está coberto": pergunta
- *  "qual documento responde por esta cláusula". Quando a resposta é só o manual, a resposta é
- *  fraca — e é isso que este número mostra. */
-export function quantosNomeiam(ref: string, modulos: Modulo[]): number {
+ *  A medida é por NATUREZA do documento, e não por como ele declara a cláusula. A versão anterior
+ *  media a profundidade da declaração — "4" valia menos que "4.1" — e isso quebrou no dia em que
+ *  o manual passou a declarar por extenso: o número foi a zero sem nada ter melhorado. Métrica que
+ *  se conserta reescrevendo a declaração não mede nada.
+ *
+ *  Um manual da qualidade percorre a norma inteira; é o que ele faz. Por isso toda cláusula tem
+ *  cobertura nele, e por isso o auditor não se satisfaz com ela: ele pergunta qual procedimento,
+ *  qual formulário, qual registro. Quando a única resposta é o manual, a resposta é fraca. */
+export function quantosEspecificos(ref: string, modulos: Modulo[]): number {
   const r = relacionadosDa(ref, modulos);
   if (!r) return 0;
-  const nomeada = r.documentos.filter(
-    (d) => (d.clausulas ?? []).some((c) => c.split('.').length >= 2 && tocaClausula(c, ref)),
-  );
-  return nomeada.length + r.telas.length;
+  return r.documentos.filter((d) => d.natureza !== 'manual').length + r.telas.length;
 }
 
-/** As cláusulas que nenhum documento nomeia e nenhuma tela atende — cobertas só pela declaração
- *  de seção do manual. Não é ausência de sistema; é ausência de endereço. */
-export function clausulasSemEndereco(refs: string[], modulos: Modulo[]): string[] {
-  return refs.filter((ref) => quantosNomeiam(ref, modulos) === 0);
+/** As cláusulas em que só o manual responde. Não é ausência de sistema; é ausência de endereço —
+ *  e é a primeira pergunta de qualquer auditoria. */
+export function clausulasSoNoManual(refs: string[], modulos: Modulo[]): string[] {
+  return refs.filter((ref) => quantosEspecificos(ref, modulos) === 0);
 }
 
 /** O catálogo padrão da empresa ativa, para a tela dizer o que a norma pede em cada cláusula. */

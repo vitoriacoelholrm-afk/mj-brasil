@@ -49,7 +49,10 @@ describe('os 47 documentos da LM-SGQ-001', () => {
   it('dá para achar quem atende uma cláusula — é o que o auditor pergunta', () => {
     expect(porClausula('8.6').map((d) => d.codigo)).toContain('PQ-003');
     expect(porClausula('8.6').map((d) => d.codigo)).toContain('FM-002');
-    expect(porClausula('7.1.5').map((d) => d.codigo)).toEqual(['PQ-005', 'IT-004']);
+    // O manual entra em todas desde 21/09/2026, quando as cláusulas dele passaram a ser
+    // declaradas por extenso em vez de por seção. É a mesma cobertura de antes, agora com
+    // endereço: quem declarava a seção 7 já declarava a 7.1.5 junto, e a lista não mostrava.
+    expect(porClausula('7.1.5').map((d) => d.codigo)).toEqual(['MQ-001', 'PQ-005', 'IT-004']);
   });
 
   it('as instruções de trabalho vivem no chão de fábrica, não no servidor', () => {

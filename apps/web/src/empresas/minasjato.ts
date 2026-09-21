@@ -67,8 +67,27 @@ export const CATALOGADOS: DocumentoMestre[] = [
   // O manual sozinho atende o escopo (4.3) e a política (5.2.2): os dois textos estão nele por
   // extenso, não só citados. Apareciam como falta porque o modelo antes só deixava um documento
   // apontar para um padrão.
+  //
+  // As cláusulas vêm por extenso, e não como '4', '5', '6'…, desde 21/09/2026. É a MESMA
+  // declaração da Lista Mestra, escrita num grau mais fino: quem declara a seção 4 declara a 4.1,
+  // a 4.2, a 4.3 e a 4.4 — não há como declarar a seção e não as cláusulas dela.
+  //
+  // O que muda é o endereço. O auditor não pergunta onde a cláusula está coberta; pergunta qual
+  // documento responde por ela. "Seção 4" manda procurar; "4.1" leva direto.
+  //
+  // O 8.3 continua na lista de propósito: a empresa exclui o requisito, e a norma manda a exclusão
+  // estar documentada com justificativa — que é o que o campo `exclusoes` abaixo guarda. A cláusula
+  // aparece no manual justamente para dizer que não se aplica, e por quê.
   catalogado('MQ-001', 'Manual da Qualidade', 'manual', 'Gestão da Qualidade', 'Dir. Geral',
-    ['4', '5', '6', '7', '8', '9', '10'], 'irrestrito', {
+    [
+      '4.1', '4.2', '4.3', '4.4',
+      '5.1', '5.2', '5.3',
+      '6.1', '6.2', '6.3',
+      '7.1', '7.1.5', '7.1.6', '7.2', '7.3', '7.4', '7.5',
+      '8.1', '8.2', '8.3', '8.4', '8.5.1', '8.5.2', '8.5.3', '8.5.4', '8.5.5', '8.5.6', '8.6', '8.7',
+      '9.1.1', '9.1.2', '9.1.3', '9.2', '9.3',
+      '10.1', '10.2', '10.3',
+    ], 'irrestrito', {
     padroes: ['manual_qualidade', 'escopo_sgq', 'politica_qualidade'],
     revisao: '00',
     emissao: '2026-03-05',

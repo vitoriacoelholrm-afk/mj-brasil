@@ -9,7 +9,7 @@ import { MODULOS } from '@/modules';
 import {
   CLAUSULAS, SECOES, clausulaDe, clausulaPorRef, clausulasDaSecao, refsNoTexto, tocaClausula,
 } from './norma';
-import { quantoTem, quantosNomeiam, relacionadosDa } from './relacionados';
+import { quantoTem, quantosEspecificos, relacionadosDa } from './relacionados';
 
 describe('a árvore da norma', () => {
   it('tem as sete seções de requisito, e não as três de abertura', () => {
@@ -152,8 +152,8 @@ describe('quem declara a seção cobre as cláusulas de dentro', () => {
     // A 4.1 está coberta no papel — o manual declara a seção 4. Nomeada, não está: nenhum
     // documento diz "4.1". Para a auditoria, a segunda é a que vale.
     expect(quantoTem('4.1', MODULOS)).toBeGreaterThan(0);
-    expect(quantosNomeiam('4.1', MODULOS)).toBe(0);
+    expect(quantosEspecificos('4.1', MODULOS)).toBe(0);
     // Já a 8.5.3 tem dois formulários que a nomeiam, e duas telas.
-    expect(quantosNomeiam('8.5.3', MODULOS)).toBeGreaterThan(0);
+    expect(quantosEspecificos('8.5.3', MODULOS)).toBeGreaterThan(0);
   });
 });

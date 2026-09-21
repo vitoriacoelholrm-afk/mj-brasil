@@ -12,7 +12,7 @@ import type { ContextoDeTela } from '@/plataforma/modulo';
 import { AVALIACAO_ROTULO, type Avaliacao } from '@/modules/sgq-documentos/diagnostico/vocabulario';
 import { NATUREZA_ROTULO } from '@/plataforma/documentos';
 import { CLAUSULAS, SECOES, clausulasDaSecao } from '../norma';
-import { quantosNomeiam, relacionadosDa } from '../relacionados';
+import { quantosEspecificos, relacionadosDa } from '../relacionados';
 import { Cabecalho } from '@/ui/Cabecalho';
 import { c, dataBR, fonte, pastilha, s } from '@/ui/estilo';
 import { useEhCelular } from '@/ui/tela';
@@ -32,7 +32,7 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
     return <Clausula ref_={aberta} modulos={modulos} irPara={irPara} aoVoltar={() => setAberta(null)} />;
   }
 
-  const semEndereco = CLAUSULAS.filter((x) => quantosNomeiam(x.ref, modulos) === 0).length;
+  const soNoManual = CLAUSULAS.filter((x) => quantosEspecificos(x.ref, modulos) === 0).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -42,15 +42,16 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
       />
 
       <div style={S.resumo}>
-        <span style={pastilha(semEndereco ? 'alerta' : 'ok')}>
-          {semEndereco
-            ? `${semEndereco} de ${CLAUSULAS.length} sem documento próprio`
+        <span style={pastilha(soNoManual ? 'alerta' : 'ok')}>
+          {soNoManual
+            ? `${soNoManual} de ${CLAUSULAS.length} só no manual`
             : `as ${CLAUSULAS.length} cláusulas têm documento próprio`}
         </span>
         <span style={{ ...s.prosa, fontSize: 13, color: c.suave }}>
-          Todas as cláusulas estão cobertas no papel: o Manual da Qualidade declara as sete seções
-          inteiras. Mas o auditor não pergunta onde está coberto — pergunta QUAL documento responde
-          por esta cláusula. Nas marcadas, a única resposta é o manual.
+          Todas estão cobertas no papel: o Manual da Qualidade percorre a norma inteira, que é o
+          que um manual faz. Mas o auditor não pergunta onde a cláusula está coberta — pergunta
+          QUAL procedimento, QUAL formulário, QUAL registro responde por ela. Nas marcadas, a
+          única resposta é o manual.
         </span>
       </div>
 
@@ -63,7 +64,7 @@ export function Manual({ irPara, modulos }: ContextoDeTela) {
           <div style={{ ...S.resumoSecao, ...s.prosa }}>{secao.resumo}</div>
           <div>
             {clausulasDaSecao(secao.numero).map((x, i) => {
-              const quantos = quantosNomeiam(x.ref, modulos);
+              const quantos = quantosEspecificos(x.ref, modulos);
               return (
                 <button
                   key={x.ref}
