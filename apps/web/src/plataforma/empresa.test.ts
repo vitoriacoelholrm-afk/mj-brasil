@@ -115,7 +115,7 @@ describe('a codificação é da empresa, não da plataforma', () => {
 
 /* ══ 3. Os conflitos são dos dados, não do motor ═════════════════════════════════════════════ */
 
-describe('as mesmas sete verificações, resultados diferentes', () => {
+describe('as mesmas oito verificações, resultados diferentes', () => {
   it('a Minasjato acumula conflitos; a empresa modelo nasce limpa', () => {
     definirEmpresaAtiva('minasjato');
     const mj = conflitos(new Date('2026-09-16'));
@@ -144,6 +144,31 @@ describe('as mesmas sete verificações, resultados diferentes', () => {
     expect(cs).toHaveLength(1);
     expect(cs[0].tipo).toBe('codigo_duplicado');
     expect(cs[0].codigo).toBe('AA-001');
+  });
+
+  it('responsável de fora é rótulo que a EMPRESA declara — o motor não conhece nenhum', () => {
+    // A Minasjato chama "RQ"; outra chamaria "Consultoria" ou o nome do escritório. O motor não
+    // tem lista de rótulos suspeitos: compara com o que veio no perfil, e só.
+    const base = {
+      meta: {
+        ...listaMestraMeta(), codigo: 'X-001', codigosParalelos: [],
+        aprovadoPor: 'a', elaboradoPor: 'b', proximaRevisao: '2099-01-01', totalCatalogado: 1,
+      },
+      legenda: { AA: 'Alguma coisa' },
+      documentos: [
+        { codigo: 'AA-001', titulo: 'Um', natureza: 'formulario' as const, categoria: 'X', revisao: '00', emissao: null, proximaRevisao: null, situacao: 'vigente' as const, acesso: 'irrestrito' as const, responsavel: 'Escritório Contratado', clausulas: [], local: null },
+      ],
+    };
+    // Sem declaração, o mesmo dado não gera conflito nenhum: quem sabe quem é de fora é a empresa.
+    expect(acharConflitos(base, new Date('2026-09-16'))).toEqual([]);
+
+    const cs = acharConflitos(
+      { ...base, responsaveisExternos: [{ rotulo: 'Escritório Contratado', quem: 'um escritório de fora' }] },
+      new Date('2026-09-16'),
+    );
+    expect(cs).toHaveLength(1);
+    expect(cs[0].tipo).toBe('responsavel_externo');
+    expect(cs[0].titulo).toBe('1 documento sob "Escritório Contratado"');
   });
 
   it('acharDoc é puro: recebe os documentos, não vai buscar empresa nenhuma', () => {

@@ -8,15 +8,16 @@ import { empresaAtiva, type PapelDeFormulario } from '@/plataforma/empresa';
 import {
   acharConflitos, acharDoc, montarCarimbo, porCategoria as agruparPorCategoria,
   porClausula as filtrarPorClausula, proximoCodigoLivre as acharProximoLivre,
+  responsavelExterno as lerResponsavelExterno,
   significadoDoPrefixo as lerPrefixo,
-  type Conflito, type DocumentoMestre,
+  type Conflito, type DocumentoMestre, type ResponsavelExterno,
 } from '@/plataforma/documentos';
 
 export type { PapelDeFormulario } from '@/plataforma/empresa';
 export {
   CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
   type Acesso, type Conflito, type DocumentoMestre, type Legenda,
-  type ListaMestraMeta, type Natureza, type SituacaoDoc, type TipoConflito,
+  type ListaMestraMeta, type Natureza, type ResponsavelExterno, type SituacaoDoc, type TipoConflito,
 } from '@/plataforma/documentos';
 
 const docs = () => empresaAtiva().documentacao;
@@ -51,6 +52,11 @@ export function carimbo(codigo: string): string {
 
 export function significadoDoPrefixo(codigo: string): string | null {
   return lerPrefixo(docs().legenda, codigo);
+}
+
+/** Quando este responsável é de fora da empresa, quem ele é. Null quando é posto de dentro. */
+export function responsavelDeFora(responsavel: string | null): ResponsavelExterno | null {
+  return lerResponsavelExterno(docs(), responsavel);
 }
 
 export function proximoCodigoLivre(prefixo: string): string {

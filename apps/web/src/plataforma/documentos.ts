@@ -83,11 +83,27 @@ export interface ListaMestraMeta {
  *  Cada empresa tem a sua — não há prefixo universal. */
 export type Legenda = Record<string, string>;
 
+/** Um rótulo da coluna "Responsável" que, na verdade, é de FORA da empresa.
+ *
+ *  Existe porque a coluna não distingue. Ao lado de "Ger. Qualidade", que é um posto da empresa,
+ *  pode estar um rótulo que é a consultoria que implanta o sistema — e quem lê a lista não tem
+ *  como saber qual é qual. O rótulo parece gente de dentro, e não é. */
+export interface ResponsavelExterno {
+  /** O rótulo exatamente como está na coluna Responsável — "RQ", "Consultoria". */
+  rotulo: string;
+  /** Quem é, em palavras. É isto que a lista não dizia em lugar nenhum. */
+  quem: string;
+  /** Por que ainda é assim, quando há motivo — implantação em curso, contrato vigente. */
+  nota?: string;
+}
+
 /** Tudo que o motor precisa saber sobre a documentação de uma empresa. */
 export interface Documentacao {
   meta: ListaMestraMeta;
   legenda: Legenda;
   documentos: DocumentoMestre[];
+  /** Ausente ou vazio é o estado saudável: todo responsável é posto de dentro. */
+  responsaveisExternos?: ResponsavelExterno[];
 }
 
 const br = (iso: string) => iso.slice(0, 10).split('-').reverse().join('/');
@@ -148,7 +164,7 @@ export function porClausula(docs: DocumentoMestre[], clausula: string): Document
 export type TipoConflito =
   | 'codigo_duplicado' | 'fora_da_lista' | 'codigo_paralelo'
   | 'revisao_vencida' | 'revisao_divergente' | 'prefixo_desconhecido' | 'sem_aprovacao'
-  | 'contagem_divergente';
+  | 'contagem_divergente' | 'responsavel_externo';
 
 export interface Conflito {
   tipo: TipoConflito;
@@ -168,9 +184,19 @@ export const CONFLITO_ROTULO: Record<TipoConflito, string> = {
   prefixo_desconhecido: 'Prefixo que a legenda não conhece',
   sem_aprovacao: 'Sem aprovação registrada',
   contagem_divergente: 'A planilha declara um total que não bate',
+  responsavel_externo: 'O responsável não é de dentro da empresa',
 };
 
-/** Tudo que impede a lista mestra de ser a única fonte de identificação. Sete verificações, e
+/** O rótulo externo por trás de um nome de responsável, ou null quando é posto da própria empresa.
+ *  A tela usa para marcar a célula: "RQ" sozinho não conta a quem pertence. */
+export function responsavelExterno(
+  docs: Documentacao, responsavel: string | null,
+): ResponsavelExterno | null {
+  if (!responsavel) return null;
+  return docs.responsaveisExternos?.find((r) => r.rotulo === responsavel) ?? null;
+}
+
+/** Tudo que impede a lista mestra de ser a única fonte de identificação. Oito verificações, e
  *  nenhuma delas sabe de que empresa é — todas leem o que veio por parâmetro. */
 export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[] {
   const out: Conflito[] = [];
@@ -233,6 +259,25 @@ export function acharConflitos(docs: Documentacao, hoje = new Date()): Conflito[
       titulo: `${iguais.length} documento${iguais.length > 1 ? 's' : ''} da lista mestra`,
       detalhe: `Revisão prevista para ${br(data)} e ainda não feita.${mesmaEmissao ? ` Vence tudo na mesma data porque tudo foi emitido na mesma data — ${br(mesmaEmissao)}.` : ''}`,
       gravidade: 'alta',
+    });
+  }
+
+  // Responsável que não é da empresa. Uma carta por rótulo, e não uma por documento: o que está em
+  // aberto é uma decisão só — quem, lá dentro, assume o que hoje é de fora. Dez cartas iguais
+  // esconderiam que a pergunta é uma.
+  //
+  // Gravidade média de propósito. Durante a implantação isto é o estado esperado, e não um erro:
+  // a consultoria escreve o sistema porque ninguém lá dentro sabe escrevê-lo ainda. O que não pode
+  // é chegar à certificação assim — por isso aparece, e por isso não pinta de vermelho.
+  for (const r of docs.responsaveisExternos ?? []) {
+    const seus = documentos.filter((d) => d.responsavel === r.rotulo);
+    if (!seus.length) continue;
+    const n = seus.length;
+    out.push({
+      tipo: 'responsavel_externo', codigo: null,
+      titulo: `${n} documento${n > 1 ? 's' : ''} sob "${r.rotulo}"`,
+      detalhe: `"${r.rotulo}" é ${r.quem} — não é posto de dentro da empresa, e a lista não diz isso em lugar nenhum: na coluna Responsável ele aparece igual a "Ger. Qualidade", que é gente de lá. A ${meta.norma} §5.3 manda a direção atribuir e comunicar as responsabilidades DENTRO da organização; enquanto ninguém de lá for nomeado, ${n > 1 ? 'estes documentos ficam' : 'este documento fica'} sem dono no dia em que o contrato terminar. ${n > 1 ? 'São' : 'É'}: ${seus.map((d) => codigoReal(d) ?? d.titulo).join(', ')}.${r.nota ? ` ${r.nota}` : ''}`,
+      gravidade: 'media',
     });
   }
 

@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import '@/empresas';
 import {
   carimbo, catalogados, conflitos, doc, legenda, listaMestra, listaMestraMeta,
-  porCategoria, porClausula, proximoCodigoLivre, significadoDoPrefixo,
+  porCategoria, porClausula, proximoCodigoLivre, responsavelDeFora, significadoDoPrefixo,
 } from './listaMestra';
 
 const CATALOGADOS = catalogados();
@@ -188,6 +188,31 @@ describe('os conflitos que impedem a Lista Mestra de identificar sozinha', () =>
     // Lista de Presença, avaliação de impacto de calibração e 5 registros sem código.
     // Eram oito: a SWOT entrou na lista em 21/09/2026, como FM-024.
     expect(por('fora_da_lista')).toHaveLength(7);
+  });
+
+  it('a coluna Responsável diz quem é de fora — e o miolo do sistema está com a consultoria', () => {
+    // Confirmado por ela em 21/09/2026: o "RQ" dos dez documentos é a consultoria, não um posto da
+    // Minasjato. Na planilha ele aparece na mesma coluna que "Ger. Qualidade", e quem lê conclui
+    // que tem dono lá dentro. Não tem.
+    const c = por('responsavel_externo');
+    expect(c).toHaveLength(1);               // uma carta por rótulo, não dez cartas iguais
+    expect(c[0].titulo).toBe('10 documentos sob "RQ"');
+    expect(c[0].detalhe).toContain('§5.3');  // atribuir responsabilidades DENTRO da organização
+    expect(c[0].gravidade).toBe('media');    // é o estado normal da implantação, não um erro
+    // E diz QUAIS, porque a decisão é sobre documento e não sobre número.
+    for (const codigo of ['PG-001', 'PG-004', 'PG-005', 'FM-003', 'FM-024']) {
+      expect(c[0].detalhe, codigo).toContain(codigo);
+    }
+  });
+
+  it('e é o rótulo que carrega isso — não o documento, um por um', () => {
+    expect(responsavelDeFora('RQ')?.quem).toContain('consultoria');
+    // Os postos da própria empresa continuam sendo postos da empresa.
+    expect(responsavelDeFora('Ger. Qualidade')).toBeNull();
+    expect(responsavelDeFora('Dir. Geral')).toBeNull();
+    expect(responsavelDeFora(null)).toBeNull();
+    // A conta fecha com a lista: dez documentos, e não uma amostra.
+    expect(LISTA_MESTRA.filter((d) => responsavelDeFora(d.responsavel)).length).toBe(10);
   });
 
   it('nada disso é histórico — e o que ainda não foi escrito diz que não foi', () => {

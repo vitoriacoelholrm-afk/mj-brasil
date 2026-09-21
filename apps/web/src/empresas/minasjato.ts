@@ -39,6 +39,22 @@ const META: ListaMestraMeta = {
   nota: 'O arquivo se identifica como LM-SGQ-001; o MJ-CDT-01 §11 manda mantê-la sob MJ-REG-LMD-01; e a planilha "Controle de Documentos" traz a aba sob MJ-REC-01 — que já é o código do formulário de Recebimento.',
 };
 
+/** Quem, na coluna Responsável, não é da Minasjato.
+ *
+ *  A planilha veio com "RQ" em dez documentos — e os dez são os do miolo do sistema: controle de
+ *  documentos, riscos, auditoria interna, não conformidade, objetivos, RNC, plano de ação, plano
+ *  de auditoria, indicadores e a SWOT. Confirmado em 21/09/2026: o RQ é a consultoria.
+ *
+ *  Declarar isto aqui é o que faz a lista parar de mentir por omissão. "RQ" na mesma coluna que
+ *  "Ger. Qualidade" passa por posto da empresa, e não é. */
+const RESPONSAVEIS_EXTERNOS = [
+  {
+    rotulo: 'RQ',
+    quem: 'a consultoria que implanta o sistema, e não um posto da Minasjato',
+    nota: 'É o estado normal de uma implantação — quem escreve o sistema é quem sabe escrevê-lo. O que fecha esta pendência não é o app: é a direção nomear alguém de dentro para assumir os dez, antes da certificação.',
+  },
+];
+
 /* ── Os 47 catalogados ──────────────────────────────────────────────────────────────────────
    Todos rev. 00 (menos o manual, rev. 01), emitidos em 03/06/2025, com revisão prevista para
    04/07/2026 — que é a data vencida. Os campos vieram da planilha coluna a coluna.           */
@@ -302,7 +318,10 @@ export const MINASJATO: PerfilDaEmpresa = registrar({
   },
   // Decidido por ela em 16/09/2026: até 40% acima, no máximo 10% abaixo.
   tolerancia: { abaixo: 0.10, acima: 0.40 },
-  documentacao: { meta: META, legenda: LEGENDA, documentos: LISTA_MESTRA },
+  documentacao: {
+    meta: META, legenda: LEGENDA, documentos: LISTA_MESTRA,
+    responsaveisExternos: RESPONSAVEIS_EXTERNOS,
+  },
   formularios: {
     ordem_servico: 'FM-001',
     relatorio_inspecao: 'FM-002',

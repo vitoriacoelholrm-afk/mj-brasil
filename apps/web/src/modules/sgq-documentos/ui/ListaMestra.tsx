@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import {
   CONFLITO_ROTULO, NATUREZA_ROTULO, SEM_CODIGO,
-  conflitos, listaMestra, listaMestraMeta, porCategoria, significadoDoPrefixo,
+  conflitos, listaMestra, listaMestraMeta, porCategoria, responsavelDeFora, significadoDoPrefixo,
   type Conflito, type DocumentoMestre, type TipoConflito,
 } from '@/modules/sgq-documentos/listaMestra';
 import { empresaAtiva } from '@/plataforma/empresa';
@@ -22,7 +22,7 @@ import { Cabecalho } from '@/ui/Cabecalho';
 
 const ORDEM_CONFLITO: TipoConflito[] = [
   'codigo_duplicado', 'prefixo_desconhecido', 'revisao_divergente', 'fora_da_lista',
-  'revisao_vencida', 'sem_aprovacao', 'codigo_paralelo',
+  'revisao_vencida', 'sem_aprovacao', 'responsavel_externo', 'codigo_paralelo',
 ];
 
 export function ListaMestra() {
@@ -37,6 +37,8 @@ export function ListaMestra() {
   const cob = useMemo(() => cobertura(LISTA_MESTRA, empresa.modulos), [empresa.id]);
   const plano = useMemo(() => planoDeUnificacao(empresa.documentacao, empresa.modulos), [empresa.id]);
   const atraso = diasAte(LISTA_MESTRA_META.proximaRevisao);
+  const deFora = useMemo(
+    () => LISTA_MESTRA.filter((d) => responsavelDeFora(d.responsavel)).length, [empresa.id]);
 
   const comProblema = useMemo(() => new Set(cs.map((x) => x.codigo).filter(Boolean)), [cs]);
   const docs = LISTA_MESTRA.filter((d) =>
@@ -82,7 +84,8 @@ export function ListaMestra() {
         <Contador n={cs.filter((x) => x.gravidade === 'alta').length} rot="conflitos graves" cor={c.critico} />
         <Contador n={cs.filter((x) => x.tipo === 'codigo_duplicado').length} rot="códigos disputados" cor={c.critico} />
         <Contador n={cs.filter((x) => x.tipo === 'fora_da_lista').length} rot="fora da lista" cor={c.alerta} />
-        <Contador n={cs.filter((x) => x.tipo === 'codigo_paralelo').length} rot="com código paralelo" cor={c.alerta} fim />
+        <Contador n={cs.filter((x) => x.tipo === 'codigo_paralelo').length} rot="com código paralelo" cor={c.alerta} />
+        <Contador n={deFora} rot="sob responsável de fora" cor={c.alerta} fim />
       </div>
 
       <div style={S.categorias}>
@@ -321,6 +324,7 @@ function LinhaConflito({ conflito }: { conflito: Conflito }) {
 function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMestre) => void }) {
   const semCodigo = d.codigo.startsWith(SEM_CODIGO);
   const prefixoConhecido = semCodigo || Boolean(significadoDoPrefixo(d.codigo));
+  const externo = responsavelDeFora(d.responsavel);
   return (
     <tr onClick={() => aoAbrir(d)} style={{ cursor: 'pointer' }}>
       <td style={{ ...s.td, ...s.mono, whiteSpace: 'nowrap' }}>
@@ -347,7 +351,16 @@ function LinhaDoc({ d, aoAbrir }: { d: DocumentoMestre; aoAbrir: (d: DocumentoMe
         {d.nota && <div style={{ ...S.nota, ...s.prosa }}>{d.nota}</div>}
       </td>
       <td style={s.td}>{d.categoria}</td>
-      <td style={{ ...s.td, color: d.responsavel ? c.tinta2 : c.suave }}>{d.responsavel ?? '—'}</td>
+      <td style={{ ...s.td, color: d.responsavel ? c.tinta2 : c.suave }}>
+        {d.responsavel ?? '—'}
+        {/* "RQ" na mesma coluna que "Ger. Qualidade" passa por posto da empresa. Aqui é o único
+            lugar onde a lista conta que não é — sem isto, quem lê conclui que tem dono lá dentro. */}
+        {externo && (
+          <div style={{ marginTop: 3 }}>
+            <span style={pastilha('alerta')} title={externo.quem}>de fora da empresa</span>
+          </div>
+        )}
+      </td>
       <td style={{ ...s.td, ...s.mono, fontSize: 12 }}>{d.clausulas.join(', ') || '—'}</td>
       <td style={s.td}>
         <span style={pastilha(d.acesso === 'irrestrito' ? 'neutro' : 'alerta')}>{d.acesso}</span>
