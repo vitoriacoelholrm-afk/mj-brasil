@@ -11,6 +11,8 @@
 // só faz o registro sair assinado por quem não o preencheu, que é a falsificação de evidência
 // que este sistema inteiro existe para impedir.
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { EQUIPE, SENHA_PROVISORIA, autenticar } from './session';
 
 const VITORIA = 'Vitória Coelho Mendes';
@@ -81,5 +83,35 @@ describe('a senha é provisória, e isso está dito', () => {
     for (const p of EQUIPE) {
       expect(autenticar(p.nome, SENHA_PROVISORIA)?.id).toBe(p.id);
     }
+  });
+});
+
+describe('quem entra tem assento no banco', () => {
+  // O ERRO QUE ISTO EXISTE PARA NÃO SE REPETIR.
+  //
+  // Entrar nesta lista faz a tela aceitar a pessoa. NÃO faz o banco conhecê-la: `x-dev-membership`
+  // leva o id daqui ao `resolveContext`, que procura uma membership ATIVA com esse id e, não
+  // achando, devolve "no active membership". A pessoa entra, o menu desenha, e toda tela que fala
+  // com o banco dá erro — que é pior do que não entrar, porque parece defeito do app.
+  //
+  // O seed é um teste que só roda com DATABASE_URL, então ele não acusa a falta em quem não tem
+  // banco. Este aqui roda sempre: lê o arquivo do seed como TEXTO e cobra que todo id da equipe
+  // esteja lá. É a mesma leitura de arquivo de `ui/estilo.test.ts`, pela mesma razão — a regra
+  // atravessa dois pacotes e não há tipo que a segure.
+  const seed = readFileSync(
+    join(__dirname, '..', '..', '..', '..', 'packages', 'db', 'test', 'seed-minasjato.test.ts'),
+    'utf8',
+  );
+
+  it('todo id de EQUIPE tem linha de membership no seed', () => {
+    const semAssento = EQUIPE.filter((p) => !seed.includes(p.id)).map((p) => `${p.nome} (${p.id})`);
+    expect(semAssento).toEqual([]);
+  });
+
+  it('e o seed não inventa gente que não está na tela de entrada', () => {
+    // O outro lado: membership ativa sem ninguém para usá-la é acesso que existe e não se vê.
+    const idsNoSeed = seed.match(/00000000-0000-4000-9000-\d{12}/g) ?? [];
+    const conhecidos = new Set(EQUIPE.map((p) => p.id));
+    expect([...new Set(idsNoSeed)].filter((id) => !conhecidos.has(id))).toEqual([]);
   });
 });

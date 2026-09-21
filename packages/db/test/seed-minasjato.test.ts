@@ -56,6 +56,11 @@ describe.skipIf(!HAS_DB)('seed Minasjato (Postgres real)', () => {
       { id: '00000000-0000-4000-9000-000000000004', nome: 'Emerson William de Faria', cargo: 'Gerente de Produção', email: null },
       { id: '00000000-0000-4000-9000-000000000005', nome: 'Edine Garcia', cargo: 'Financeiro e RH', email: 'financeiro@minasjato.net' },
       { id: '00000000-0000-4000-9000-000000000006', nome: 'Roberta Patrocínio', cargo: 'Portaria', email: null },
+      // Não é da Minasjato: é quem faz a migração do banco, pela BraMex. Precisa de membership
+      // AQUI porque membership é por org — é ela que o RLS usa para decidir o que ele enxerga, e
+      // sem uma linha nesta org o app responde "no active membership" antes de qualquer consulta.
+      // Quando o cliente 02 existir, ele ganha uma segunda membership lá, e o x-active-org escolhe.
+      { id: '00000000-0000-4000-9000-000000000007', nome: 'Adrian Bazbaz', cargo: 'Suporte técnico — BraMex', email: null },
     ]) {
       await admin`
         insert into memberships (id, org_id, display_name, email, rbac_role, status, activated_at)
