@@ -1,9 +1,18 @@
-// O shell do app: navegação em cima agrupada por domínio, e a home é um veredito
+// O shell do app: navegação numa coluna à esquerda, e a home é um veredito
 // ("estamos em dia?") em vez de uma lista.
 //
 // Este arquivo não conhece tela nenhuma. Ele lê o registro de módulos, filtra pelo que o papel
 // pode ver, e desenha. Acrescentar uma tela é acrescentar um módulo — nada aqui muda.
-import { useState } from 'react';
+//
+// DE QUEM É A TELA. A coluna é do SISTEMA e o cabeçalho é do CLIENTE. Os dois aparecem no alto,
+// cada um no seu território, porque as duas perguntas são diferentes: "que sistema é este" e
+// "de quem são estes dados". Quem atende mais de uma empresa precisa da segunda resposta antes
+// de digitar qualquer coisa.
+//
+// A coluna também acabou com a segunda barra de menu. Antes se clicava no domínio e só então na
+// tela; agora as telas do domínio estão todas visíveis e cada uma é um clique. A conta é a mesma
+// de sempre — `dominios()` não mudou —, só o desenho é outro.
+import { useEffect, useState } from 'react';
 import appInfo from './app-info.json';
 import { papelAtual, pessoaAtual, sair } from '@/lib/session';
 import { Entrar } from '@/ui/Entrar';
@@ -11,7 +20,7 @@ import { Situacao } from '@/modules/nucleo/ui/Situacao';
 import { MODULOS, modulosDe } from '@/modules';
 import { modulosVisiveis, telaDaRota, type Modulo, type Rota } from '@/plataforma/modulo';
 import { pode, type Papel } from '@/plataforma/acesso';
-import { c, fonte } from '@/ui/estilo';
+import { c, fonte, marca, reguaDaMarca } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { definirEmpresaAtiva, empresaAtiva, empresas } from '@/plataforma/empresa';
 import '@/empresas';   // põe as empresas atendidas no registro
@@ -21,13 +30,16 @@ export type { Rota };
 /** A home não é módulo: é o destino padrão e o único lugar que navega para os outros. */
 const SITUACAO: Rota = 'situacao';
 
+/** Largura da coluna. Cabe "Propriedade do Cliente" numa linha só, que é o rótulo mais longo. */
+const COLUNA = 244;
+
 /** Os módulos desta empresa que este papel enxerga. */
 function menuDe(papel: Papel): Modulo[] {
   return modulosVisiveis(modulosDe(empresaAtiva().modulos), (p) => pode(papel, p));
 }
 
-/** Os domínios do menu de cima, na ordem em que os módulos aparecem. Dois módulos podem dividir
- *  um domínio — as telas dos dois viram abas dentro dele. */
+/** Os domínios do menu, na ordem em que os módulos aparecem. Dois módulos podem dividir um
+ *  domínio — as telas dos dois entram na mesma seção. */
 function dominios(modulos: Modulo[]): { rotulo: string; telas: Modulo['telas'] }[] {
   const ordem: string[] = [];
   const por = new Map<string, Modulo['telas']>();
@@ -49,9 +61,19 @@ export function App() {
   const [pessoa, setPessoa] = useState(pessoaAtual);
   const [rota, setRota] = useState<Rota>(() => primeiraRota(papelAtual()));
   const [empresaId, setEmpresaId] = useState(() => empresaAtiva().id);
+  const [menuAberto, setMenuAberto] = useState(false);
   const empresa = empresaAtiva();
   const celular = useEhCelular();
   const lado = margemLateral(celular);
+
+  // Esc fecha a gaveta. O gancho fica ANTES do desvio da tela de entrada de propósito: gancho que
+  // só roda em um dos caminhos quebra a ordem entre renderizações, e o React cobra.
+  useEffect(() => {
+    if (!menuAberto) return;
+    const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuAberto(false); };
+    window.addEventListener('keydown', aoTeclar);
+    return () => window.removeEventListener('keydown', aoTeclar);
+  }, [menuAberto]);
 
   if (!pessoa) {
     return (
@@ -78,16 +100,98 @@ export function App() {
     : grupos.find((g) => g.telas.some((t) => t.rota === rota)) ?? null;
   const tela = rota === SITUACAO ? null : telaDaRota(meus, rota);
 
+  // Navegar fecha a gaveta. No celular ela cobre a tela: deixá-la aberta esconderia justamente o
+  // que a pessoa acabou de pedir.
+  const ir = (r: Rota) => { setRota(r); setMenuAberto(false); };
+
+  const trocarEmpresa = (id: string) => {
+    definirEmpresaAtiva(id);
+    setEmpresaId(id);
+    setRota(primeiraRota(papel));
+    setMenuAberto(false);
+  };
+
   return (
-    <div style={S.pagina}>
-      <header style={{ ...S.topo, flexWrap: celular ? 'wrap' : 'nowrap' }}>
-        <div style={{ ...S.marca, padding: celular ? '12px 16px' : '14px 24px', borderRight: celular ? 'none' : `1px solid ${c.linha}`, flex: celular ? '1 1 auto' : '0 0 auto', minWidth: 0 }}>
-          <div style={{ ...S.marcaNome, color: empresa.identidade.acento }}>{empresa.identidade.nome}</div>
-          <div style={S.marcaSub}>{empresa.identidade.subtitulo}</div>
+    <div style={{ ...S.pagina, flexDirection: celular ? 'column' : 'row' }}>
+
+      {/* No celular a coluna vira gaveta, e some. Sem esta barra não sobraria nem como abri-la
+          nem de quem é o sistema — e "de quem são os dados" é pergunta que não pode sumir junto
+          com o menu. */}
+      {celular && (
+        <header style={S.topoCelular}>
+          <button
+            style={S.hamburguer}
+            onClick={() => setMenuAberto((v) => !v)}
+            aria-label={menuAberto ? 'Fechar o menu' : 'Abrir o menu'}
+            aria-expanded={menuAberto}
+          >
+            {menuAberto ? '✕' : '☰'}
+          </button>
+          <div style={{ minWidth: 0 }}>
+            <div style={S.marcaNomeCelular}>BraMex</div>
+            <div style={S.clienteCelular}>{empresa.identidade.nome}</div>
+          </div>
+        </header>
+      )}
+
+      {/* O véu é BOTÃO, e não `div aria-hidden`. Sobreposição que só fecha clicando num elemento
+          escondido da árvore de acessibilidade não fecha para quem navega por teclado nem para
+          leitor de tela — some da única saída que existe. Como botão, ele tem nome, recebe foco,
+          e o Esc fecha junto. */}
+      {celular && menuAberto && (
+        <button style={S.veu} onClick={() => setMenuAberto(false)} aria-label="Fechar o menu" />
+      )}
+
+      <aside
+        style={{
+          ...S.coluna,
+          ...(celular
+            ? { ...S.colunaGaveta, transform: menuAberto ? 'translateX(0)' : `translateX(-${COLUNA + 8}px)` }
+            : null),
+        }}
+      >
+        {/* A marca fica na gaveta também: aberta, ela cobre a barra do celular, e sem isto o menu
+            aberto seria a única tela do sistema que não diz que sistema é. */}
+        <div style={S.marca}>
+          <div style={S.marcaNome}>BraMex</div>
+          <div style={S.marcaSub}>Sistema de Qualidade e Gestão</div>
+        </div>
+
+        <nav style={S.nav}>
+          {verSituacao && (
+            <ItemDeMenu rotulo="Situação" ativo={rota === SITUACAO} aoClicar={() => ir(SITUACAO)} />
+          )}
+
+          {grupos.map((g) => (
+            // Domínio de uma tela só não ganha cabeçalho: seria um título para um item, e a
+            // coluna encheria de rótulo repetido. Vira item direto, com o nome do domínio — que
+            // é o nome pelo qual a pessoa o procura.
+            g.telas.length === 1
+              ? (
+                <ItemDeMenu
+                  key={g.rotulo} rotulo={g.rotulo} ativo={g === grupoAtivo}
+                  aoClicar={() => ir(g.telas[0].rota)}
+                />
+              )
+              : (
+                <div key={g.rotulo}>
+                  <div style={S.secao}>{g.rotulo}</div>
+                  {g.telas.map((t) => (
+                    <ItemDeMenu
+                      key={t.rota} rotulo={t.rotulo} ativo={rota === t.rota}
+                      aoClicar={() => ir(t.rota)}
+                    />
+                  ))}
+                </div>
+              )
+          ))}
+        </nav>
+
+        <div style={S.rodapeColuna}>
           {empresas().length > 1 && (
             <select
               value={empresaId}
-              onChange={(e) => { definirEmpresaAtiva(e.target.value); setEmpresaId(e.target.value); setRota(primeiraRota(papel)); }}
+              onChange={(e) => trocarEmpresa(e.target.value)}
               style={S.trocaEmpresa}
               title="A empresa atendida. Trocar aqui troca a codificação, a tolerância, a marca e quais módulos existem — nenhuma regra muda."
             >
@@ -96,82 +200,71 @@ export function App() {
               ))}
             </select>
           )}
+          <div style={S.eu}>
+            <span style={S.bolha}>{iniciais(pessoa.nome)}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={S.pessoaNome}>{pessoa.nome}</div>
+              <div style={S.pessoaPapel}>{pessoa.cargo}</div>
+            </div>
+          </div>
+          <button style={S.sair} onClick={() => { sair(); setPessoa(null); setMenuAberto(false); }}>
+            Trocar de usuário
+          </button>
+        </div>
+      </aside>
+
+      <div style={S.direita}>
+        {!celular && (
+          <header style={S.faixaTopo}>
+            <div style={S.onde}>{grupoAtivo?.rotulo ?? 'Visão geral'}</div>
+            <div style={S.cliente}>
+              <div style={S.clienteRotulo}>Cliente</div>
+              <div style={S.clienteNome}>{empresa.identidade.nome}</div>
+              <div style={S.clienteSub}>{empresa.identidade.subtitulo}</div>
+              {/* O fio da cor do cliente, no canto do cliente. É o único lugar em que a marca de
+                  quem é atendido pinta alguma coisa: pintar mais faria cada novo cliente trazer
+                  uma paleta para dentro do sistema. */}
+              <div style={{ ...S.clienteFio, background: empresa.identidade.acento }} />
+            </div>
+          </header>
+        )}
+
+        <div style={reguaDaMarca} />
+
+        <div style={{ ...S.faixaDev, padding: `6px ${lado}px` }}>
+          {import.meta.env?.VITE_DEMO === '1'
+            ? 'Demonstração — nomes de empresas, obras e pessoas foram substituídos. As telas ligadas ao banco são só de leitura aqui.'
+            : 'Ambiente de desenvolvimento — entrada sem senha, dados locais.'}
         </div>
 
-        <nav style={{ ...S.nav, flexBasis: celular ? '100%' : 'auto', order: celular ? 3 : 0, borderTop: celular ? `1px solid ${c.linha}` : 'none' }}>
-          {verSituacao && (
-            <BotaoDeMenu
-              rotulo="Situação" ativo={rota === SITUACAO} celular={celular}
-              aoClicar={() => setRota(SITUACAO)}
-            />
-          )}
-          {grupos.map((g) => (
-            <BotaoDeMenu
-              key={g.rotulo} rotulo={g.rotulo} ativo={g === grupoAtivo} celular={celular}
-              aoClicar={() => g.telas[0] && setRota(g.telas[0].rota)}
-            />
-          ))}
-        </nav>
+        <main style={{ ...S.miolo, padding: `${celular ? 16 : 24}px ${lado}px 40px` }}>
+          {rota === SITUACAO
+            ? <Situacao irPara={ir} />
+            // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
+            // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
+            // tela em branco.
+            : tela?.render({ irPara: ir, modulos: meus, instalados }) ?? <Situacao irPara={ir} />}
+        </main>
 
-        <div style={{ ...S.pessoa, padding: celular ? '12px 16px' : '12px 24px', borderLeft: celular ? 'none' : `1px solid ${c.linha}` }}>
-          <div style={S.pessoaNome}>{pessoa.nome}</div>
-          <div style={S.pessoaPapel}>{pessoa.cargo}</div>
-          <button style={S.sair} onClick={() => { sair(); setPessoa(null); }}>Trocar de usuário</button>
-        </div>
-      </header>
-
-      <div style={{ ...S.faixaDev, padding: `6px ${lado}px` }}>
-        {import.meta.env?.VITE_DEMO === '1'
-          ? 'Demonstração — nomes de empresas, obras e pessoas foram substituídos. As telas ligadas ao banco são só de leitura aqui.'
-          : 'Ambiente de desenvolvimento — entrada sem senha, dados locais.'}
+        <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>
       </div>
-
-      {grupoAtivo && grupoAtivo.telas.length > 1 && (
-        <div style={{ ...S.subnav, padding: `14px ${lado}px 0`, flexWrap: 'wrap' }}>
-          {grupoAtivo.telas.map((t) => (
-            <button
-              key={t.rota}
-              onClick={() => setRota(t.rota)}
-              style={{
-                ...S.subItem,
-                background: rota === t.rota ? c.acentoFraco : 'transparent',
-                borderColor: rota === t.rota ? c.acentoMarca : c.linha,
-                color: rota === t.rota ? c.acento : c.tinta2,
-                fontWeight: rota === t.rota ? 700 : 500,
-              }}
-            >
-              {t.rotulo}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <main style={{ ...S.miolo, padding: `${celular ? 16 : 24}px ${lado}px 40px` }}>
-        {rota === SITUACAO
-          ? <Situacao irPara={setRota} />
-          // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
-          // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
-          // tela em branco.
-          : tela?.render({ irPara: setRota, modulos: meus, instalados }) ?? <Situacao irPara={setRota} />}
-      </main>
-
-      <div style={{ ...S.rodape, padding: `14px ${lado}px` }}>{appInfo.client} · {appInfo.name}</div>
     </div>
   );
 }
 
-function BotaoDeMenu({ rotulo, ativo, celular, aoClicar }: {
-  rotulo: string; ativo: boolean; celular: boolean; aoClicar: () => void;
+function ItemDeMenu({ rotulo, ativo, aoClicar }: {
+  rotulo: string; ativo: boolean; aoClicar: () => void;
 }) {
   return (
     <button
       onClick={aoClicar}
+      aria-current={ativo ? 'page' : undefined}
       style={{
-        ...S.navItem,
-        padding: celular ? '12px 14px' : '0 20px',
-        borderBottomColor: ativo ? c.acentoMarca : 'transparent',
-        fontWeight: ativo ? 700 : 500,
-        color: ativo ? c.tinta : c.tinta2,
+        ...S.item,
+        background: ativo ? 'rgba(15,111,219,.22)' : 'transparent',
+        borderLeftColor: ativo ? marca.turquesa : 'transparent',
+        color: ativo ? marca.emNavyForte : marca.emNavy,
+        fontWeight: ativo ? 600 : 400,
       }}
     >
       {rotulo}
@@ -179,59 +272,109 @@ function BotaoDeMenu({ rotulo, ativo, celular, aoClicar }: {
   );
 }
 
+/** As duas primeiras iniciais do nome. Nome composto vira "VC", não "VCM". */
+function iniciais(nome: string): string {
+  return nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('');
+}
+
 export { MODULOS };
 
 const S: Record<string, React.CSSProperties> = {
   pagina: {
-    minHeight: '100vh', display: 'flex', flexDirection: 'column',
+    minHeight: '100vh', display: 'flex',
     background: c.fundo, color: c.tinta, fontFamily: fonte.texto,
   },
-  topo: {
-    background: c.superficie, borderBottom: `1px solid ${c.linhaForte}`,
-    display: 'flex', alignItems: 'stretch',
+
+  /* ── a coluna: território da marca ─────────────────────────────────────────────────────── */
+  coluna: {
+    width: COLUNA, flexShrink: 0, background: marca.navy, color: marca.emNavyForte,
+    display: 'flex', flexDirection: 'column',
+    // Sticky e não fixed: a coluna acompanha a rolagem sem tirar o miolo do fluxo, e uma coluna
+    // mais alta que a tela ainda rola por dentro.
+    position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh',
   },
-  marca: {
-    padding: '14px 24px', borderRight: `1px solid ${c.linha}`,
-    display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0,
+  colunaGaveta: {
+    position: 'fixed', top: 0, left: 0, zIndex: 40,
+    boxShadow: '4px 0 24px rgba(0,0,0,.35)', transition: 'transform .18s ease-out',
   },
-  marcaNome: { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em' },
-  trocaEmpresa: {
-    marginTop: 6, fontFamily: fonte.texto, fontSize: 11.5, color: c.tinta2,
-    padding: '2px 6px', borderRadius: 3, border: `1px solid ${c.linha}`, background: c.superficie,
-    maxWidth: 170,
-  },
+  marca: { padding: '18px 20px 16px', borderBottom: '1px solid rgba(255,255,255,.10)' },
+  marcaNome: { fontSize: 20, fontWeight: 700, letterSpacing: '-.02em' },
   marcaSub: {
-    fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
-    color: c.suave, fontWeight: 600, marginTop: 2,
+    fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
+    color: marca.emNavyFraco, fontWeight: 600, marginTop: 3,
   },
-  nav: { display: 'flex', alignItems: 'stretch', flex: 1, minWidth: 0, overflowX: 'auto' },
-  navItem: {
-    display: 'flex', alignItems: 'center', padding: '0 20px',
-    border: 'none', borderBottom: '3px solid transparent', background: 'none',
-    fontFamily: fonte.texto, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap',
+  nav: { flex: 1, overflowY: 'auto', padding: '8px 0 16px', minHeight: 0 },
+  secao: {
+    fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
+    color: marca.emNavyFraco, fontWeight: 700, padding: '16px 20px 6px',
   },
-  pessoa: {
-    padding: '12px 24px', borderLeft: `1px solid ${c.linha}`,
-    display: 'flex', flexDirection: 'column', justifyContent: 'center',
-    textAlign: 'right', flexShrink: 0,
-  },
-  pessoaNome: { fontSize: 13, fontWeight: 600 },
-  pessoaPapel: { fontSize: 11, color: c.suave, marginTop: 2 },
-  sair: {
-    marginTop: 4, padding: 0, border: 'none', background: 'none', alignSelf: 'flex-end',
-    color: c.acento, fontFamily: fonte.texto, fontSize: 11.5,
-    cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2,
-  },
-  faixaDev: {
-    background: c.acentoFraco, borderBottom: `1px solid ${c.acentoMarca}`,
-    color: c.acento, fontSize: 11.5, fontWeight: 600, padding: '6px 28px',
-  },
-  subnav: {
-    display: 'flex', gap: 8, padding: '14px 28px 0',
-  },
-  subItem: {
-    padding: '7px 14px', borderRadius: 3, border: '1px solid',
+  item: {
+    display: 'block', width: '100%', textAlign: 'left',
+    padding: '9px 20px', border: 'none', borderLeft: '3px solid transparent',
     fontFamily: fonte.texto, fontSize: 13.5, cursor: 'pointer',
+  },
+  rodapeColuna: {
+    padding: '12px 18px 14px', borderTop: '1px solid rgba(255,255,255,.12)', flexShrink: 0,
+  },
+  trocaEmpresa: {
+    width: '100%', marginBottom: 10, fontFamily: fonte.texto, fontSize: 11.5,
+    color: marca.emNavy, padding: '4px 6px', borderRadius: 4,
+    border: '1px solid rgba(255,255,255,.26)', background: 'rgba(255,255,255,.06)',
+  },
+  eu: { display: 'flex', alignItems: 'center', gap: 10 },
+  bolha: {
+    width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+    background: `linear-gradient(135deg, ${marca.verde}, ${marca.azul})`,
+    color: '#FFFFFF', fontWeight: 700, fontSize: 12,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  pessoaNome: { fontSize: 12.5, fontWeight: 600, color: marca.emNavyForte },
+  pessoaPapel: { fontSize: 11, color: marca.emNavyFraco, marginTop: 1 },
+  sair: {
+    width: '100%', marginTop: 10, padding: '5px 9px', borderRadius: 4,
+    border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
+    color: marca.emNavy, fontFamily: fonte.texto, fontSize: 11, cursor: 'pointer',
+  },
+
+  /* ── o celular: barra fina e gaveta ────────────────────────────────────────────────────── */
+  topoCelular: {
+    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px',
+    background: marca.navy, color: marca.emNavyForte, position: 'sticky', top: 0, zIndex: 30,
+  },
+  hamburguer: {
+    width: 36, height: 36, flexShrink: 0, borderRadius: 6, cursor: 'pointer',
+    border: '1px solid rgba(255,255,255,.26)', background: 'transparent',
+    color: marca.emNavyForte, fontSize: 15, lineHeight: 1,
+  },
+  marcaNomeCelular: { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em' },
+  clienteCelular: {
+    fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
+    color: marca.emNavyFraco, fontWeight: 600, marginTop: 1,
+  },
+  veu: {
+    position: 'fixed', inset: 0, zIndex: 35, background: 'rgba(1,32,67,.45)',
+    border: 'none', padding: 0, cursor: 'pointer',
+  },
+
+  /* ── a direita: território do conteúdo ─────────────────────────────────────────────────── */
+  direita: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' },
+  faixaTopo: {
+    background: c.superficie, borderBottom: `1px solid ${c.linha}`,
+    padding: '13px 28px', display: 'flex', alignItems: 'center',
+    justifyContent: 'space-between', gap: 20, flexWrap: 'wrap',
+  },
+  onde: { fontSize: 19, fontWeight: 700, letterSpacing: '-.02em', color: c.acento },
+  cliente: { textAlign: 'right', borderLeft: `1px solid ${c.linha}`, paddingLeft: 20 },
+  clienteRotulo: {
+    fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase',
+    color: c.suave, fontWeight: 700,
+  },
+  clienteNome: { fontSize: 15, fontWeight: 700, color: c.acento, letterSpacing: '-.01em' },
+  clienteSub: { fontSize: 11.5, color: c.suave },
+  clienteFio: { height: 3, borderRadius: 2, marginTop: 5, marginLeft: 'auto', width: 44 },
+  faixaDev: {
+    background: c.alertaFraco, borderBottom: `1px solid ${c.alerta}`,
+    color: c.alerta, fontSize: 11.5, fontWeight: 600,
   },
   // minWidth: 0 é o que impede um filho largo (tabela) de esticar o main inteiro:
   // em flex, min-width vale 'auto' por padrão e o container cresce com o conteúdo.

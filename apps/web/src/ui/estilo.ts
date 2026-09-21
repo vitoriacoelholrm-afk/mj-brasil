@@ -1,23 +1,63 @@
-// Paleta e primitivos visuais do app. Aço primerizado como neutro, ocre como acento — o amarelo
-// que os formulários da Minasjato já usam para "campo obrigatório". Semáforo separado do acento.
+// Paleta e primitivos visuais do app.
+//
+// DUAS PALETAS, E ELAS NÃO SE CRUZAM:
+//
+//   `marca` é a identidade — azul profundo, azul, turquesa, verde. Vive na CASCA: a coluna da
+//   esquerda, a tela de entrada, a régua que fecha o cabeçalho. Ali a cor não significa nada
+//   além de "este sistema é este sistema".
+//
+//   `c` é a interface — neutros, e o semáforo. Vive no CONTEÚDO, e ali cor É significado: verde
+//   é conforme, amarelo é vence em breve, vermelho é não conformidade. Num painel em que quase
+//   nada tem cor, a pastilha vermelha é a primeira coisa que o olho acha; num painel colorido de
+//   ponta a ponta, ela é mais uma.
+//
+// Foi por isso que o ocre saiu do acento: ele era quase o mesmo tom do alerta, e botão parecido
+// com aviso ensina a ignorar os dois. O acento agora é o azul da marca, que nenhum veredito usa.
 export const c = {
-  fundo: '#EFF1EF',
+  fundo: '#F4F7FA',
   superficie: '#FFFFFF',
-  superficie2: '#F7F8F6',
-  tinta: '#14181A',
-  tinta2: '#33403F',
-  suave: '#5A6468',
-  linha: '#D3D8D5',
-  linhaForte: '#B6BEBA',
-  acento: '#8A6C00',
-  acentoMarca: '#B08900',
-  acentoFraco: '#FBF3D2',
-  ok: '#35664A',
-  okFraco: '#E2EDE6',
-  alerta: '#8A5F0E',
-  alertaFraco: '#F7EDD8',
-  critico: '#9C3225',
-  criticoFraco: '#F6E3E0',
+  superficie2: '#F5F8FB',
+  tinta: '#0F1A26',
+  tinta2: '#33414F',
+  suave: '#6B7280',
+  linha: '#E2E8F0',
+  linhaForte: '#CBD5E1',
+  acento: '#0B3A6E',
+  acentoMarca: '#0F6FDB',
+  acentoFraco: '#E7F0FB',
+  ok: '#046B37',
+  okFraco: '#E4F5EC',
+  alerta: '#7A5B00',
+  alertaFraco: '#FDF4DA',
+  critico: '#A32B22',
+  criticoFraco: '#FBE9E7',
+};
+
+/** A identidade. Só a casca a usa — coluna, entrada, régua. O conteúdo usa `c`.
+ *
+ *  O vermelho não está aqui de propósito: a marca não tem um, e um sistema de qualidade precisa
+ *  de um. Ele vive em `c.critico`, que é semáforo e não identidade. */
+export const marca = {
+  navy: '#012043',
+  azulProfundo: '#0B3A6E',
+  azul: '#0F6FDB',
+  turquesa: '#00C2C7',
+  verde: '#00A651',
+  amarelo: '#F4C430',
+  cinza: '#6B7280',
+  /** Sobre o navy da coluna: item, item ativo, e o rótulo de seção. */
+  emNavy: '#CBDBEB',
+  emNavyForte: '#FFFFFF',
+  emNavyFraco: '#6F90B4',
+};
+
+/** A régua de três cores que fecha a casca. Não entra no conteúdo: lá, listra colorida seria cor
+ *  sem veredito — exatamente o que a separação das duas paletas existe para evitar. */
+export const reguaDaMarca: React.CSSProperties = {
+  height: 3,
+  flexShrink: 0,
+  background: `linear-gradient(90deg,
+    ${marca.verde} 0 33.34%, ${marca.azul} 33.34% 66.67%, ${marca.turquesa} 66.67%)`,
 };
 
 export const fonte = {
@@ -74,7 +114,8 @@ export const s: Record<string, React.CSSProperties> = {
     borderRadius: 3,
     border: `1px solid ${c.acentoMarca}`,
     background: c.acentoMarca,
-    color: '#1A1400',
+    // Branco sobre o azul, e não preto: com o ocre antigo o texto escuro é que contrastava.
+    color: '#FFFFFF',
     cursor: 'pointer',
   },
   campo: {
