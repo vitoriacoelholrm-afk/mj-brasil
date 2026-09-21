@@ -102,15 +102,16 @@ describe('abrir um cliente novo é escolher módulos, não digitar lista', () =>
 describe('a Minasjato medida contra o padrão', () => {
   const c = cobertura(MINASJATO.documentacao.documentos, MINASJATO.modulos);
 
-  it('a cobertura caiu de 100% para 96% — e foi o CATÁLOGO que mudou, não ela', () => {
-    // Em 21/09/2026 o catálogo ganhou duas perguntas que nunca tinha feito: a comunicação do
-    // sistema (7.4) e as atividades pós-entrega (8.5.5). A Minasjato não perdeu documento nenhum;
-    // o que ela deixou de ter é resposta para duas perguntas novas.
+  it('a cobertura caiu de 100% para 94% — e foi o CATÁLOGO que mudou, não ela', () => {
+    // Em 21/09/2026 o catálogo ganhou três perguntas que nunca tinha feito: a comunicação do
+    // sistema (7.4), a política de pós-entrega e o registro de cada atendimento (8.5.5). A
+    // Minasjato não perdeu documento nenhum; o que ela deixou de ter é resposta para perguntas
+    // novas.
     //
     // O número tinha de cair. Catálogo que não pergunta não acha, e cobertura de 100% obtida
     // assim é a pior espécie de verde: o que faltava continuava faltando e ninguém via.
     expect(c.atendidos.length).toBe(48);
-    expect(percentualCoberto(c)).toBe(0.96);
+    expect(percentualCoberto(c)).toBe(0.94);
   });
 
   it('o manual sozinho atende três padrões: ele mesmo, o escopo e a política', () => {
@@ -122,19 +123,32 @@ describe('a Minasjato medida contra o padrão', () => {
     expect(manual.exclusoes?.[0].requisito).toContain('8.3');
   });
 
-  it('nada do que a NORMA EXIGE falta — o que falta são as duas de prática', () => {
+  it('nada do que a NORMA EXIGE falta — o que falta são as três de prática', () => {
     // Das seis de 16/09, nenhuma voltou: as duas últimas fecharam de maneiras diferentes, e a
     // diferença importa — a 9.1.1 precisou de documento novo, a 8.7.2 não. Ver o teste abaixo.
     expect(faltasDeNorma(c)).toEqual([]);
 
-    // As duas que apareceram em 21/09 não são exigência literal de documento: a norma manda
+    // As três que apareceram em 21/09 não são exigência literal de documento: a norma manda
     // DETERMINAR a comunicação (7.4) e ATENDER o pós-entrega (8.5.5), não retê-los por escrito.
     // Mas não há como demonstrar que se determinou sem ter escrito — por isso entram como
     // prática, e por isso viram achado mesmo sem a palavra "documentada" na cláusula.
-    expect(c.faltando.map((x) => x.chave).sort()).toEqual(['comunicacao_sgq', 'pos_entrega']);
+    expect(c.faltando.map((x) => x.chave).sort())
+      .toEqual(['atendimento_pos_entrega', 'comunicacao_sgq', 'pos_entrega']);
     expect(c.faltando.every((x) => x.exigencia === 'pratica')).toBe(true);
-    // E as duas vêm com o esqueleto pronto: o que a cláusula obriga a cobrir, ponto a ponto.
-    expect(c.faltando.every((x) => (x.roteiro?.length ?? 0) >= 5)).toBe(true);
+  });
+
+  it('a 8.5.5 pede duas coisas, e o catálogo cobra as duas', () => {
+    // O procedimento diz a POLÍTICA (o que se oferece, por quanto tempo, sob que condições) e se
+    // mantém; o registro prova CADA atendimento e se retém. Procedimento sem registro é promessa;
+    // registro sem procedimento é improviso repetido.
+    const pol = c.faltando.find((x) => x.chave === 'pos_entrega')!;
+    const reg = c.faltando.find((x) => x.chave === 'atendimento_pos_entrega')!;
+    expect(pol.retencao).toBe('manter');
+    expect(reg.retencao).toBe('reter');
+    // A política vem com o esqueleto pronto — é ela que a consultoria escreve no modelo.
+    expect(pol.roteiro!.length).toBeGreaterThanOrEqual(5);
+    // O registro vem com papel, porque é tela: a estrutura dele são os campos, não um roteiro.
+    expect(reg.papel).toBe('pos_entrega');
   });
 
   it('a 8.7.2 fechou SEM documento novo: o RNC já era o lugar dela', () => {

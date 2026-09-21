@@ -36,7 +36,7 @@ export type PapelDeFormulario =
   | 'plano_acao' | 'recebimento' | 'romaneio' | 'avaliacao_fornecedor'
   | 'pesquisa_satisfacao' | 'registro_treinamento' | 'plano_auditoria' | 'pedido_compra'
   | 'propriedade_cliente' | 'mudanca_producao' | 'monitoramento_sgq' | 'controle_cargas'
-  | 'comunicacao_sgq';
+  | 'comunicacao_sgq' | 'pos_entrega';
 
 export interface PerfilDaEmpresa {
   id: string;

@@ -52,6 +52,80 @@ export const COMUNICACAO_SGQ: FormularioDef = {
   ],
 };
 
+/* ══ 8.5.5 — Atividades pós-entrega ══════════════════════════════════════════════════════════
+   "A organização deve atender aos requisitos para atividades pós-entrega associadas com os
+   produtos e serviços. Ao determinar a extensão das atividades pós-entrega requeridas, a
+   organização deve considerar: a) requisitos estatutários e regulamentares; b) as potenciais
+   consequências indesejáveis associadas aos seus produtos e serviços; c) a natureza, o uso e a
+   vida útil pretendida; d) requisitos do cliente; e) retroalimentação do cliente."
+
+   A cláusula não manda RETER informação documentada — manda ATENDER. Mas atender sem registrar é
+   atender sem provar, e o auditor pergunta pelo chamado que o cliente abriu no mês passado.
+
+   São DUAS coisas, e o sistema trata as duas separadas porque elas são separadas:
+
+     · o PROCEDIMENTO (PR-010) diz a política — o que a empresa oferece, por quanto tempo, sob
+       que condições. Escreve-se uma vez e revisa-se quando a política muda.
+     · ESTE REGISTRO prova cada atendimento. Nasce quando o cliente aciona, e nenhum texto de
+       procedimento o substitui.
+
+   Obrigatório aqui é o que faz o registro PROVAR o fato: de quem, sobre o quê, o que o cliente
+   relatou, se estava na garantia, o que se fez e quem fez. A origem da falha fica de fora da
+   obrigação pelo mesmo motivo que a causa fica no RNC: na hora de abrir ninguém sabe, e exigir
+   faz a pessoa inventar para conseguir salvar.                                                  */
+
+export const POS_ENTREGA: FormularioDef = {
+  papel: 'pos_entrega',
+  setor: 'os',
+  titulo: 'Atendimento Pós-Entrega',
+  clausula: '8.5.5',
+  explicacao:
+    'O que aconteceu depois que o serviço saiu: garantia acionada, retoque em campo, assistência, dúvida técnica. Um registro por chamado — é o que prova que a empresa atende, e não só promete no manual.',
+  campos: [
+    { chave: 'cliente', rotulo: 'Cliente', tipo: 'texto', obrigatorio: true },
+    { chave: 'objeto', rotulo: 'O que foi entregue', tipo: 'texto', obrigatorio: true, ajuda: 'A peça, o lote ou a obra. A mesma identificação que saiu na entrega.' },
+    { chave: 'os', rotulo: 'Ordem de serviço', tipo: 'texto', ajuda: 'A OS em que o serviço foi feito. É o que liga o chamado ao que foi medido e liberado na época.' },
+    { chave: 'entregueEm', rotulo: 'Entregue em', tipo: 'data', ajuda: 'A data da entrega original — é ela que decide se o chamado está dentro do prazo de garantia.' },
+
+    { chave: 'acionadoEm', rotulo: 'Cliente acionou em', tipo: 'data', obrigatorio: true, preenchidoCom: 'hoje' },
+    {
+      chave: 'comoAcionou', rotulo: 'Por onde acionou', tipo: 'escolha',
+      opcoes: ['Telefone', 'E-mail', 'Visita', 'Ofício ou carta', 'Sistema', 'Outro'],
+    },
+    {
+      chave: 'tipo', rotulo: 'Tipo de atendimento', tipo: 'escolha', obrigatorio: true,
+      opcoes: [
+        'Garantia', 'Retoque em campo', 'Assistência técnica', 'Manutenção contratada',
+        'Dúvida técnica', 'Reclamação', 'Outro',
+      ],
+      ajuda: 'Reclamação também entra aqui, e vale reparar: reclamação de cliente é retroalimentação (9.1.2) e costuma virar não conformidade. Um chamado pode ser as três coisas.',
+    },
+    { chave: 'relato', rotulo: 'O que o cliente relatou', tipo: 'texto_longo', obrigatorio: true, ajuda: 'Nas palavras dele, antes de qualquer interpretação. O que a empresa constatou vem no campo de baixo.' },
+    { chave: 'dentroDaGarantia', rotulo: 'Dentro da garantia', tipo: 'sim_nao', obrigatorio: true, ajuda: 'É a decisão que define quem paga e qual prazo vale. Sem ela o registro não fecha — e é a primeira pergunta que o cliente faz.' },
+
+    { chave: 'constatado', rotulo: 'O que a empresa constatou', tipo: 'texto_longo', ajuda: 'O que se viu ao atender. Pode confirmar o relato, pode não confirmar — e as duas coisas são resposta.' },
+    { chave: 'atendimento', rotulo: 'O que foi feito', tipo: 'texto_longo', obrigatorio: true, ajuda: 'A ação: retoque, refazimento, substituição, orientação técnica, visita sem intervenção. "Atendido" não é resposta.' },
+    { chave: 'atendidoPor', rotulo: 'Atendido por', tipo: 'pessoa', obrigatorio: true, preenchidoCom: 'quem_registra' },
+    { chave: 'concluidoEm', rotulo: 'Concluído em', tipo: 'data', ajuda: 'Em branco enquanto o chamado está aberto. É o que permite medir o tempo de atendimento.' },
+
+    {
+      chave: 'origem', rotulo: 'Origem da falha', tipo: 'escolha',
+      opcoes: [
+        'Execução do serviço', 'Material ou insumo', 'Especificação do cliente',
+        'Uso ou manuseio depois da entrega', 'Desgaste normal', 'Não houve falha', 'A apurar',
+      ],
+      ajuda: 'Daqui para baixo é o que volta para o sistema. Não trava o registro: na hora de abrir o chamado ninguém sabe a origem, e exigir faz inventar.',
+    },
+    { chave: 'abriuNc', rotulo: 'Abriu não conformidade', tipo: 'sim_nao', ajuda: 'Falha de execução ou de material é não conformidade (10.2), e o chamado é só onde ela apareceu. Abrir a RNC é o que faz o caso não se repetir.' },
+    { chave: 'numeroDaNc', rotulo: 'Número da não conformidade', tipo: 'texto', obrigatorio: true, dependeDe: { campo: 'abriuNc', valor: 'Sim' }, ajuda: 'Sem o número, o chamado e a RNC ficam sendo dois registros do mesmo fato que ninguém liga depois.' },
+    { chave: 'observacoes', rotulo: 'Observações', tipo: 'texto_longo' },
+  ],
+  anexos: {
+    titulo: 'Fotos e documentos do atendimento',
+    vazio: 'A foto do que o cliente relatou e do que ficou depois do atendimento. Em chamado de campo é a única prova do estado em que se encontrou a peça — e a que decide, meses depois, se a falha era da execução ou do uso.',
+  },
+};
+
 /* ══ 8.5.3 — Propriedade pertencente ao cliente ══════════════════════════════════════════════
    "Quando a propriedade de um cliente for perdida, danificada ou de outra forma constatada
    inadequada para uso, a organização deve relatar isso ao cliente e reter informação

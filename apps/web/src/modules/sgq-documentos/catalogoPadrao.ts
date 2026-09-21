@@ -186,6 +186,16 @@ const NUCLEO_DOCS: DocumentoPadrao[] = [
     ],
   }),
 
+  // A 8.5.5 são DUAS coisas, e o catálogo pede as duas porque elas são separadas: o procedimento
+  // diz a política (o que se oferece, por quanto tempo, sob que condições) e o registro prova
+  // cada atendimento. Procedimento sem registro é promessa; registro sem procedimento é
+  // improviso repetido.
+  d('atendimento_pos_entrega', 'Atendimento Pós-Entrega', 'formulario', 'Operações', ['8.5.5'], 'pratica', 'FR-021', {
+    papel: 'pos_entrega',
+    comoAtender: 'Um registro por chamado: quem acionou, sobre o quê, se estava na garantia, o que foi feito e por quem.',
+    nota: 'É o que prova que a empresa ATENDE, e não só promete no procedimento. Também é a porta de entrada da retroalimentação do cliente (9.1.2) e de não conformidade que só aparece em campo (10.2).',
+  }),
+
   d('pos_entrega', 'Atividades Pós-Entrega', 'procedimento', 'Operações', ['8.5.5'], 'pratica', 'PR-010', {
     comoAtender: 'Descrever o que a empresa faz DEPOIS que o serviço saiu: garantia, retoque em campo, assistência e o que fazer quando o cliente reclama do que já entregou.',
     nota: 'A cláusula manda considerar cinco coisas para dimensionar o pós-entrega — e as cinco estão no roteiro. Empresa que não tem o documento costuma ter a prática: faz o retoque, atende o chamado, e não registra.',

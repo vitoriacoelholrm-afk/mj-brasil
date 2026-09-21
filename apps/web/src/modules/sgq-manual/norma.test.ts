@@ -157,6 +157,15 @@ describe('quem declara a seção cobre as cláusulas de dentro', () => {
     expect(quantosEspecificos('8.5.3', MODULOS)).toBeGreaterThan(0);
   });
 
+  it('a 8.5.5 leva ao chamado de campo, e ainda cobra a política', () => {
+    // A cláusula pede as duas coisas. A tela existe (o registro de cada atendimento); o
+    // procedimento que diz a política continua na lista do que falta — e é assim que tem de
+    // aparecer, porque ter onde registrar não é ter a política escrita.
+    const r = relacionadosDa('8.5.5', MODULOS)!;
+    expect(r.telas.map((t) => t.tela.rota)).toContain('pos-entrega');
+    expect(r.faltando.map((f) => f.chave)).toContain('pos_entrega');
+  });
+
   it('a 7.4 saiu do "só no manual" ao ganhar tela, mesmo sem documento catalogado', () => {
     // A matriz de comunicação virou tela em 21/09/2026. A Minasjato ainda não a catalogou na
     // lista mestra — e é por isso que a tela existe e a falta continua sendo apontada. Uma coisa

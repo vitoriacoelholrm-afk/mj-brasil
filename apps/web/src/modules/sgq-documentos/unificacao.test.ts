@@ -100,9 +100,11 @@ describe('depois do alinhamento', () => {
       'propriedade_cliente', 'mudanca_producao', 'saida_nao_conforme', 'monitoramento_medicao']) {
       expect(c.faltando.map((x) => x.chave), antiga).not.toContain(antiga);
     }
-    // As duas de 21/09 são da comunicação (7.4) e do pós-entrega (8.5.5), que o catálogo passou
-    // a perguntar. Documento nenhum foi perdido: a pergunta é que é nova.
-    expect(c.faltando.map((x) => x.chave).sort()).toEqual(['comunicacao_sgq', 'pos_entrega']);
+    // As de 21/09 são da comunicação (7.4) e do pós-entrega (8.5.5, que pede política E
+    // registro), e o catálogo passou a perguntar pelas três. Documento nenhum foi perdido: a
+    // pergunta é que é nova.
+    expect(c.faltando.map((x) => x.chave).sort())
+      .toEqual(['atendimento_pos_entrega', 'comunicacao_sgq', 'pos_entrega']);
   });
 
   it('a Minasjato usa dois módulos: o do setor e o de segurança', () => {

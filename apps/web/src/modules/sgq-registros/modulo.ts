@@ -10,7 +10,8 @@
 import { createElement } from 'react';
 import type { Modulo } from '@/plataforma/modulo';
 import {
-  COMUNICACAO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, PROPRIEDADE_CLIENTE, REGISTRO_TREINAMENTO,
+  COMUNICACAO_SGQ, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, POS_ENTREGA, PROPRIEDADE_CLIENTE,
+  REGISTRO_TREINAMENTO,
 } from './formularios';
 import { Registros } from '@/ui/Registros';
 
@@ -19,12 +20,13 @@ export const sgqRegistros: Modulo = {
   nome: 'Registros do SGQ',
   descricao:
     'Os registros que a norma exige de qualquer empresa certificada: propriedade do cliente, mudança na produção, saída não conforme e competência.',
-  clausulas: ['7.2', '7.4', '8.5.3', '8.5.6', '8.7.2', '10.2.2'],
+  clausulas: ['7.2', '7.4', '8.5.3', '8.5.5', '8.5.6', '8.7.2', '10.2.2'],
   dominio: 'Qualidade',
   exige: 'sgq.ver',
   essencial: true,
   formularios: [
     PROPRIEDADE_CLIENTE, MUDANCA_PRODUCAO, NAO_CONFORMIDADE, REGISTRO_TREINAMENTO, COMUNICACAO_SGQ,
+    POS_ENTREGA,
   ],
   telas: [
     {
@@ -53,6 +55,14 @@ export const sgqRegistros: Modulo = {
       rota: 'comunicacao',
       formulario: 'comunicacao_sgq',
       render: () => createElement(Registros, { def: COMUNICACAO_SGQ }),
+    },
+    // O chamado de campo é do setor da ordem de serviço: quem executou o serviço é quem vai
+    // atender o que voltou dele, e a OS original é onde está o que foi medido e liberado.
+    {
+      rotulo: 'Pós-Entrega',
+      rota: 'pos-entrega',
+      formulario: 'pos_entrega',
+      render: () => createElement(Registros, { def: POS_ENTREGA }),
     },
   ],
 };

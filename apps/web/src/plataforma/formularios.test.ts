@@ -64,13 +64,15 @@ describe('toda definição se sustenta sozinha', () => {
     // ela avisa em vez de quebrar — e é assim que um formulário novo da plataforma chega antes
     // de a empresa adotá-lo.
     //
-    // A matriz de comunicação (7.4) é esse caso desde 21/09/2026: o formulário existe na
-    // plataforma, a Minasjato ainda não o catalogou. Enquanto não catalogar, a tela funciona e
-    // sai sem código — e o diagnóstico continua apontando a falta.
+    // A matriz de comunicação (7.4) e o atendimento pós-entrega (8.5.5) são esse caso desde
+    // 21/09/2026: os formulários existem na plataforma, a Minasjato ainda não os catalogou.
+    // Enquanto não catalogar, a tela funciona e sai sem código — e o diagnóstico continua
+    // apontando a falta.
     const semCodigo = FORMULARIOS
       .filter((def) => !MINASJATO.formularios[def.papel])
-      .map((def) => def.papel);
-    expect(semCodigo).toEqual(['comunicacao_sgq']);
+      .map((def) => def.papel)
+      .sort();
+    expect(semCodigo).toEqual(['comunicacao_sgq', 'pos_entrega']);
 
     for (const def of FORMULARIOS.filter((d) => MINASJATO.formularios[d.papel])) {
       expect(MINASJATO.formularios[def.papel], def.papel).toMatch(/^FM-\d{3}$/);
