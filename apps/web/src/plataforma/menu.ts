@@ -27,8 +27,8 @@ export const FEITIO: Partial<Record<Papel, FeitioDeMenu>> = {
   },
 
   coordenacao_qualidade: {
-    fora: ['nao-conformidade', 'propriedade-cliente', 'mudanca-producao', 'comunicacao',
-      'pos-entrega', 'plano-acao', 'vencimentos', 'instrumentos', 'lista-mestra', 'manual'],
+    fora: ['situacao', 'nao-conformidade', 'propriedade-cliente', 'mudanca-producao', 'comunicacao',
+      'pos-entrega', 'plano-acao', 'vencimentos', 'instrumentos', 'lista-mestra', 'manual', 'satisfacao', 'indicadores', 'plano-auditoria'],
     portas: [
       {
         rota: 'registros-empresa',
