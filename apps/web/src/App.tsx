@@ -201,11 +201,9 @@ export function App() {
 
           {/* A porta fica por último, sempre: é consulta, e consulta não disputa o alto da coluna
               com o que a pessoa faz todo dia. */}
-          { portas.length > 0 && (
           {portas.map((p) => (
             <ItemDeMenu key={p.rota} rotulo={p.rotulo} ativo={rota === p.rota} aoClicar={() => ir(p.rota)} />
           ))}
-          )}
         </nav>
 
         <div style={S.rodapeColuna}>
