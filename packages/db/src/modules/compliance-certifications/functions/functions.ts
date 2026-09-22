@@ -141,7 +141,9 @@ export async function vencimientosBoard(db: DbOrTx, ctx: Context, input?: { hold
   if (!can(ctx, 'compliance.credentials.read')) throw new ForbiddenError('compliance.credentials.read');
   const hk = input?.holderKind ?? null;
   const rows = (await db.execute(sql`
-    select id, holder_kind, holder_label, kind, title, number, expires_at, status,
+    -- holder_id entra no painel para a linha poder AGIR: sem ele, "vence em 7 dias" é um aviso
+    -- que não leva a lugar nenhum — quem renova a calibração precisa saber de que instrumento.
+    select id, holder_kind, holder_id, holder_label, kind, title, number, expires_at, status,
       case
         when expires_at is null then 'later'
         when expires_at < ${todayIso()} then 'expired'

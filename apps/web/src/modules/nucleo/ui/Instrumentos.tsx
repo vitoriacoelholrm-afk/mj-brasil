@@ -4,8 +4,11 @@
 import { useMemo, useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
+import { papelAtual } from '@/lib/session';
+import { motivoDoCadastro, podeCadastrar } from '@/plataforma/acesso';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Aviso, Cabecalho } from '@/ui/Cabecalho';
+import { FormCalibracao, type AlvoDaCalibracao } from './FormCalibracao';
 
 interface Ativo {
   id: string; code: string; name: string; area: string | null;
@@ -17,6 +20,12 @@ interface Credencial {
 
 export function Instrumentos() {
   const [novo, setNovo] = useState(false);
+  const [calibrando, setCalibrando] = useState<AlvoDaCalibracao | null>(null);
+  const papel = papelAtual();
+  // Consultar o inventário é de todo mundo; cadastrar instrumento e registrar calibração é de
+  // quem mede. Até 21/09/2026 esta tela não perguntava nada.
+  const podeEscrever = podeCadastrar(papel, 'instrumentos');
+  const bloqueio = motivoDoCadastro(papel, 'instrumentos');
 
   const ativos = usarDados<{ rows: Ativo[] } | Ativo[]>(
     () => (trpc as any)['equipment-maintenance'].listAssets.query({}),
@@ -41,10 +50,23 @@ export function Instrumentos() {
       <Cabecalho
         titulo="Instrumentos"
         sub="Inventário dos equipamentos de medição e a validade da calibração de cada um."
-        acao={<button style={s.botaoPrimario} onClick={() => setNovo(true)}>Novo instrumento</button>}
+        acao={podeEscrever
+          ? <button style={s.botaoPrimario} onClick={() => setNovo(true)}>Novo instrumento</button>
+          : undefined}
       />
 
-      {novo && <FormNovo aoFechar={() => setNovo(false)} aoSalvar={() => { setNovo(false); ativos.recarregar(); }} />}
+      {/* Botão que some sem explicação parece defeito. A frase diz de quem é o cadastro. */}
+      {bloqueio && <div style={{ marginBottom: 18 }}><Aviso texto={bloqueio} /></div>}
+
+      {novo && podeEscrever && <FormNovo aoFechar={() => setNovo(false)} aoSalvar={() => { setNovo(false); ativos.recarregar(); }} />}
+
+      {calibrando && podeEscrever && (
+        <FormCalibracao
+          alvo={calibrando}
+          aoFechar={() => setCalibrando(null)}
+          aoSalvar={() => { setCalibrando(null); creds.recarregar(); }}
+        />
+      )}
 
       <div style={{ ...s.cartao, overflowX: 'auto' }}>
         <table style={s.tabela}>
@@ -55,11 +77,12 @@ export function Instrumentos() {
               <th style={s.th}>Local</th>
               <th style={s.th}>Certificado</th>
               <th style={s.th}>Calibração</th>
+              {podeEscrever && <th style={s.th} />}
             </tr>
           </thead>
           <tbody>
             {linhas.length === 0 && (
-              <tr><td style={{ ...s.td, color: c.suave }} colSpan={5}>Nenhum instrumento cadastrado.</td></tr>
+              <tr><td style={{ ...s.td, color: c.suave }} colSpan={podeEscrever ? 6 : 5}>Nenhum instrumento cadastrado.</td></tr>
             )}
             {linhas.map(({ ativo, cal }) => {
               const dias = diasAte(cal?.expires_at);
@@ -75,6 +98,16 @@ export function Instrumentos() {
                     <span style={pastilha(tom)}>{texto}</span>
                     {cal?.expires_at && <span style={S.venc}>até {dataBR(cal.expires_at)}</span>}
                   </td>
+                  {podeEscrever && (
+                    <td style={{ ...s.td, textAlign: 'right' }}>
+                      <button
+                        style={s.botao}
+                        onClick={() => setCalibrando({ id: ativo.id, label: `${ativo.code} — ${ativo.name}` })}
+                      >
+                        {cal ? 'Renovar calibração' : 'Registrar calibração'}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               );
             })}

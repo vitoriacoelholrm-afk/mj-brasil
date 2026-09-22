@@ -1,14 +1,19 @@
 // Painel de vencimentos — o semáforo do MJ-CAL-01 §9.1 ("notifica com 30 dias de antecedência")
 // estendido a tudo que expira: calibração de instrumento, certificação de inspetor, licença.
 // Lê compliance-certifications.vencimientosBoard, que já devolve os baldes prontos.
+import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { usarDados } from '@/lib/usarDados';
+import { papelAtual } from '@/lib/session';
+import { podeCadastrar } from '@/plataforma/acesso';
 import { c, dataBR, diasAte, fonte, pastilha, s } from '@/ui/estilo';
 import { Aviso, Cabecalho } from '@/ui/Cabecalho';
+import { FormCalibracao, type AlvoDaCalibracao } from './FormCalibracao';
 
 interface Credencial {
   id: string;
   holder_kind: string;
+  holder_id: string | null;
   holder_label: string;
   kind: string;
   title: string | null;
@@ -36,7 +41,11 @@ const TIPO: Record<string, string> = {
 };
 
 export function Vencimentos() {
-  const { dados, carregando, erro } = usarDados<Painel>(
+  const [calibrando, setCalibrando] = useState<AlvoDaCalibracao | null>(null);
+  // Renovar aqui é o mesmo ato do inventário, e por isso a mesma permissão: quem mede é quem
+  // responde pelo instrumento. Quem só acompanha continua vendo o painel inteiro.
+  const podeRenovar = podeCadastrar(papelAtual(), 'instrumentos');
+  const { dados, carregando, erro, recarregar } = usarDados<Painel>(
     () => (trpc as any)['compliance-certifications'].vencimientosBoard.query({}),
   );
 
@@ -53,6 +62,14 @@ export function Vencimentos() {
         titulo="Vencimentos"
         sub="Calibração de instrumentos, certificações e licenças — tudo que expira, num lugar só."
       />
+
+      {calibrando && podeRenovar && (
+        <FormCalibracao
+          alvo={calibrando}
+          aoFechar={() => setCalibrando(null)}
+          aoSalvar={() => { setCalibrando(null); recarregar(); }}
+        />
+      )}
 
       <div style={S.contadores}>
         {BALDES.map((b) => (
@@ -88,6 +105,7 @@ export function Vencimentos() {
                     <th style={s.th}>Certificado</th>
                     <th style={s.th}>Vence</th>
                     <th style={s.th}>Situação</th>
+                    {podeRenovar && <th style={s.th} />}
                   </tr>
                 </thead>
                 <tbody>
@@ -107,6 +125,20 @@ export function Vencimentos() {
                           )}
                         </td>
                         <td style={s.td}><span style={pastilha(b.tom)}>{b.rotulo}</span></td>
+                        {/* Só a calibração de instrumento se renova por aqui. Certificação de
+                            pessoa e licença da empresa têm outro dono e outro caminho. */}
+                        {podeRenovar && (
+                          <td style={{ ...s.td, textAlign: 'right' }}>
+                            {l.holder_kind === 'asset' && l.kind === 'calibracao' && l.holder_id && (
+                              <button
+                                style={s.botao}
+                                onClick={() => setCalibrando({ id: l.holder_id as string, label: l.holder_label })}
+                              >
+                                Renovar
+                              </button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

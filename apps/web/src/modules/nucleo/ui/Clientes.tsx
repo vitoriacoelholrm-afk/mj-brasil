@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { empresaAtiva } from '@/plataforma/empresa';
 import { usarDados } from '@/lib/usarDados';
+import { papelAtual } from '@/lib/session';
+import { motivoDoCadastro, podeCadastrar } from '@/plataforma/acesso';
 import { c, pastilha, s } from '@/ui/estilo';
 import { Aviso, Cabecalho } from '@/ui/Cabecalho';
 
@@ -19,6 +21,11 @@ const TIPO: Record<string, string> = {
 
 export function Clientes() {
   const [novo, setNovo] = useState(false);
+  const papel = papelAtual();
+  // Ver a carteira é de todo mundo; abrir cliente novo é de quem atende. Até 21/09/2026 esta tela
+  // não perguntava nada — o botão aparecia para a direção e para a consultoria também.
+  const podeEscrever = podeCadastrar(papel, 'clientes');
+  const bloqueio = motivoDoCadastro(papel, 'clientes');
   const { dados, carregando, erro, recarregar } = usarDados<{ rows: Cliente[] } | Cliente[]>(
     () => (trpc as any)['customer-management'].listCustomers.query({}),
   );
@@ -33,10 +40,15 @@ export function Clientes() {
       <Cabecalho
         titulo="Clientes"
         sub={`Quem a ${empresaAtiva().identidade.nome} atende e fatura.`}
-        acao={<button style={s.botaoPrimario} onClick={() => setNovo(true)}>Novo cliente</button>}
+        acao={podeEscrever
+          ? <button style={s.botaoPrimario} onClick={() => setNovo(true)}>Novo cliente</button>
+          : undefined}
       />
 
-      {novo && <FormNovo aoFechar={() => setNovo(false)} aoSalvar={() => { setNovo(false); recarregar(); }} />}
+      {/* Botão que some sem explicação parece defeito. A frase diz de quem é o cadastro. */}
+      {bloqueio && <div style={{ marginBottom: 18 }}><Aviso texto={bloqueio} /></div>}
+
+      {novo && podeEscrever && <FormNovo aoFechar={() => setNovo(false)} aoSalvar={() => { setNovo(false); recarregar(); }} />}
 
       <div style={{ ...s.cartao, overflowX: 'auto' }}>
         <table style={s.tabela}>
