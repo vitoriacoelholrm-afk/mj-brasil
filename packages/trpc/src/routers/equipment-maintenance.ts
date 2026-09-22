@@ -25,20 +25,17 @@ import {
   completeMaintenanceOrder, completeMaintenanceOrderInput,
   getMaintenanceOrder, type EquipDeps,
   syncPmSchedules, pmCompliance, pmComplianceInput,
-  createRequest, getFailureCode,
   consumptionForTask,
 } from '@app/db';
 
 const sc = (ctx: unknown) => ctx as ScopedContext;
 
 // Anti-cycle wiring (§4.3): equipment reaches request-intake only through injected resolvers, so the
-// db-package files never import request-intake back. createRequest/getFailureCode are request-intake's;
-// createMaintenanceOrder is equipment's own OT creator (injected into the crear_tarea path).
+// db-package files never import request-intake back. createMaintenanceOrder is equipment's own OT
+// creator (injected into the crear_tarea path).
 function equipDepsFor(ctx: unknown): EquipDeps {
   const c = sc(ctx);
   return {
-    createRequest: (input) => createRequest(c.db, c.identity, input as any) as Promise<{ id: string; folio?: string }>,
-    getFailureCode: async (id) => { try { return (await getFailureCode(c.db, c.identity, { id })) as { id: string }; } catch { return null; } },
     createMaintenanceOrder: (input) => createMaintenanceOrder(c.db, c.identity, input as any, equipDepsFor(ctx)) as Promise<{ taskId: string; detailId: string }>,
     // materials-inventory cost seam (§10) — real refacciones cost at OT completion (try/catch → 0 when
     // materials isn't installed, so equipment degrades to the manual estimate). Wired only here (router).
