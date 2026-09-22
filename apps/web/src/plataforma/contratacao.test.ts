@@ -83,16 +83,16 @@ describe('a porta não virou corredor', () => {
   it('a ordem de serviço continua de quem executa e de quem inspeciona', () => {
     expect(podeEditar('coordenacao_qualidade', 'os')).toBe(false);
     expect(podeEditar('inspecao', 'os')).toBe(true);
-    expect(podeEditar('execucao', 'os')).toBe(true);
   });
 
   it('e as exclusividades de setor seguem de pé', () => {
-    // Decididas por ela em 17/09 e 21/09: registros de pessoas só do RH, suprimentos só do apoio.
-    expect(podeEditar('apoio', 'rh')).toBe(true);
-    expect(podeEditar('apoio', 'suprimentos')).toBe(true);
-    for (const papel of PAPEIS.filter((p) => p !== 'apoio')) {
-      expect(podeEditar(papel, 'rh'), papel).toBe(false);
-      expect(podeEditar(papel, 'suprimentos'), papel).toBe(false);
+    // Decididas por ela em 17/09 e 21/09: registros de pessoas só do RH, suprimentos só do apoio,
+    // e desde 21/09 a gestão do sistema também — quem apura indicador é o administrativo.
+    for (const setor of ['rh', 'suprimentos', 'sgq'] as const) {
+      expect(podeEditar('apoio', setor), setor).toBe(true);
+      for (const papel of PAPEIS.filter((p) => p !== 'apoio')) {
+        expect(podeEditar(papel, setor), `${papel} · ${setor}`).toBe(false);
+      }
     }
   });
 });

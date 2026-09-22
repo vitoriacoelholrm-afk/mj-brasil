@@ -112,8 +112,8 @@ describe('quem é auditado não vê a auditoria', () => {
     }
   });
 
-  it('e saem de quem executa, de quem inspeciona e do apoio', () => {
-    for (const papel of ['execucao', 'inspecao', 'apoio'] as Papel[]) {
+  it('e saem de quem faz o serviço e do apoio', () => {
+    for (const papel of ['inspecao', 'apoio'] as Papel[]) {
       expect(rotasDe(papel, MODO), papel).not.toContain('plano-auditoria');
       expect(rotasDe(papel, MODO), papel).not.toContain('diagnostico');
     }
@@ -122,7 +122,7 @@ describe('quem é auditado não vê a auditoria', () => {
   it('sem que ninguém perca o trabalho que era dele', () => {
     // O risco de uma mudança assim é levar junto o que não devia. A não conformidade, o plano de
     // ação e o pós-entrega são de quem executa o serviço, e continuam onde estavam.
-    for (const papel of ['execucao', 'inspecao'] as Papel[]) {
+    for (const papel of ['inspecao'] as Papel[]) {
       const r = rotasDe(papel, MODO);
       for (const rota of ['nao-conformidade', 'plano-acao', 'pos-entrega', 'lista-mestra', 'manual']) {
         expect(r, `${papel} · ${rota}`).toContain(rota);

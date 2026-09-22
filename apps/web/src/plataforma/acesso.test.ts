@@ -1,10 +1,11 @@
 // Quem pode o quê. A regra não é de software: quem confere não preenche.
 import { describe, it, expect } from 'vitest';
 import {
-  ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, pode, podeEditar,
-  podeEditarOModelo, podeVer, somenteLeitura, type Papel,
+  ACESSO, PAPEL_ROTULO, motivoDaLeituraApenas, motivoDoBloqueio, motivoDoCadastro, pode,
+  podeCadastrar, podeEditar, podeEditarOModelo, podeVer, somenteLeitura, type Papel,
 } from './acesso';
 import { NAO_CONFORMIDADE, REGISTRO_TREINAMENTO } from '@/modules/sgq-registros/formularios';
+import { PLANO_AUDITORIA } from '@/modules/sgq-registros/formularios.gestao';
 import {
   AVALIACAO_FORNECEDOR, PEDIDO_COMPRA, RECEBIMENTO, ROMANEIO,
 } from '@/modules/suprimentos/formularios';
@@ -15,14 +16,39 @@ const PAPEIS = Object.keys(ACESSO) as Papel[];
 /* ══ A gestão do sistema é da direção ════════════════════════════════════════════════════════ */
 
 describe('o setor de gestão do SGQ', () => {
-  it('quem determina a comunicação (7.4) é a direção, e mais ninguém', () => {
-    // A cláusula manda a ORGANIZAÇÃO determinar o que se comunica e por quem. Determinar é ato
-    // de liderança (§5.1, §5.3) — não é o inspetor nem o porteiro que decide a rotina de
-    // comunicação da empresa.
-    expect(podeEditar('direcao', 'sgq')).toBe(true);
-    for (const papel of PAPEIS.filter((p) => p !== 'direcao')) {
-      expect(podeEditar(papel, 'sgq'), papel).toBe(false);
+  it('a gestão do sistema passou da direção para o apoio', () => {
+    // Decisão dela em 21/09/2026, em duas partes. Primeiro: a direção acompanha e decide, sem
+    // digitar registro nenhum — perdeu `sgq.editar`, que era a única escrita que tinha. Depois:
+    // comunicação (§7.4), satisfação do cliente (§9.1.2) e indicadores (§9.1.1) são apuração, e
+    // quem apura é o administrativo.
+    expect(podeEditar('direcao', 'sgq')).toBe(false);
+    expect(PAPEIS.filter((p) => podeEditar(p, 'sgq'))).toEqual(['apoio']);
+  });
+
+  it('e o programa de auditoria saiu junto, para quem conduz a auditoria', () => {
+    // A auditoria virou SETOR PRÓPRIO na mesma decisão. É a exceção que a §9.2.2 obriga: plano
+    // escrito por quem vai ser auditado é o contrário de imparcialidade na condução. E não fere
+    // "quem confere não preenche", porque o plano não é evidência de trabalho da EMPRESA — é o
+    // produto de quem audita, como o manual.
+    expect(PAPEIS.filter((p) => podeEditar(p, 'auditoria'))).toEqual(['coordenacao_qualidade']);
+    expect(podeEditar('apoio', 'auditoria')).toBe(false);
+    expect(PLANO_AUDITORIA.setor).toBe('auditoria');
+    // Quem RECEBE o resultado continua vendo sem escrever: é entrada da análise crítica (§9.3).
+    expect(podeVer('direcao', 'auditoria')).toBe(true);
+    expect(podeEditar('direcao', 'auditoria')).toBe(false);
+    // E quem é auditado continua sem ver o que vai ser olhado.
+    for (const papel of ['inspecao', 'apoio', 'portaria'] as const) {
+      expect(podeVer(papel, 'auditoria'), papel).toBe(false);
     }
+  });
+
+  it('a direção não escreve em lugar nenhum — nem OS, nem pessoas, nem compras', () => {
+    for (const setor of ['os', 'rh', 'portaria', 'sgq', 'suprimentos'] as const) {
+      expect(podeEditar('direcao', setor), setor).toBe(false);
+    }
+    // E também não cadastra instrumento nem cliente: as telas não perguntavam nada até 21/09.
+    expect(podeCadastrar('direcao', 'instrumentos')).toBe(false);
+    expect(podeCadastrar('direcao', 'clientes')).toBe(false);
   });
 
   it('e a coordenação continua vendo sem escrever — inclusive aqui', () => {
@@ -92,10 +118,39 @@ describe('a coordenação da qualidade vê e não escreve', () => {
 });
 
 describe('quem faz o serviço é quem registra', () => {
-  it('execução preenche a ordem e junta evidência', () => {
-    expect(pode('execucao', 'os.editar')).toBe(true);
-    expect(pode('execucao', 'os.anexar')).toBe(true);
-    expect(somenteLeitura('execucao')).toBe(false);
+  it('quem faz o serviço preenche a ordem e junta evidência', () => {
+    expect(pode('inspecao', 'os.editar')).toBe(true);
+    expect(pode('inspecao', 'os.anexar')).toBe(true);
+    expect(somenteLeitura('inspecao')).toBe(false);
+  });
+
+  it('o instrumento e o cliente são de quem mede e de quem atende', () => {
+    // Decisão dela em 21/09/2026. Antes disto NÃO HAVIA TRAVA: as duas telas ofereciam o botão de
+    // criar a qualquer um que as abrisse — inclusive à direção e à consultoria. Era furo, não era
+    // regra, e é por isso que a permissão nasce aqui e não na tela.
+    expect(podeCadastrar('inspecao', 'instrumentos')).toBe(true);
+    expect(podeCadastrar('inspecao', 'clientes')).toBe(true);
+    expect(motivoDoCadastro('inspecao', 'clientes')).toBeNull();
+
+    for (const papel of PAPEIS.filter((p) => p !== 'inspecao')) {
+      expect(podeCadastrar(papel, 'instrumentos'), papel).toBe(false);
+      expect(podeCadastrar(papel, 'clientes'), papel).toBe(false);
+    }
+  });
+
+  it('e quem não cadastra recebe frase, não botão sumido', () => {
+    // Botão que desaparece sem explicação parece defeito. A da consultoria diz por quê.
+    expect(motivoDoCadastro('coordenacao_qualidade', 'instrumentos')).toContain('independente');
+    expect(motivoDoCadastro('direcao', 'clientes')).toContain('Direção');
+  });
+
+  it('execução e inspeção são um papel só', () => {
+    // Decisão dela em 21/09/2026: na empresa 01 quem faz o serviço é quem assina o relatório, e
+    // um papel sem ninguém dentro é menu que não serve a pessoa nenhuma. A distinção não se
+    // perdeu — ela continua sendo a permissão `relatorio.emitir`, e um cliente que separe as
+    // duas funções ganha um papel novo aqui.
+    expect(PAPEIS).not.toContain('execucao');
+    expect(PAPEL_ROTULO.inspecao).toBe('Execução e Inspeção');
   });
 
   it('só a inspeção emite o relatório que vai ao cliente', () => {
@@ -166,13 +221,17 @@ describe('o setor de suprimentos é do administrativo', () => {
   });
 
   it('quem toca a ordem de serviço e quem fica no portão também não', () => {
-    for (const papel of ['execucao', 'inspecao', 'portaria'] as const) {
+    for (const papel of ['inspecao', 'portaria'] as const) {
       expect(podeEditar(papel, 'suprimentos'), papel).toBe(false);
     }
   });
 
   it('só um papel escreve em suprimentos', () => {
+    // Houve um papel `suprimentos` separado por algumas horas em 21/09/2026, a pedido dela. Ela
+    // decidiu em seguida que a responsável por compras é a mesma do apoio — e papel sem gente
+    // dentro é o que acabou de sair do sistema com a execução. O setor ficou onde estava.
     expect(PAPEIS.filter((p) => podeEditar(p, 'suprimentos'))).toEqual(['apoio']);
+    expect(PAPEIS).not.toContain('suprimentos');
   });
 
   it('os quatro declaram o setor novo', () => {

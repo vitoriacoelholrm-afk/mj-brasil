@@ -30,8 +30,8 @@ export const EQUIPE: Pessoa[] = [
   { id: '00000000-0000-4000-9000-000000000001', nome: 'Vitória Coelho Mendes', cargo: 'Coordenadora da Qualidade', papel: 'coordenacao_qualidade' },
   { id: '00000000-0000-4000-9000-000000000002', nome: 'Leandro Santos', cargo: 'Diretor', papel: 'direcao' },
   // PCC. Ela pediu explicitamente que ele tenha a ordem de serviço E o relatório de inspeção
-  // editáveis — que é exatamente o conjunto do papel de inspeção. Era `execucao`, que edita a
-  // OS e NÃO emite relatório; por isso mudou de papel, não só de cargo.
+  // editáveis — o conjunto do papel de inspeção, que desde 21/09/2026 é o papel de quem executa
+  // E confere: os dois eram separados e ela os uniu, porque aqui é a mesma gente.
   { id: '00000000-0000-4000-9000-000000000003', nome: 'Gustavo Moreira', cargo: 'PCC', papel: 'inspecao' },
   // Gerente de Produção. Ela corrigiu o cargo em 17/09/2026 e disse que ele fica com a função
   // de produção e mantém a ordem de serviço e o RIP — o papel não muda, o nome do posto sim.

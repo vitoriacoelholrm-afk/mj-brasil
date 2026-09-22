@@ -17,7 +17,14 @@ import type { FormularioDef } from '@/plataforma/formularios';
 
 export const MONITORAMENTO_SGQ: FormularioDef = {
   papel: 'monitoramento_sgq',
-  setor: 'os',
+  // SETOR DA GESTÃO DO SISTEMA, e não o da ordem de serviço (corrigido em 21/09/2026, por decisão
+  // dela). Estava em `os`, e o efeito era que quem apurava o indicador do SISTEMA era quem executa
+  // o serviço. O indicador não mede uma ordem: mede a empresa, e é entrada da análise crítica
+  // pela direção (§9.3.2). Por isso o setor é `sgq` — quem escreve é a direção.
+  //
+  // A coordenação da qualidade continua de fora, como em todo registro: ela confere o número,
+  // não o produz.
+  setor: 'sgq',
   titulo: 'Indicadores do SGQ',
   clausula: '9.1.1',
   explicacao:

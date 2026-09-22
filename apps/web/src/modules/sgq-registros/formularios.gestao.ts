@@ -78,9 +78,14 @@ export const PLANO_ACAO: FormularioDef = {
 /** O programa de auditoria interna — a 9.2.2 lista o que ele precisa ter, e são seis coisas. */
 export const PLANO_AUDITORIA: FormularioDef = {
   papel: 'plano_auditoria',
-  // Gestão do próprio sistema: quem determina o programa de auditoria é a direção. E há um motivo
-  // a mais aqui — a 9.2.2 manda assegurar objetividade e imparcialidade na seleção do auditor.
-  setor: 'sgq',
+  // SETOR PRÓPRIO desde 21/09/2026, quando ela decidiu que quem escreve o programa é quem conduz
+  // a auditoria — a coordenação da qualidade. Estava no setor da gestão do sistema, junto com o
+  // indicador e a satisfação do cliente, e foi para lá quando a direção ainda preenchia.
+  //
+  // O que sustenta a separação é a 9.2.2: objetividade e imparcialidade na seleção do auditor e na
+  // condução. Plano escrito por quem vai ser auditado é o oposto disso — e o plano também não é
+  // evidência de trabalho da EMPRESA, é o produto de quem audita, como o manual.
+  setor: 'auditoria',
   titulo: 'Plano de Auditoria Interna',
   clausula: '9.2',
   explicacao:

@@ -13,11 +13,19 @@ import { temGestao } from './contratacao';
 
 /** O papel de alguém dentro da empresa atendida. É o que decide o acesso.
  *  Não confundir com o CARGO, que é o nome que a empresa dá — "Gerente de Produção" é cargo,
- *  `inspecao` é papel. Duas empresas com cargos diferentes usam os mesmos papéis. */
+ *  `inspecao` é papel. Duas empresas com cargos diferentes usam os mesmos papéis.
+ *
+ *  EXECUÇÃO E INSPEÇÃO SÃO UM PAPEL SÓ, por decisão dela em 21/09/2026. Eram dois, e a única
+ *  diferença era emitir o relatório que vai ao cliente. Na empresa 01 ninguém era só executante:
+ *  o PCC e o gerente de produção fazem o serviço E assinam o RIP, e um papel sem ninguém dentro
+ *  é 15 telas de menu que não servem a pessoa nenhuma.
+ *
+ *  Se um cliente futuro separar as duas funções — aplicador que não assina laudo —, volta um
+ *  papel novo aqui, com `os.editar` e `os.anexar` e sem `relatorio.emitir`. Nada se perde: a
+ *  distinção continua existindo como PERMISSÃO, que é onde ela sempre morou. */
 export type Papel =
   | 'coordenacao_qualidade'
   | 'direcao'
-  | 'execucao'
   | 'inspecao'
   | 'apoio'
   | 'portaria';
@@ -25,8 +33,7 @@ export type Papel =
 export const PAPEL_ROTULO: Record<Papel, string> = {
   coordenacao_qualidade: 'Coordenação da Qualidade',
   direcao: 'Direção',
-  execucao: 'Execução',
-  inspecao: 'Inspeção',
+  inspecao: 'Execução e Inspeção',
   apoio: 'Apoio',
   portaria: 'Portaria',
 };
@@ -107,14 +114,39 @@ export type Permissao =
    *  precisa dele como entrada da análise crítica, §9.3). Quem executa e quem inspeciona não
    *  perdem nada do trabalho deles: a não conformidade, o plano de ação e o pós-entrega continuam
    *  onde estavam. */
-  | 'auditoria.ver';
+  | 'auditoria.ver'
+  /** Escrever o PROGRAMA de auditoria interna — o plano, o escopo, o que vai ser olhado.
+   *
+   *  É da coordenação da qualidade, e só dela, por decisão dela em 21/09/2026. Parece contrariar
+   *  "quem confere não preenche", e não contraria: aquela regra protege o REGISTRO da empresa —
+   *  a ordem de serviço, o RNC, a ficha de treinamento —, que é a evidência de que a EMPRESA fez
+   *  o trabalho. O plano de auditoria não é evidência de trabalho da empresa: é o produto de quem
+   *  audita, escrito por quem conduz. Mesmo raciocínio que já abriu o manual (`manual.editar`).
+   *
+   *  O contrário é que seria o problema: plano de auditoria escrito por quem vai ser auditado é
+   *  exatamente o que a §9.2 proíbe quando pede imparcialidade na condução. */
+  | 'auditoria.editar'
+  /** Cadastrar instrumento de medição e registrar a calibração que vence.
+   *
+   *  É §7.1.5 — recursos de monitoramento e medição. Fica com quem MEDE, por decisão dela em
+   *  21/09/2026: o responsável pelo instrumento é quem sabe que ele voltou do laboratório e com
+   *  que certificado. Quem só olha o painel de vencimentos não tem o papel na mão.
+   *
+   *  Antes disto não havia trava nenhuma: as telas de instrumento e de cliente deixavam QUALQUER
+   *  um criar, inclusive a coordenação da qualidade e a direção. Era furo, não era regra. */
+  | 'instrumentos.editar'
+  /** Cadastrar e alterar o cliente da empresa atendida — quem contrata o serviço dela.
+   *
+   *  É §8.2, requisitos do cliente. Mesma decisão e mesma data: quem atende o cliente é quem
+   *  abre a ordem de serviço para ele. */
+  | 'clientes.editar';
 
 /** Um conjunto de telas que anda junto em matéria de acesso.
  *
  *  Existe porque acesso não é uma régua só. Quem preenche a ordem de serviço não é quem preenche
  *  a ficha de treinamento, e nenhum dos dois precisa do que é do outro. Sem setor, a única saída
  *  seria dar tudo a todo mundo ou inventar um papel novo a cada tela. */
-export type Setor = 'os' | 'rh' | 'portaria' | 'sgq' | 'suprimentos';
+export type Setor = 'os' | 'rh' | 'portaria' | 'sgq' | 'suprimentos' | 'auditoria';
 
 export const SETOR_ROTULO: Record<Setor, string> = {
   os: 'ordem de serviço',
@@ -122,6 +154,7 @@ export const SETOR_ROTULO: Record<Setor, string> = {
   portaria: 'entrada e saída de cargas',
   sgq: 'gestão do sistema da qualidade',
   suprimentos: 'compras, recebimento e expedição',
+  auditoria: 'programa de auditoria interna',
 };
 
 const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
@@ -130,25 +163,37 @@ const DO_SETOR: Record<Setor, { ver: Permissao; editar: Permissao }> = {
   portaria: { ver: 'portaria.ver', editar: 'portaria.editar' },
   sgq: { ver: 'sgq.ver', editar: 'sgq.editar' },
   suprimentos: { ver: 'suprimentos.ver', editar: 'suprimentos.editar' },
+  // A auditoria saiu de dentro do setor da gestão em 21/09/2026, quando ela decidiu quem preenche
+  // o quê. Os dois setores já não eram a mesma coisa: quem apura indicador não é quem conduz a
+  // auditoria, e agora não é mais a mesma gente. Ver `auditoria.editar`.
+  auditoria: { ver: 'auditoria.ver', editar: 'auditoria.editar' },
 };
 
 const TUDO_NA_OS: Permissao[] = ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar', 'relatorio.emitir'];
 
 const ACESSO: Record<Papel, Permissao[]> = {
-  // A consultoria. Vê tudo — inclusive o que está errado — e não escreve nada.
-  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar', 'manual.editar', 'documentos.anexar', 'auditoria.ver'],
-  // Direção acompanha e decide; não é quem preenche formulário de chão de fábrica. Mas o que a
-  // NORMA manda a organização determinar sobre o próprio sistema é dela: a 7.4 pede determinar o
-  // que se comunica e por quem, e determinar é ato de liderança (§5.1, §5.3).
-  // A direção acompanha o que a empresa compra sem preencher pedido: aprovar fornecedor é decisão
-  // dela, digitar o recebimento não é.
-  direcao: ['sgq.ver', 'os.ver', 'sgq.editar', 'suprimentos.ver', 'auditoria.ver'],
-  // Quem faz o serviço registra o que fez, e não assina o documento que vai ao cliente.
-  execucao: ['sgq.ver', 'os.ver', 'os.editar', 'os.anexar'],
-  // Quem registra a medição e assina o relatório que vai ao cliente. Pode ser mais de uma
-  // pessoa, e com cargos diferentes: quem planeja e quem gerencia a produção costumam assinar
-  // tanto quanto quem inspeciona. O papel é um só; os cargos ficam no perfil da empresa.
-  inspecao: TUDO_NA_OS,
+  // A consultoria. Vê tudo — inclusive o que está errado — e não escreve REGISTRO nenhum da
+  // empresa. O que ela escreve é o que é dela: o modelo, o manual e o programa de auditoria
+  // (`auditoria.editar`, decisão dela em 21/09/2026) — nenhum dos três é evidência de trabalho
+  // feito pela empresa.
+  coordenacao_qualidade: ['sgq.ver', 'os.ver', 'portaria.ver', 'modelo.editar', 'manual.editar', 'documentos.anexar', 'auditoria.ver', 'auditoria.editar'],
+  // A DIREÇÃO NÃO PREENCHE NADA — decisão dela em 21/09/2026, e é uma régua só: acompanha,
+  // decide e recebe o resultado, sem digitar registro nenhum.
+  //
+  // Ela tinha `sgq.editar` até então, pelo argumento de que determinar o que se comunica (§7.4) é
+  // ato de liderança. A decisão passou por cima desse argumento. Os quatro registros que ficaram
+  // órfãos foram redistribuídos na mesma conversa: o programa de auditoria para a coordenação da
+  // qualidade, que é quem conduz; a comunicação, a satisfação do cliente e os indicadores para o
+  // apoio, que é quem apura.
+  direcao: ['sgq.ver', 'os.ver', 'suprimentos.ver', 'auditoria.ver'],
+  // Quem faz o serviço e quem confere a medição — um papel só desde 21/09/2026. Registra o que
+  // fez, junta a evidência e assina o relatório que vai ao cliente. Pode ser mais de uma pessoa,
+  // e com cargos diferentes: quem planeja e quem gerencia a produção assinam tanto quanto quem
+  // inspeciona. O papel é um só; os cargos ficam no perfil da empresa.
+  //
+  // O instrumento e o cliente entraram aqui em 21/09/2026, por decisão dela: quem mede é quem
+  // responde pelo instrumento, e quem atende o cliente é quem abre a ordem de serviço dele.
+  inspecao: [...TUDO_NA_OS, 'instrumentos.editar', 'clientes.editar'],
   // Administrativo. A ordem de serviço não é assunto dele; os registros de pessoas são — e são
   // só dele. Decisão dela: o RH preenche, e ninguém mais entra nesse setor.
   //
@@ -156,7 +201,15 @@ const ACESSO: Record<Papel, Permissao[]> = {
   // empresa 01, quem responde pelo pedido de compra e pela avaliação de fornecedor é a gerência
   // administrativa, que é este papel. Compras, recebimento e expedição andam juntos porque são o
   // mesmo caminho — o que se pede, o que chega e o que sai.
-  apoio: ['sgq.ver', 'rh.ver', 'rh.editar', 'suprimentos.ver', 'suprimentos.editar'],
+  //
+  // A GESTÃO DO SISTEMA entrou aqui em 21/09/2026, por decisão dela: comunicação (§7.4),
+  // satisfação do cliente (§9.1.2) e indicadores (§9.1.1) são apuração, e quem apura é o
+  // administrativo. Eram da direção, que deixou de preencher.
+  //
+  // Houve um papel `suprimentos` separado por algumas horas neste mesmo dia. Ela decidiu que a
+  // responsável por compras é a mesma pessoa do apoio, e papel sem gente dentro é o que acabamos
+  // de tirar do sistema com a execução. O setor continua aqui, onde já estava.
+  apoio: ['sgq.ver', 'rh.ver', 'rh.editar', 'suprimentos.ver', 'suprimentos.editar', 'sgq.editar'],
   // Posto de uso único: um terminal no portão. Não é console do sistema da qualidade, e por
   // isso não recebe `sgq.ver` — a tela abre já no que ele tem a fazer, e nada mais aparece.
   portaria: ['portaria.ver', 'portaria.editar'],
@@ -186,6 +239,30 @@ export function motivoDaLeituraApenas(papel: Papel): string {
   return papel === 'coordenacao_qualidade'
     ? 'Você está como Coordenação da Qualidade: vê tudo e não altera nada. Quem preenche a ordem de serviço é quem executa e quem inspeciona — é o que mantém o registro sendo evidência da empresa, e a conferência, independente.'
     : `Seu papel (${PAPEL_ROTULO[papel]}) tem acesso de consulta. Alterar a ordem de serviço é de quem executa e de quem inspeciona.`;
+}
+
+/** O cadastro que esta tela oferece — instrumento ou cliente. Não é `Setor`: o setor agrupa
+ *  telas de REGISTRO, e estas duas são de cadastro, vistas por todo mundo e escritas por um só. */
+export type Cadastro = 'instrumentos' | 'clientes';
+
+const DO_CADASTRO: Record<Cadastro, { permissao: Permissao; oQue: string }> = {
+  instrumentos: { permissao: 'instrumentos.editar', oQue: 'Cadastrar instrumento e registrar calibração' },
+  clientes: { permissao: 'clientes.editar', oQue: 'Cadastrar e alterar cliente' },
+};
+
+export function podeCadastrar(papel: Papel, cadastro: Cadastro): boolean {
+  return pode(papel, DO_CADASTRO[cadastro].permissao);
+}
+
+/** Por que o botão de cadastrar não aparece — ou null quando aparece.
+ *
+ *  A tela continua abrindo para todo mundo: ver o inventário e a carteira de clientes é consulta,
+ *  e não tira evidência de ninguém. O que fecha é a escrita. */
+export function motivoDoCadastro(papel: Papel, cadastro: Cadastro): string | null {
+  if (podeCadastrar(papel, cadastro)) return null;
+  return papel === 'coordenacao_qualidade'
+    ? `${DO_CADASTRO[cadastro].oQue} é da empresa, não da consultoria. Você consulta — é o que mantém a conferência independente.`
+    : `${DO_CADASTRO[cadastro].oQue} é de quem executa e inspeciona o serviço. Seu papel (${PAPEL_ROTULO[papel]}) consulta.`;
 }
 
 /** Por que esta tela não abre para escrever — ou null quando abre.
