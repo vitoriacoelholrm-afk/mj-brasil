@@ -91,8 +91,9 @@ export function App() {
   const verSituacao = pode(papel, 'sgq.ver');
   // A porta não é tela de módulo nenhum: ela só existe no menu deste papel, e por isso é o App
   // quem a desenha. Ver `plataforma/menu.ts`.
-  const porta = feitioDe(papel).porta;
-  const naPorta = porta != null && rota === porta.rota;
+  const portas = feitioDe(papel).portas ?? [];
+  const porta = portas.find(p => p.rota === rota);
+  const naPorta = porta != null;
 
   const grupoAtivo = rota === SITUACAO
     ? null
@@ -200,8 +201,10 @@ export function App() {
 
           {/* A porta fica por último, sempre: é consulta, e consulta não disputa o alto da coluna
               com o que a pessoa faz todo dia. */}
-          {porta && (
-            <ItemDeMenu rotulo={porta.rotulo} ativo={naPorta} aoClicar={() => ir(porta.rota)} />
+          { portas.length > 0 && (
+          {portas.map((p) => (
+            <ItemDeMenu key={p.rota} rotulo={p.rotulo} ativo={rota === p.rota} aoClicar={() => ir(p.rota)} />
+          ))}
           )}
         </nav>
 

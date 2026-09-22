@@ -9,8 +9,8 @@ const PAPEIS = Object.keys(PAPEL_ROTULO) as Papel[];
 const visiveis = (papel: Papel): Modulo[] => modulosVisiveis(MODULOS, (p) => pode(papel, p));
 function itens(papel: Papel): string[] {
   const rotas = colunaDe(visiveis(papel), papel).flatMap((g) => g.telas.map((t) => t.rota));
-  const porta = feitioDe(papel).porta;
-  return porta ? [...rotas, porta.rota] : rotas;
+  const portas = feitioDe(papel).portas ?? [];
+  return [...rotas, ...portas.map(p => p.rota)];
 }
 
 describe('o menu de quem executa e inspeciona', () => {
@@ -28,8 +28,17 @@ describe('o menu de quem executa e inspeciona', () => {
   });
 });
 
+describe('o menu de quem audita', () => {
+  it('encolheu de dezoito para oito', () => expect(itens('coordenacao_qualidade')).toHaveLength(10));
+  it('três itens na frente e três portas; mesma estrutura do Gustavo', () => {
+    const portas = feitioDe('coordenacao_qualidade').portas ?? [];
+    expect(portas).toHaveLength(3);
+    expect(portas.map(p => p.rota)).toEqual(['registros-empresa', 'medicoes-vencimentos', 'documentos']);
+  });
+});
+
 describe('a porta esconde, não trava', () => {
-  it('manual e lista-mestra saíram', () => {
+  it('manual e lista-mestra saíram de Gustavo', () => {
     expect(foraDaColuna('inspecao', 'manual')).toBe(true);
     expect(foraDaColuna('inspecao', 'lista-mestra')).toBe(true);
   });
