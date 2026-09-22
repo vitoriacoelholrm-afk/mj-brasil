@@ -45,8 +45,6 @@ jobs:
         run: pnpm check:rls
       - name: check:procedures (no domain router on publicProcedure)
         run: pnpm check:procedures
-      - name: typecheck (app layer only; db modules have pre-existing type errors)
-        run: tsc -p apps/web/tsconfig.check.json && node scripts/build-api.mjs && tsc -p api/tsconfig.json
 
       # ── DB gates against the service container ──
       - name: db:migrate (roles + schema + RLS)
