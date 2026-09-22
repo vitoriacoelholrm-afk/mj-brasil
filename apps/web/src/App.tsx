@@ -10,8 +10,11 @@
 // de digitar qualquer coisa.
 //
 // A coluna também acabou com a segunda barra de menu. Antes se clicava no domínio e só então na
-// tela; agora as telas do domínio estão todas visíveis e cada uma é um clique. A conta é a mesma
-// de sempre — `dominios()` não mudou —, só o desenho é outro.
+// tela; agora as telas do domínio estão todas visíveis e cada uma é um clique.
+//
+// O QUE ENTRA NA COLUNA é conta de `plataforma/menu.ts`, não daqui: `colunaDe` aplica o feitio do
+// papel — o que sai da frente, o que fica atrás de uma porta, e em que ordem. Esconder ali não
+// tira acesso de ninguém; a rota continua resolvendo em `telaDaRota`.
 import { useEffect, useState } from 'react';
 import appInfo from './app-info.json';
 import { papelAtual, pessoaAtual, sair } from '@/lib/session';
@@ -20,6 +23,8 @@ import { Situacao } from '@/modules/nucleo/ui/Situacao';
 import { MODULOS, modulosDe } from '@/modules';
 import { modulosVisiveis, telaDaRota, type Modulo, type Rota } from '@/plataforma/modulo';
 import { pode, type Papel } from '@/plataforma/acesso';
+import { colunaDe, feitioDe } from '@/plataforma/menu';
+import { Porta } from '@/ui/Porta';
 import { c, fonte, marca, reguaDaMarca } from '@/ui/estilo';
 import { margemLateral, useEhCelular } from '@/ui/tela';
 import { publico } from '@/ui/publico';
@@ -39,17 +44,6 @@ function menuDe(papel: Papel): Modulo[] {
   return modulosVisiveis(modulosDe(empresaAtiva().modulos), (p) => pode(papel, p), empresaAtiva().modo);
 }
 
-/** Os domínios do menu, na ordem em que os módulos aparecem. Dois módulos podem dividir um
- *  domínio — as telas dos dois entram na mesma seção. */
-function dominios(modulos: Modulo[]): { rotulo: string; telas: Modulo['telas'] }[] {
-  const ordem: string[] = [];
-  const por = new Map<string, Modulo['telas']>();
-  for (const m of modulos) {
-    if (!por.has(m.dominio)) { por.set(m.dominio, []); ordem.push(m.dominio); }
-    por.get(m.dominio)!.push(...m.telas);
-  }
-  return ordem.map((rotulo) => ({ rotulo, telas: por.get(rotulo)! }));
-}
 
 /** Onde a pessoa cai ao entrar: a situação, se ela puder vê-la; senão a primeira tela que tem.
  *  O posto de uso único (a portaria) cai direto no que tem a fazer. */
@@ -93,13 +87,17 @@ export function App() {
   // Tudo que a empresa tem, sem filtro de permissão. Vai junto para a tela porque o manual mostra
   // o MODELO em branco de qualquer formulário instalado — modelo é documento, não registro.
   const instalados = modulosDe(empresaAtiva().modulos);
-  const grupos = dominios(meus);
+  const grupos = colunaDe(meus, papel);
   const verSituacao = pode(papel, 'sgq.ver');
+  // A porta não é tela de módulo nenhum: ela só existe no menu deste papel, e por isso é o App
+  // quem a desenha. Ver `plataforma/menu.ts`.
+  const porta = feitioDe(papel).porta;
+  const naPorta = porta != null && rota === porta.rota;
 
   const grupoAtivo = rota === SITUACAO
     ? null
     : grupos.find((g) => g.telas.some((t) => t.rota === rota)) ?? null;
-  const tela = rota === SITUACAO ? null : telaDaRota(meus, rota);
+  const tela = rota === SITUACAO || naPorta ? null : telaDaRota(meus, rota);
 
   // Navegar fecha a gaveta. No celular ela cobre a tela: deixá-la aberta esconderia justamente o
   // que a pessoa acabou de pedir.
@@ -199,6 +197,12 @@ export function App() {
                 </div>
               )
           ))}
+
+          {/* A porta fica por último, sempre: é consulta, e consulta não disputa o alto da coluna
+              com o que a pessoa faz todo dia. */}
+          {porta && (
+            <ItemDeMenu rotulo={porta.rotulo} ativo={naPorta} aoClicar={() => ir(porta.rota)} />
+          )}
         </nav>
 
         <div style={S.rodapeColuna}>
@@ -230,7 +234,7 @@ export function App() {
       <div style={S.direita}>
         {!celular && (
           <header style={S.faixaTopo}>
-            <div style={S.onde}>{grupoAtivo?.rotulo ?? 'Visão geral'}</div>
+            <div style={S.onde}>{naPorta && porta ? porta.rotulo : grupoAtivo?.rotulo ?? 'Visão geral'}</div>
             <div style={S.cliente}>
               <div style={S.clienteRotulo}>Cliente</div>
               <div style={S.clienteNome}>{empresa.identidade.nome}</div>
@@ -254,10 +258,12 @@ export function App() {
         <main style={{ ...S.miolo, padding: `${celular ? 16 : 24}px ${lado}px 40px` }}>
           {rota === SITUACAO
             ? <Situacao irPara={ir} />
-            // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
-            // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
-            // tela em branco.
-            : tela?.render({ irPara: ir, modulos: meus, instalados }) ?? <Situacao irPara={ir} />}
+            : naPorta && porta
+              ? <Porta porta={porta} modulos={meus} irPara={ir} />
+              // Rota que não é de nenhum módulo instalado acontece de verdade: troca-se de empresa
+              // e a tela em que se estava pode não existir na outra. Cai na situação em vez de na
+              // tela em branco.
+              : tela?.render({ irPara: ir, modulos: meus, instalados }) ?? <Situacao irPara={ir} />}
         </main>
 
         {/* O rodapé diz o SISTEMA. Dizer o cliente aqui o repetiria pela terceira vez na mesma
